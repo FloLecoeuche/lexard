@@ -37,7 +37,7 @@ Response with Citations
 
 ## US 3.1: Dense Retrieval
 
-**Status:** 🔲 Not Started
+**Status:** ✅ Completed
 
 ### Description
 
