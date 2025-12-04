@@ -226,16 +226,13 @@ pytest tests/ -v
 
 1. **Create feature branch** from `develop`: `git checkout -b feature/us-X.X-name develop`
 2. **Implement** the User Story
-3. **Ask user** before any commit
-4. **Commit** with conventional format: `type(scope): description`
-5. **Ask user** before merge to `develop`
-6. **Delete** feature branch after merge
+3. **Commit** with conventional format: `type(scope): description`
+4. **Merge** to `develop`
+5. **Delete** feature branch after merge
 
 ### Rules
 
-- **NEVER** commit, merge, or push without explicit user approval
 - **NEVER** work directly on `main` or `develop`
-- **ALWAYS** ask before any git operation
 - **ALWAYS** use conventional commits: `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `chore:`
 
 ## File Naming
