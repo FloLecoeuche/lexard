@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from src.api.logging import get_logger, setup_logging
 from src.api.middleware import ErrorHandlerMiddleware, RequestIDMiddleware
 from src.api.routes import api_router
+from src.api.routes.static import router as static_router
 from src.api.schemas import HealthResponse
 from src.mcp import mcp_router
 
@@ -79,6 +80,7 @@ app.add_middleware(
 # Include API routes
 app.include_router(api_router)
 app.include_router(mcp_router)
+app.include_router(static_router)
 
 
 async def check_qdrant() -> Literal["connected", "disconnected"]:

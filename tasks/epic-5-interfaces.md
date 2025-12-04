@@ -507,7 +507,7 @@ assert response.json()["error"]["code"] == -32601
 
 ## US 5.3: Web UI
 
-**Status:** Not Started
+**Status:** 🔶 In Progress
 
 ### Description
 
