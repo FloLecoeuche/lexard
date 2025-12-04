@@ -529,7 +529,7 @@ def test_upsert_and_delete():
 
 ## US 2.5: Document Registry
 
-**Status:** 🔲 Not Started
+**Status:** ✅ Completed
 
 ### Description
 
