@@ -92,10 +92,22 @@ Start US $ARGUMENTS:
 ### Case 3: Current epic complete (all US ✅)
 
 1. Update `tasks/PROGRESS.md`: mark epic as ✅ Completed
-2. Show epic completion summary
-3. Identify next epic
-4. Show next epic overview
-5. Next action: "Run `/flo_continue X.1` to start first US of next epic"
+2. **Merge to main:** Create a milestone merge commit on `main`
+   - Checkout `main`
+   - Merge `develop` with `--no-ff` and detailed commit message:
+     ```
+     feat: complete Epic X <Epic Title>
+
+     Merge develop branch containing all Epic X user stories:
+     - US X.1: <Short description>
+     - US X.2: <Short description>
+     - ...
+     ```
+   - Switch back to `develop`
+3. Show epic completion summary
+4. Identify next epic
+5. Show next epic overview
+6. Next action: "Run `/flo_continue X.1` to start first US of next epic"
 
 ---
 
