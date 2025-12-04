@@ -64,6 +64,14 @@ class RetrievalConfig(BaseModel):
     rerank: bool = False
 
 
+class ContextConfig(BaseModel):
+    """Context building configuration."""
+
+    max_chunks: int = Field(default=8, ge=1)
+    max_tokens: int = Field(default=3000, ge=100)
+    excerpt_length: int = Field(default=100, ge=10)
+
+
 class GuardrailsConfig(BaseModel):
     """Output guardrails configuration."""
 
@@ -96,6 +104,7 @@ class Settings(BaseModel):
     chunking: ChunkingConfig = Field(default_factory=ChunkingConfig)
     qdrant: QdrantConfig = Field(default_factory=QdrantConfig)
     retrieval: RetrievalConfig = Field(default_factory=RetrievalConfig)
+    context: ContextConfig = Field(default_factory=ContextConfig)
     guardrails: GuardrailsConfig = Field(default_factory=GuardrailsConfig)
     storage: StorageConfig = Field(default_factory=StorageConfig)
     server: ServerConfig = Field(default_factory=ServerConfig)
