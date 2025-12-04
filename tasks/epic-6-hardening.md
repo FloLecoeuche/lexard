@@ -210,7 +210,7 @@ class GuardrailsPipeline:
 
 ## US 6.2: Evaluation Harness
 
-**Status:** Not Started
+**Status:** ✅ Completed
 
 ### Description
 

@@ -13,7 +13,7 @@ This folder contains detailed specifications for each Epic and User Story. Each 
 | 3    | RAG Engine         | ✅ Completed   | 5/5 US   |
 | 4    | Agent System       | ✅ Completed   | 5/5 US   |
 | 5    | Interfaces         | ✅ Completed   | 3/3 US   |
-| 6    | Hardening          | 🔶 In Progress | 1/5 US   |
+| 6    | Hardening          | 🔶 In Progress | 2/5 US   |
 
 **Legend:** 🔲 Not Started | 🔶 In Progress | ✅ Completed
 
@@ -53,6 +53,7 @@ This folder contains detailed specifications for each Epic and User Story. Each 
 | 5.2   | MCP Server Implementation | 2025-12-04   | 3153e63     |
 | 5.3   | Web UI                    | 2025-12-04   | 546b669     |
 | 6.1   | Guardrails Refinement     | 2025-12-04   | 3f78f54     |
+| 6.2   | Evaluation Harness        | 2025-12-04   | a8a2185     |
 
 <!-- Format: | US ID | Name | Completed Date | Commit Hash | -->
 
