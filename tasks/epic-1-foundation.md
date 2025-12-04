@@ -16,7 +16,7 @@ Set up the base infrastructure for the Lexard project including repository struc
 
 ## US 1.1: Repository Structure
 
-**Status:** 🔲 Not Started
+**Status:** ✅ Completed
 
 ### Description
 
@@ -123,7 +123,7 @@ dev = [
 
 ## US 1.2: Docker Compose Setup
 
-**Status:** 🔲 Not Started
+**Status:** ✅ Completed
 
 ### Description
 
@@ -218,7 +218,7 @@ docker exec -it lexard-ollama-1 ollama pull mistral:7b-instruct
 
 ## US 1.3: FastAPI Skeleton
 
-**Status:** 🔲 Not Started
+**Status:** ✅ Completed
 
 ### Description
 
@@ -328,7 +328,7 @@ async def health():
 
 ## US 1.4: Configuration Management
 
-**Status:** 🔲 Not Started
+**Status:** ✅ Completed
 
 ### Description
 

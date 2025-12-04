@@ -1,0 +1,1 @@
+"""Lexard - AI Contract Analyst."""

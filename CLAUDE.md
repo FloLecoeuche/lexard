@@ -173,10 +173,18 @@ Always return the standard error schema:
 - **Config:** All settings externalized to `config/config.yaml`
 - **Logging:** JSON structured logs with trace_id
 - **Errors:** Consistent error schema with code, message, trace_id
+- **Python command:** Always use `python`, never `python3`
 
 ## Quick Commands
 
 ```bash
+# Create and activate virtual environment (required - macOS uses externally-managed Python)
+python -m venv .venv
+source .venv/bin/activate
+
+# Install dependencies (inside venv)
+pip install -e ".[dev]"
+
 # Start services
 docker-compose up -d
 
@@ -186,6 +194,8 @@ uvicorn src.api.main:app --reload
 # Run tests
 pytest tests/ -v
 ```
+
+**Note:** Always run `pip` inside the virtual environment. Direct system-wide pip installs are blocked on macOS.
 
 ## Critical Constraints
 
