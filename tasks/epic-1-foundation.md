@@ -16,7 +16,7 @@ Set up the base infrastructure for the Lexard project including repository struc
 
 ## US 1.1: Repository Structure
 
-**Status:** 🔲 Not Started
+**Status:** ✅ Completed
 
 ### Description
 
