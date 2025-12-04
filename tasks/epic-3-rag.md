@@ -37,7 +37,7 @@ Response with Citations
 
 ## US 3.1: Dense Retrieval
 
-**Status:** 🔲 Not Started
+**Status:** ✅ Completed
 
 ### Description
 
@@ -182,7 +182,7 @@ def test_retrieval_empty_results():
 
 ## US 3.2: Context Building
 
-**Status:** 🔲 Not Started
+**Status:** ✅ Completed
 
 ### Description
 
@@ -337,7 +337,7 @@ def test_empty_chunks():
 
 ## US 3.3: LLM Integration
 
-**Status:** 🔲 Not Started
+**Status:** ✅ Completed
 
 ### Description
 
@@ -514,7 +514,7 @@ def test_health_check():
 
 ## US 3.4: Response Generation
 
-**Status:** 🔲 Not Started
+**Status:** ✅ Completed
 
 ### Description
 
@@ -690,7 +690,7 @@ def test_confidence_scoring():
 
 ## US 3.5: Basic Guardrails
 
-**Status:** 🔲 Not Started
+**Status:** ✅ Completed
 
 ### Description
 
