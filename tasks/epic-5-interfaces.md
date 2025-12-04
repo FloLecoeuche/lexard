@@ -507,7 +507,7 @@ assert response.json()["error"]["code"] == -32601
 
 ## US 5.3: Web UI
 
-**Status:** Not Started
+**Status:** ✅ Completed
 
 ### Description
 
@@ -523,17 +523,17 @@ The UI is for demonstration only, not production use. It should:
 
 ### Tasks
 
-- [ ] Create `ui/index.html` with:
+- [x] Create `ui/index.html` with:
   - Document upload form
   - Document list display
   - Query input and results display
   - Summarization trigger
   - Risk analysis display
   - Document comparison interface
-- [ ] Style with minimal CSS (embedded or inline)
-- [ ] Implement JavaScript for API calls (fetch API)
-- [ ] Add loading states and error handling
-- [ ] Create `src/api/routes/static.py` to serve the UI
+- [x] Style with minimal CSS (embedded or inline)
+- [x] Implement JavaScript for API calls (fetch API)
+- [x] Add loading states and error handling
+- [x] Create `src/api/routes/static.py` to serve the UI
 
 ### UI Components
 
@@ -673,16 +673,16 @@ function renderComparison(differences) { ... }
 
 ### Acceptance Criteria
 
-- [ ] UI loads at `http://localhost:8000/`
-- [ ] Document upload works (drag-and-drop and file picker)
-- [ ] Document list refreshes after upload
-- [ ] Query returns answer with citations displayed
-- [ ] Summarization generates and displays summary
-- [ ] Risk analysis shows risks with severity
-- [ ] Document comparison shows differences
-- [ ] Loading states visible during API calls
-- [ ] Errors displayed clearly to user
-- [ ] Works in Chrome, Firefox, Safari
+- [x] UI loads at `http://localhost:8000/`
+- [x] Document upload works (drag-and-drop and file picker)
+- [x] Document list refreshes after upload
+- [x] Query returns answer with citations displayed
+- [x] Summarization generates and displays summary
+- [x] Risk analysis shows risks with severity
+- [x] Document comparison shows differences
+- [x] Loading states visible during API calls
+- [x] Errors displayed clearly to user
+- [x] Works in Chrome, Firefox, Safari
 
 ### Files to Create
 
@@ -710,10 +710,10 @@ async def serve_ui():
 
 ## Definition of Done (Epic 5)
 
-- [ ] All 3 User Stories completed
-- [ ] All REST API endpoints functional with proper error handling
-- [ ] MCP server accepts JSON-RPC requests
-- [ ] Web UI demonstrates all core features
-- [ ] OpenAPI documentation complete at `/docs`
-- [ ] All endpoints tested manually
-- [ ] Error responses consistent across all interfaces
+- [x] All 3 User Stories completed
+- [x] All REST API endpoints functional with proper error handling
+- [x] MCP server accepts JSON-RPC requests
+- [x] Web UI demonstrates all core features
+- [x] OpenAPI documentation complete at `/docs`
+- [x] All endpoints tested manually
+- [x] Error responses consistent across all interfaces
