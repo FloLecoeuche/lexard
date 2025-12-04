@@ -159,7 +159,7 @@ def test_unsupported_file():
 
 ## US 2.2: Chunking
 
-**Status:** 🔲 Not Started
+**Status:** ✅ Completed
 
 ### Description
 
