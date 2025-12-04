@@ -12,7 +12,7 @@ This folder contains detailed specifications for each Epic and User Story. Each 
 | 2    | Ingestion Pipeline | ✅ Completed   | 5/5 US   |
 | 3    | RAG Engine         | ✅ Completed   | 5/5 US   |
 | 4    | Agent System       | ✅ Completed   | 5/5 US   |
-| 5    | Interfaces         | 🔲 Not Started | 0/3 US   |
+| 5    | Interfaces         | 🔶 In Progress | 1/3 US   |
 | 6    | Hardening          | 🔲 Not Started | 0/5 US   |
 
 **Legend:** 🔲 Not Started | 🔶 In Progress | ✅ Completed
@@ -49,6 +49,7 @@ This folder contains detailed specifications for each Epic and User Story. Each 
 | 4.3   | Summarizer Tool         | 2025-12-04     | 0b1684b     |
 | 4.4   | Risk Detector Tool      | 2025-12-04     | d6581e4     |
 | 4.5   | Diff Tool               | 2025-12-04     | 1b8cf23     |
+| 5.1   | Complete REST API       | 2025-12-04     | 0a0e696     |
 
 <!-- Format: | US ID | Name | Completed Date | Commit Hash | -->
 
