@@ -378,3 +378,36 @@ class SuccessResponse(BaseModel):
 
     success: bool = True
     message: Optional[str] = None
+
+
+# =============================================================================
+# Guardrails Metrics Schema
+# =============================================================================
+
+
+class GuardrailsMetricsResponse(BaseModel):
+    """Response for guardrails metrics endpoint."""
+
+    total_inputs: int = Field(..., description="Total inputs processed")
+    total_outputs: int = Field(..., description="Total outputs processed")
+    injection_blocks: int = Field(..., description="Inputs blocked due to injection")
+    hallucination_blocks: int = Field(..., description="Outputs blocked due to hallucination")
+    schema_failures: int = Field(..., description="Outputs blocked due to schema validation")
+    pii_redactions: int = Field(..., description="Outputs with PII redacted")
+    input_block_rate: float = Field(..., description="Percentage of inputs blocked")
+    output_block_rate: float = Field(..., description="Percentage of outputs blocked")
+
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "total_inputs": 100,
+                "total_outputs": 95,
+                "injection_blocks": 5,
+                "hallucination_blocks": 2,
+                "schema_failures": 1,
+                "pii_redactions": 10,
+                "input_block_rate": 5.0,
+                "output_block_rate": 3.16,
+            }
+        }
+    }
