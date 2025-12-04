@@ -606,7 +606,7 @@ def test_detailed_style():
 
 ## US 4.4: Risk Detector Tool
 
-**Status:** 🔶 In Progress
+**Status:** ✅ Completed
 
 ### Description
 
