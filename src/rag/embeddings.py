@@ -1,10 +1,12 @@
 """Embedding generation service using sentence-transformers.
 
 Provides lazy-loaded embedding model with batch processing,
-retry logic, and progress tracking for large documents.
+retry logic, caching, and progress tracking for large documents.
 """
 
+import hashlib
 import logging
+from collections import OrderedDict
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -27,12 +29,81 @@ class EmbeddingError(Exception):
     pass
 
 
+class LRUCache:
+    """Simple LRU cache for embeddings using OrderedDict."""
+
+    def __init__(self, max_size: int = 1000):
+        """Initialize LRU cache.
+
+        Args:
+            max_size: Maximum number of entries to cache
+        """
+        self._cache: OrderedDict[str, np.ndarray] = OrderedDict()
+        self.max_size = max_size
+        self.hits = 0
+        self.misses = 0
+
+    def _make_key(self, text: str) -> str:
+        """Create cache key from text using MD5 hash."""
+        return hashlib.md5(text.encode()).hexdigest()
+
+    def get(self, text: str) -> np.ndarray | None:
+        """Get embedding from cache.
+
+        Args:
+            text: Text to look up
+
+        Returns:
+            Cached embedding or None if not found
+        """
+        key = self._make_key(text)
+        if key in self._cache:
+            # Move to end (most recently used)
+            self._cache.move_to_end(key)
+            self.hits += 1
+            return self._cache[key]
+        self.misses += 1
+        return None
+
+    def put(self, text: str, embedding: np.ndarray) -> None:
+        """Store embedding in cache.
+
+        Args:
+            text: Text key
+            embedding: Embedding vector to store
+        """
+        key = self._make_key(text)
+        if key in self._cache:
+            self._cache.move_to_end(key)
+        else:
+            if len(self._cache) >= self.max_size:
+                # Remove oldest entry
+                self._cache.popitem(last=False)
+            self._cache[key] = embedding
+
+    def clear(self) -> None:
+        """Clear the cache."""
+        self._cache.clear()
+        self.hits = 0
+        self.misses = 0
+
+    @property
+    def hit_rate(self) -> float:
+        """Calculate cache hit rate."""
+        total = self.hits + self.misses
+        return self.hits / total if total > 0 else 0.0
+
+    def __len__(self) -> int:
+        return len(self._cache)
+
+
 class EmbeddingService:
     """Service for generating text embeddings using sentence-transformers.
 
     Features:
     - Lazy model loading to avoid slow startup
     - Batch processing for efficiency
+    - LRU caching for repeated queries
     - Retry logic with exponential backoff
     - Progress tracking for large documents
 
@@ -49,16 +120,22 @@ class EmbeddingService:
         self,
         model_name: str = "all-mpnet-base-v2",
         device: str = "cpu",
+        cache_size: int = 1000,
+        enable_cache: bool = True,
     ):
         """Initialize embedding service.
 
         Args:
             model_name: Sentence-transformers model name
             device: Device to run model on ('cpu' or 'cuda')
+            cache_size: Maximum number of embeddings to cache
+            enable_cache: Whether to enable embedding caching
         """
         self._model: "SentenceTransformer | None" = None
         self.model_name = model_name
         self.device = device
+        self.enable_cache = enable_cache
+        self._cache = LRUCache(max_size=cache_size) if enable_cache else None
 
     @property
     def model(self) -> "SentenceTransformer":
@@ -153,7 +230,7 @@ class EmbeddingService:
             raise EmbeddingError(f"Embedding generation failed: {e}") from e
 
     def embed_query(self, query: str) -> np.ndarray:
-        """Embed a single query string.
+        """Embed a single query string with caching.
 
         Args:
             query: Query text to embed
@@ -167,8 +244,43 @@ class EmbeddingService:
         if not query or not query.strip():
             raise EmbeddingError("Query cannot be empty")
 
+        # Check cache first
+        if self._cache is not None:
+            cached = self._cache.get(query)
+            if cached is not None:
+                logger.debug("Cache hit for query embedding")
+                return cached
+
         embeddings = self.embed([query], batch_size=1, show_progress=False)
-        return embeddings[0]
+        result = embeddings[0]
+
+        # Cache the result
+        if self._cache is not None:
+            self._cache.put(query, result)
+
+        return result
+
+    @property
+    def cache_stats(self) -> dict[str, float | int] | None:
+        """Get cache statistics.
+
+        Returns:
+            Dictionary with hits, misses, size, and hit_rate, or None if caching disabled
+        """
+        if self._cache is None:
+            return None
+        return {
+            "hits": self._cache.hits,
+            "misses": self._cache.misses,
+            "size": len(self._cache),
+            "hit_rate": self._cache.hit_rate,
+        }
+
+    def clear_cache(self) -> None:
+        """Clear the embedding cache."""
+        if self._cache is not None:
+            self._cache.clear()
+            logger.info("Embedding cache cleared")
 
     def embed_chunks(
         self,
@@ -191,3 +303,7 @@ class EmbeddingService:
         """
         texts = [chunk.content for chunk in chunks]
         return self.embed(texts, batch_size=batch_size)
+
+
+# Alias for backward compatibility
+EmbeddingsService = EmbeddingService

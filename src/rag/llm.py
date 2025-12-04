@@ -68,6 +68,8 @@ FORMAT:
 class OllamaClient:
     """Client for interacting with Ollama LLM API.
 
+    Features connection pooling for improved performance with repeated requests.
+
     Args:
         config: LLM configuration from settings
     """
@@ -78,6 +80,42 @@ class OllamaClient:
         self.temperature = config.temperature
         self.max_tokens = config.max_tokens
         self.timeout = config.timeout_seconds
+
+        # Connection pooling for improved performance
+        self._client: httpx.Client | None = None
+
+    @property
+    def client(self) -> httpx.Client:
+        """Get or create pooled HTTP client.
+
+        Returns:
+            Shared httpx.Client with connection pooling
+        """
+        if self._client is None or self._client.is_closed:
+            self._client = httpx.Client(
+                base_url=self.base_url,
+                timeout=self.timeout,
+                limits=httpx.Limits(
+                    max_connections=10,
+                    max_keepalive_connections=5,
+                    keepalive_expiry=30.0,
+                ),
+            )
+            logger.debug("Created pooled HTTP client for Ollama")
+        return self._client
+
+    def close(self) -> None:
+        """Close the HTTP client and release connections."""
+        if self._client is not None and not self._client.is_closed:
+            self._client.close()
+            self._client = None
+            logger.debug("Closed Ollama HTTP client")
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
 
     def generate(self, prompt: str, system_prompt: str | None = None) -> LLMResponse:
         """Generate response from Ollama.
@@ -109,43 +147,42 @@ class OllamaClient:
         )
 
         try:
-            with httpx.Client(timeout=self.timeout) as client:
-                response = client.post(
-                    f"{self.base_url}/api/chat",
-                    json={
-                        "model": self.model,
-                        "messages": messages,
-                        "stream": False,
-                        "options": {
-                            "temperature": self.temperature,
-                            "num_predict": self.max_tokens,
-                        },
+            response = self.client.post(
+                "/api/chat",
+                json={
+                    "model": self.model,
+                    "messages": messages,
+                    "stream": False,
+                    "options": {
+                        "temperature": self.temperature,
+                        "num_predict": self.max_tokens,
                     },
-                )
-                response.raise_for_status()
-                data = response.json()
+                },
+            )
+            response.raise_for_status()
+            data = response.json()
 
-                content = data.get("message", {}).get("content", "")
-                if not content:
-                    raise LLMGenerationError("Empty response from LLM")
+            content = data.get("message", {}).get("content", "")
+            if not content:
+                raise LLMGenerationError("Empty response from LLM")
 
-                llm_response = LLMResponse(
-                    content=content,
-                    model=data.get("model", self.model),
-                    total_tokens=data.get("eval_count"),
-                    finish_reason=data.get("done_reason", "stop"),
-                )
+            llm_response = LLMResponse(
+                content=content,
+                model=data.get("model", self.model),
+                total_tokens=data.get("eval_count"),
+                finish_reason=data.get("done_reason", "stop"),
+            )
 
-                logger.debug(
-                    "LLM generation complete",
-                    extra={
-                        "model": llm_response.model,
-                        "tokens": llm_response.total_tokens,
-                        "response_length": len(llm_response.content),
-                    },
-                )
+            logger.debug(
+                "LLM generation complete",
+                extra={
+                    "model": llm_response.model,
+                    "tokens": llm_response.total_tokens,
+                    "response_length": len(llm_response.content),
+                },
+            )
 
-                return llm_response
+            return llm_response
 
         except httpx.TimeoutException as e:
             logger.error(f"Ollama request timed out after {self.timeout}s")
@@ -170,8 +207,9 @@ class OllamaClient:
             True if Ollama is healthy and model is available, False otherwise
         """
         try:
-            with httpx.Client(timeout=5) as client:
-                response = client.get(f"{self.base_url}/api/tags")
+            # Use a separate short-timeout client for health checks
+            with httpx.Client(base_url=self.base_url, timeout=5) as client:
+                response = client.get("/api/tags")
                 if response.status_code == 200:
                     models = response.json().get("models", [])
                     # Check if our model (or base model name) is available
