@@ -407,7 +407,7 @@ def test_refuse_intent():
 
 ## US 4.3: Summarizer Tool
 
-**Status:** 🔲 Not Started
+**Status:** ✅ Completed
 
 ### Description
 
