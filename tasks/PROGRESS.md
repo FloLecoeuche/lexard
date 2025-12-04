@@ -13,7 +13,7 @@ This folder contains detailed specifications for each Epic and User Story. Each 
 | 3    | RAG Engine         | ✅ Completed   | 5/5 US   |
 | 4    | Agent System       | ✅ Completed   | 5/5 US   |
 | 5    | Interfaces         | ✅ Completed   | 3/3 US   |
-| 6    | Hardening          | 🔶 In Progress | 3/5 US   |
+| 6    | Hardening          | 🔶 In Progress | 4/5 US   |
 
 **Legend:** 🔲 Not Started | 🔶 In Progress | ✅ Completed
 
@@ -55,6 +55,7 @@ This folder contains detailed specifications for each Epic and User Story. Each 
 | 6.1   | Guardrails Refinement     | 2025-12-04   | 3f78f54     |
 | 6.2   | Evaluation Harness        | 2025-12-04   | a8a2185     |
 | 6.3   | Red Team Testing          | 2025-12-04   | 5651f61     |
+| 6.4   | Performance Optimization  | 2025-12-04   | 3aef045     |
 
 <!-- Format: | US ID | Name | Completed Date | Commit Hash | -->
 
