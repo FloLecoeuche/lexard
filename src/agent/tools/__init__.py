@@ -3,9 +3,15 @@
 Provides specialized tools for:
 - Document summarization (SummarizerTool)
 - Risk detection (RiskDetectorTool)
-- Document comparison (DiffTool) - US 4.5
+- Document comparison (DiffTool)
 """
 
+from src.agent.tools.diff import (
+    ChangeType,
+    ComparisonResult,
+    Difference,
+    DiffTool,
+)
 from src.agent.tools.risk_detector import (
     Risk,
     RiskAnalysisResult,
@@ -23,4 +29,8 @@ __all__ = [
     "Risk",
     "RiskCategory",
     "RiskSeverity",
+    "DiffTool",
+    "ComparisonResult",
+    "Difference",
+    "ChangeType",
 ]

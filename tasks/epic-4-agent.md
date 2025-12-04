@@ -844,7 +844,7 @@ def test_high_risk_detection():
 
 ## US 4.5: Diff Tool
 
-**Status:** 🔲 Not Started
+**Status:** 🔶 In Progress
 
 ### Description
 
