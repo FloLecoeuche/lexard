@@ -32,7 +32,7 @@ Storage (Qdrant vectors + SQLite metadata)
 
 ## US 2.1: Text Extraction
 
-**Status:** 🔲 Not Started
+**Status:** ✅ Completed
 
 ### Description
 
