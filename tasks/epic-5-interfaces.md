@@ -265,7 +265,7 @@ All endpoints use consistent error format:
 
 ## US 5.2: MCP Server Implementation
 
-**Status:** 🔶 In Progress
+**Status:** ✅ Completed
 
 ### Description
 
@@ -462,13 +462,13 @@ The server uses JSON-RPC 2.0 protocol over HTTP.
 
 ### Acceptance Criteria
 
-- [ ] `POST /mcp` accepts JSON-RPC requests
-- [ ] All 4 methods implemented and functional
-- [ ] Error responses follow JSON-RPC 2.0 spec
-- [ ] Invalid methods return -32601
-- [ ] Invalid params return -32602
-- [ ] Request validation with proper error messages
-- [ ] Methods integrate with existing agent tools
+- [x] `POST /mcp` accepts JSON-RPC requests
+- [x] All 4 methods implemented and functional
+- [x] Error responses follow JSON-RPC 2.0 spec
+- [x] Invalid methods return -32601
+- [x] Invalid params return -32602
+- [x] Request validation with proper error messages
+- [x] Methods integrate with existing agent tools
 
 ### Files to Create
 
