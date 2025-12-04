@@ -217,7 +217,7 @@ def test_retry_logic():
 
 ## US 4.2: Intent Classification
 
-**Status:** 🔲 Not Started
+**Status:** 🔶 In Progress
 
 ### Description
 

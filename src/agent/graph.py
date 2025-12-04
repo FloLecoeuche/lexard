@@ -3,18 +3,23 @@ from typing import Literal
 
 from langgraph.graph import StateGraph, END
 
+from src.agent.classifier import IntentClassifier
 from src.agent.state import AgentState, AgentStatus, Intent
 
 
-def classify_intent_node(state: AgentState) -> dict:
-    """Classify user intent.
+# Singleton classifier instance
+_classifier = IntentClassifier()
 
-    Stub implementation - full classification in US 4.2.
-    For now, defaults to ANSWER_QUESTION.
+
+def classify_intent_node(state: AgentState) -> dict:
+    """Classify user intent using IntentClassifier.
+
+    Uses keyword-based classification to determine the appropriate
+    tool for handling the user's request.
     """
-    # Stub: will be replaced with IntentClassifier in US 4.2
+    result = _classifier.classify(state.user_query)
     return {
-        "intent": Intent.ANSWER_QUESTION,
+        "intent": result.intent,
         "status": AgentStatus.PROCESSING
     }
 
