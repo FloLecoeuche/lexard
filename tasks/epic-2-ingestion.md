@@ -32,7 +32,7 @@ Storage (Qdrant vectors + SQLite metadata)
 
 ## US 2.1: Text Extraction
 
-**Status:** 🔲 Not Started
+**Status:** ✅ Completed
 
 ### Description
 
@@ -159,7 +159,7 @@ def test_unsupported_file():
 
 ## US 2.2: Chunking
 
-**Status:** 🔲 Not Started
+**Status:** ✅ Completed
 
 ### Description
 
@@ -269,7 +269,7 @@ def test_content_hash():
 
 ## US 2.3: Embeddings
 
-**Status:** 🔲 Not Started
+**Status:** ✅ Completed
 
 ### Description
 
@@ -370,7 +370,7 @@ def test_batch_embedding():
 
 ## US 2.4: Qdrant Indexing
 
-**Status:** 🔲 Not Started
+**Status:** ✅ Completed
 
 ### Description
 
@@ -529,7 +529,7 @@ def test_upsert_and_delete():
 
 ## US 2.5: Document Registry
 
-**Status:** 🔲 Not Started
+**Status:** ✅ Completed
 
 ### Description
 
