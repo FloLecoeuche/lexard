@@ -40,7 +40,7 @@ This folder contains detailed specifications for each Epic and User Story. Each 
 | 2.4   | Qdrant Indexing          | 2025-12-04     | 08b05d9     |
 | 2.5   | Document Registry        | 2025-12-04     | 75addc0     |
 | 3.1   | Dense Retrieval          | 2025-12-04     | 0ab6087     |
-| 3.2   | Context Building         | 2025-12-04     | PENDING     |
+| 3.2   | Context Building         | 2025-12-04     | 16064d3     |
 
 <!-- Format: | US ID | Name | Completed Date | Commit Hash | -->
 
