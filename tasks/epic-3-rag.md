@@ -690,7 +690,7 @@ def test_confidence_scoring():
 
 ## US 3.5: Basic Guardrails
 
-**Status:** 🔲 Not Started
+**Status:** ✅ Completed
 
 ### Description
 
