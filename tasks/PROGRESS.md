@@ -10,7 +10,7 @@ This folder contains detailed specifications for each Epic and User Story. Each 
 | ---- | ------------------ | -------------- | -------- |
 | 1    | Foundation         | ✅ Completed   | 4/4 US   |
 | 2    | Ingestion Pipeline | ✅ Completed   | 5/5 US   |
-| 3    | RAG Engine         | 🔶 In Progress | 3/5 US   |
+| 3    | RAG Engine         | 🔶 In Progress | 4/5 US   |
 | 4    | Agent System       | 🔲 Not Started | 0/5 US   |
 | 5    | Interfaces         | 🔲 Not Started | 0/3 US   |
 | 6    | Hardening          | 🔲 Not Started | 0/5 US   |
@@ -42,6 +42,7 @@ This folder contains detailed specifications for each Epic and User Story. Each 
 | 3.1   | Dense Retrieval          | 2025-12-04     | 0ab6087     |
 | 3.2   | Context Building         | 2025-12-04     | 16064d3     |
 | 3.3   | LLM Integration          | 2025-12-04     | d39d0bd     |
+| 3.4   | Response Generation      | 2025-12-04     | 0671056     |
 
 <!-- Format: | US ID | Name | Completed Date | Commit Hash | -->
 
