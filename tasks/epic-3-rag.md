@@ -182,7 +182,7 @@ def test_retrieval_empty_results():
 
 ## US 3.2: Context Building
 
-**Status:** 🔲 Not Started
+**Status:** ✅ Completed
 
 ### Description
 
