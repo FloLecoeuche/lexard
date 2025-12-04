@@ -16,7 +16,7 @@ Implement the complete REST API, MCP server, and minimal web UI for demo purpose
 
 ## US 5.1: Complete REST API
 
-**Status:** Not Started
+**Status:** 🔶 In Progress
 
 ### Description
 
