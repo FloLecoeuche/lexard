@@ -87,10 +87,15 @@ See `tasks/PROGRESS.md` for detailed task status.
 
 **Checklist before marking complete:**
 
+- [ ] All tasks implemented
 - [ ] Feature works end-to-end (manual test)
 - [ ] Code runs without errors
 - [ ] No hardcoded values (use config)
 - [ ] All acceptance criteria verified (never assume)
+
+### Switching US Mid-Progress
+
+If starting a new US while another is 🔶 In Progress, warn user and require explicit confirmation before switching.
 
 ## Code Patterns
 
