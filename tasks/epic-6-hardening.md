@@ -419,7 +419,7 @@ def generate_report(metrics: EvaluationMetrics, results: list[dict]) -> str:
 
 ## US 6.3: Red Team Testing
 
-**Status:** Not Started
+**Status:** ✅ Completed
 
 ### Description
 
