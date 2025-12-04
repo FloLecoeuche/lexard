@@ -32,7 +32,7 @@ stateDiagram-v2
 
 ## US 4.1: LangGraph State Machine
 
-**Status:** 🔲 Not Started
+**Status:** ✅ Completed
 
 ### Description
 
@@ -217,7 +217,7 @@ def test_retry_logic():
 
 ## US 4.2: Intent Classification
 
-**Status:** 🔲 Not Started
+**Status:** ✅ Completed
 
 ### Description
 
@@ -407,7 +407,7 @@ def test_refuse_intent():
 
 ## US 4.3: Summarizer Tool
 
-**Status:** 🔲 Not Started
+**Status:** ✅ Completed
 
 ### Description
 
@@ -606,7 +606,7 @@ def test_detailed_style():
 
 ## US 4.4: Risk Detector Tool
 
-**Status:** 🔲 Not Started
+**Status:** ✅ Completed
 
 ### Description
 
@@ -844,7 +844,7 @@ def test_high_risk_detection():
 
 ## US 4.5: Diff Tool
 
-**Status:** 🔲 Not Started
+**Status:** ✅ Completed
 
 ### Description
 
