@@ -1,5 +1,6 @@
 """Main FastAPI application for Lexard."""
 
+from functools import lru_cache
 from typing import Literal
 
 import httpx
@@ -10,7 +11,8 @@ from src.api.logging import get_logger, setup_logging
 from src.api.middleware import ErrorHandlerMiddleware, RequestIDMiddleware
 from src.api.routes import api_router
 from src.api.routes.static import router as static_router
-from src.api.schemas import HealthResponse
+from src.api.schemas import GuardrailsMetricsResponse, HealthResponse
+from src.guardrails import GuardrailsPipeline
 from src.mcp import mcp_router
 
 # Initialize logging
@@ -108,6 +110,21 @@ async def check_ollama() -> Literal["connected", "disconnected"]:
     return "disconnected"
 
 
+# Global guardrails pipeline instance for metrics tracking
+_guardrails_pipeline: GuardrailsPipeline | None = None
+
+
+def get_guardrails_pipeline() -> GuardrailsPipeline:
+    """Get the global guardrails pipeline instance.
+
+    Creates a new instance on first call.
+    """
+    global _guardrails_pipeline
+    if _guardrails_pipeline is None:
+        _guardrails_pipeline = GuardrailsPipeline()
+    return _guardrails_pipeline
+
+
 @app.get(
     "/health",
     response_model=HealthResponse,
@@ -140,4 +157,28 @@ async def health() -> HealthResponse:
         status=status,
         version="0.1.0",
         services=services,
+    )
+
+
+@app.get(
+    "/guardrails/metrics",
+    response_model=GuardrailsMetricsResponse,
+    tags=["health"],
+    summary="Guardrails metrics",
+    description="Get guardrails pipeline metrics including rejection counts by type.",
+)
+async def guardrails_metrics() -> GuardrailsMetricsResponse:
+    """Get guardrails metrics for monitoring."""
+    pipeline = get_guardrails_pipeline()
+    metrics = pipeline.metrics
+
+    return GuardrailsMetricsResponse(
+        total_inputs=metrics.total_inputs,
+        total_outputs=metrics.total_outputs,
+        injection_blocks=metrics.injection_blocks,
+        hallucination_blocks=metrics.hallucination_blocks,
+        schema_failures=metrics.schema_failures,
+        pii_redactions=metrics.pii_redactions,
+        input_block_rate=metrics.input_block_rate,
+        output_block_rate=metrics.output_block_rate,
     )

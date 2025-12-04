@@ -13,7 +13,7 @@ This folder contains detailed specifications for each Epic and User Story. Each 
 | 3    | RAG Engine         | ✅ Completed   | 5/5 US   |
 | 4    | Agent System       | ✅ Completed   | 5/5 US   |
 | 5    | Interfaces         | ✅ Completed   | 3/3 US   |
-| 6    | Hardening          | 🔲 Not Started | 0/5 US   |
+| 6    | Hardening          | 🔶 In Progress | 0/5 US   |
 
 **Legend:** 🔲 Not Started | 🔶 In Progress | ✅ Completed
 
