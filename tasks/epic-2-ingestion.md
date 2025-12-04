@@ -370,7 +370,7 @@ def test_batch_embedding():
 
 ## US 2.4: Qdrant Indexing
 
-**Status:** 🔲 Not Started
+**Status:** ✅ Completed
 
 ### Description
 
