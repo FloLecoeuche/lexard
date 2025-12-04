@@ -41,7 +41,7 @@ This folder contains detailed specifications for each Epic and User Story. Each 
 | 2.5   | Document Registry        | 2025-12-04     | 75addc0     |
 | 3.1   | Dense Retrieval          | 2025-12-04     | 0ab6087     |
 | 3.2   | Context Building         | 2025-12-04     | 16064d3     |
-| 3.3   | LLM Integration          | 2025-12-04     | PENDING     |
+| 3.3   | LLM Integration          | 2025-12-04     | d39d0bd     |
 
 <!-- Format: | US ID | Name | Completed Date | Commit Hash | -->
 
