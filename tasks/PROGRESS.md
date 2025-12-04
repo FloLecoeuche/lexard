@@ -8,7 +8,7 @@ This folder contains detailed specifications for each Epic and User Story. Each 
 
 | Epic | Name               | Status         | Progress |
 | ---- | ------------------ | -------------- | -------- |
-| 1    | Foundation         | 🔶 In Progress | 2/4 US   |
+| 1    | Foundation         | 🔶 In Progress | 3/4 US   |
 | 2    | Ingestion Pipeline | 🔲 Not Started | 0/5 US   |
 | 3    | RAG Engine         | 🔲 Not Started | 0/5 US   |
 | 4    | Agent System       | 🔲 Not Started | 0/5 US   |
@@ -28,10 +28,11 @@ This folder contains detailed specifications for each Epic and User Story. Each 
 
 ## Completed User Stories
 
-| US ID | Name | Completed Date | Commit Hash |
-|-------|------|----------------|-------------|
-| 1.1 | Repository Structure | 2025-12-04 | a06f0f2 |
-| 1.2 | Docker Compose Setup | 2025-12-04 | e105ddb |
+| US ID | Name                 | Completed Date | Commit Hash |
+| ----- | -------------------- | -------------- | ----------- |
+| 1.1   | Repository Structure | 2025-12-04     | a06f0f2     |
+| 1.2   | Docker Compose Setup | 2025-12-04     | e105ddb     |
+| 1.3   | FastAPI Skeleton     | 2025-12-04     | a138756     |
 
 <!-- Format: | US ID | Name | Completed Date | Commit Hash | -->
 
@@ -43,7 +44,3 @@ This folder contains detailed specifications for each Epic and User Story. Each 
 4. Update the US status in the Epic file
 5. Update this PROGRESS.md with completion info
 6. Ask user to commit when ready
-
-## Current Focus
-
-**Epic 1: Foundation** - Start with US 1.1

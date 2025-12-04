@@ -218,7 +218,7 @@ docker exec -it lexard-ollama-1 ollama pull mistral:7b-instruct
 
 ## US 1.3: FastAPI Skeleton
 
-**Status:** 🔲 Not Started
+**Status:** ✅ Completed
 
 ### Description
 

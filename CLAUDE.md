@@ -173,6 +173,7 @@ Always return the standard error schema:
 - **Config:** All settings externalized to `config/config.yaml`
 - **Logging:** JSON structured logs with trace_id
 - **Errors:** Consistent error schema with code, message, trace_id
+- **Python command:** Always use `python`, never `python3`
 
 ## Quick Commands
 
