@@ -1,6 +1,7 @@
 """Document management routes for Lexard API."""
 
 import hashlib
+import tempfile
 from pathlib import Path
 
 from fastapi import APIRouter, File, HTTPException, Request, UploadFile
@@ -97,8 +98,8 @@ async def upload_document(
 ) -> DocumentUploadResponse:
     """Upload and process a new document."""
     from src.config import get_settings
-    from src.rag.chunking import chunk_text
-    from src.rag.extractors.factory import create_extractor
+    from src.rag.chunking import Chunker
+    from src.rag.extractors.factory import get_extractor
 
     trace_id = getattr(request.state, "trace_id", "")
 
@@ -127,12 +128,20 @@ async def upload_document(
     # Get file extension
     suffix = Path(file.filename).suffix.lower()  # type: ignore[union-attr]
 
+    # Save to temp file for extraction
+    with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp_file:
+        tmp_file.write(content)
+        tmp_path = Path(tmp_file.name)
+
     # Extract text from document
     try:
-        extractor = create_extractor(suffix)
-        extraction_result = extractor.extract(content)
+        extractor = get_extractor(tmp_path)
+        extraction_result = extractor.extract(tmp_path)
     except Exception as e:
+        tmp_path.unlink(missing_ok=True)
         raise DocumentParseError(f"Failed to extract text from document: {e}")
+    finally:
+        tmp_path.unlink(missing_ok=True)
 
     # Get title from filename
     title = Path(file.filename).stem  # type: ignore[union-attr]
@@ -151,21 +160,15 @@ async def upload_document(
     )
 
     try:
-        # Chunk the text
-        chunks = chunk_text(
-            extraction_result.text,
+        # Chunk the text using Chunker class
+        chunker = Chunker(
             chunk_size=settings.chunking.size,
             overlap=settings.chunking.overlap,
         )
-
-        # Update chunks with page info
-        for i, chunk in enumerate(chunks):
-            # Map chunk to page based on position
-            chunk.page = extraction_result.get_page_for_position(chunk.start_position)
+        chunks = chunker.chunk(extraction_result.pages)
 
         # Generate embeddings
-        texts = [c.content for c in chunks]
-        embeddings = embedding_service.embed_texts(texts)
+        embeddings = embedding_service.embed_chunks(chunks)
 
         # Ensure collection exists
         qdrant.ensure_collection()
@@ -182,7 +185,7 @@ async def upload_document(
         registry.update_status(
             doc.id,
             status="processed",
-            page_count=extraction_result.page_count,
+            page_count=extraction_result.total_pages,
             chunk_count=len(chunks),
         )
 
