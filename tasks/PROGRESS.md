@@ -8,7 +8,7 @@ This folder contains detailed specifications for each Epic and User Story. Each 
 
 | Epic | Name               | Status         | Progress |
 | ---- | ------------------ | -------------- | -------- |
-| 1    | Foundation         | 🔲 Not Started | 0/4 US   |
+| 1    | Foundation         | 🔶 In Progress | 1/4 US   |
 | 2    | Ingestion Pipeline | 🔲 Not Started | 0/5 US   |
 | 3    | RAG Engine         | 🔲 Not Started | 0/5 US   |
 | 4    | Agent System       | 🔲 Not Started | 0/5 US   |
@@ -28,7 +28,9 @@ This folder contains detailed specifications for each Epic and User Story. Each 
 
 ## Completed User Stories
 
-_None yet_
+| US ID | Name | Completed Date | Commit Hash |
+|-------|------|----------------|-------------|
+| 1.1 | Repository Structure | 2025-12-04 | a06f0f2 |
 
 <!-- Format: | US ID | Name | Completed Date | Commit Hash | -->
 
