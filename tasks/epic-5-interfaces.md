@@ -16,7 +16,7 @@ Implement the complete REST API, MCP server, and minimal web UI for demo purpose
 
 ## US 5.1: Complete REST API
 
-**Status:** 🔶 In Progress
+**Status:** ✅ Completed
 
 ### Description
 
@@ -34,21 +34,21 @@ The API serves as the primary interface for:
 
 ### Tasks
 
-- [ ] Create `src/api/routes/documents.py` with:
+- [x] Create `src/api/routes/documents.py` with:
   - `POST /upload` - Document upload (multipart/form-data)
   - `GET /documents` - List all documents
   - `GET /documents/{id}` - Get document metadata
   - `DELETE /documents/{id}` - Delete document
-- [ ] Create `src/api/routes/query.py` with:
+- [x] Create `src/api/routes/query.py` with:
   - `POST /query` - RAG query with citations
-- [ ] Create `src/api/routes/analysis.py` with:
+- [x] Create `src/api/routes/analysis.py` with:
   - `POST /summarize` - Document summarization
   - `POST /compare` - Document comparison
   - `POST /risks` - Risk analysis
-- [ ] Create `src/api/routes/__init__.py` with router aggregation
-- [ ] Update `src/api/main.py` to include all routers
-- [ ] Create comprehensive request/response schemas in `src/api/schemas.py`
-- [ ] Add OpenAPI metadata (tags, descriptions, examples)
+- [x] Create `src/api/routes/__init__.py` with router aggregation
+- [x] Update `src/api/main.py` to include all routers
+- [x] Create comprehensive request/response schemas in `src/api/schemas.py`
+- [x] Add OpenAPI metadata (tags, descriptions, examples)
 
 ### API Specifications
 
@@ -244,13 +244,13 @@ All endpoints use consistent error format:
 
 ### Acceptance Criteria
 
-- [ ] All endpoints return correct status codes
-- [ ] Request validation with Pydantic models
-- [ ] Response schemas documented in OpenAPI
-- [ ] Error responses include trace_id
-- [ ] File upload validates size (max 50MB) and format
-- [ ] OpenAPI docs available at `/docs`
-- [ ] All endpoints have example requests/responses
+- [x] All endpoints return correct status codes
+- [x] Request validation with Pydantic models
+- [x] Response schemas documented in OpenAPI
+- [x] Error responses include trace_id
+- [x] File upload validates size (max 50MB) and format
+- [x] OpenAPI docs available at `/docs`
+- [x] All endpoints have example requests/responses
 
 ### Files to Create/Modify
 
