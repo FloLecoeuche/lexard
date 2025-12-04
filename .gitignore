@@ -37,6 +37,10 @@ data/uploads/*
 # Docker
 docker-compose.override.yml
 
+# Config (keep example)
+config/config.yaml
+!config/config.example.yaml
+
 # OS
 .DS_Store
 Thumbs.db
