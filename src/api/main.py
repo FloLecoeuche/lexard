@@ -8,17 +8,60 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from src.api.logging import get_logger, setup_logging
 from src.api.middleware import ErrorHandlerMiddleware, RequestIDMiddleware
+from src.api.routes import api_router
+from src.api.routes.static import router as static_router
 from src.api.schemas import HealthResponse
+from src.mcp import mcp_router
 
 # Initialize logging
 setup_logging(level="info")
 logger = get_logger(__name__)
 
-# Create FastAPI app
+# Create FastAPI app with OpenAPI metadata
 app = FastAPI(
     title="Lexard",
-    description="AI Contract Analyst - Sovereign B2B RAG Solution",
+    description="""
+**Lexard** is a sovereign, self-hosted B2B RAG solution for contract analysis.
+
+## Features
+
+- **Document Ingestion**: Upload PDF, DOCX, or TXT documents for analysis
+- **RAG Queries**: Ask questions about documents with cited sources
+- **Summarization**: Generate executive or detailed summaries
+- **Risk Analysis**: Identify legal, financial, and operational risks
+- **Document Comparison**: Compare two documents for differences
+
+## API Sections
+
+- **Documents**: Upload, list, view, and delete documents
+- **Query**: Ask questions about specific documents
+- **Analysis**: Summarize, analyze risks, and compare documents
+""",
     version="0.1.0",
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_tags=[
+        {
+            "name": "health",
+            "description": "Service health and status endpoints",
+        },
+        {
+            "name": "documents",
+            "description": "Document upload, listing, and management",
+        },
+        {
+            "name": "query",
+            "description": "RAG-powered question answering with citations",
+        },
+        {
+            "name": "analysis",
+            "description": "Document summarization, risk analysis, and comparison",
+        },
+        {
+            "name": "mcp",
+            "description": "Model Context Protocol JSON-RPC 2.0 endpoint",
+        },
+    ],
 )
 
 # Add middleware (order matters: first added = outermost)
@@ -33,6 +76,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include API routes
+app.include_router(api_router)
+app.include_router(mcp_router)
+app.include_router(static_router)
 
 
 async def check_qdrant() -> Literal["connected", "disconnected"]:
@@ -60,7 +108,13 @@ async def check_ollama() -> Literal["connected", "disconnected"]:
     return "disconnected"
 
 
-@app.get("/health", response_model=HealthResponse)
+@app.get(
+    "/health",
+    response_model=HealthResponse,
+    tags=["health"],
+    summary="Health check",
+    description="Check service health and status of external dependencies (Qdrant, Ollama).",
+)
 async def health() -> HealthResponse:
     """Check service health and dependencies."""
     qdrant_status = await check_qdrant()

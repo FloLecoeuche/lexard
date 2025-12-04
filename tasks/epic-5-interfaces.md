@@ -16,7 +16,7 @@ Implement the complete REST API, MCP server, and minimal web UI for demo purpose
 
 ## US 5.1: Complete REST API
 
-**Status:** Not Started
+**Status:** ✅ Completed
 
 ### Description
 
@@ -34,21 +34,21 @@ The API serves as the primary interface for:
 
 ### Tasks
 
-- [ ] Create `src/api/routes/documents.py` with:
+- [x] Create `src/api/routes/documents.py` with:
   - `POST /upload` - Document upload (multipart/form-data)
   - `GET /documents` - List all documents
   - `GET /documents/{id}` - Get document metadata
   - `DELETE /documents/{id}` - Delete document
-- [ ] Create `src/api/routes/query.py` with:
+- [x] Create `src/api/routes/query.py` with:
   - `POST /query` - RAG query with citations
-- [ ] Create `src/api/routes/analysis.py` with:
+- [x] Create `src/api/routes/analysis.py` with:
   - `POST /summarize` - Document summarization
   - `POST /compare` - Document comparison
   - `POST /risks` - Risk analysis
-- [ ] Create `src/api/routes/__init__.py` with router aggregation
-- [ ] Update `src/api/main.py` to include all routers
-- [ ] Create comprehensive request/response schemas in `src/api/schemas.py`
-- [ ] Add OpenAPI metadata (tags, descriptions, examples)
+- [x] Create `src/api/routes/__init__.py` with router aggregation
+- [x] Update `src/api/main.py` to include all routers
+- [x] Create comprehensive request/response schemas in `src/api/schemas.py`
+- [x] Add OpenAPI metadata (tags, descriptions, examples)
 
 ### API Specifications
 
@@ -244,13 +244,13 @@ All endpoints use consistent error format:
 
 ### Acceptance Criteria
 
-- [ ] All endpoints return correct status codes
-- [ ] Request validation with Pydantic models
-- [ ] Response schemas documented in OpenAPI
-- [ ] Error responses include trace_id
-- [ ] File upload validates size (max 50MB) and format
-- [ ] OpenAPI docs available at `/docs`
-- [ ] All endpoints have example requests/responses
+- [x] All endpoints return correct status codes
+- [x] Request validation with Pydantic models
+- [x] Response schemas documented in OpenAPI
+- [x] Error responses include trace_id
+- [x] File upload validates size (max 50MB) and format
+- [x] OpenAPI docs available at `/docs`
+- [x] All endpoints have example requests/responses
 
 ### Files to Create/Modify
 
@@ -265,7 +265,7 @@ All endpoints use consistent error format:
 
 ## US 5.2: MCP Server Implementation
 
-**Status:** Not Started
+**Status:** ✅ Completed
 
 ### Description
 
@@ -284,16 +284,16 @@ The server uses JSON-RPC 2.0 protocol over HTTP.
 
 ### Tasks
 
-- [ ] Create `src/mcp/server.py` with JSON-RPC handler
-- [ ] Create `src/mcp/methods.py` with MCP method implementations:
+- [x] Create `src/mcp/server.py` with JSON-RPC handler
+- [x] Create `src/mcp/methods.py` with MCP method implementations:
   - `list_documents`
   - `analyze_document`
   - `ask_question`
   - `compare`
-- [ ] Create `src/mcp/schemas.py` with request/response models
-- [ ] Create `src/mcp/errors.py` with JSON-RPC error codes
-- [ ] Add MCP router to FastAPI app
-- [ ] Implement request validation and error handling
+- [x] Create `src/mcp/schemas.py` with request/response models
+- [x] Create `src/mcp/errors.py` with JSON-RPC error codes
+- [x] Add MCP router to FastAPI app
+- [x] Implement request validation and error handling
 
 ### MCP Protocol Specification
 
@@ -462,13 +462,13 @@ The server uses JSON-RPC 2.0 protocol over HTTP.
 
 ### Acceptance Criteria
 
-- [ ] `POST /mcp` accepts JSON-RPC requests
-- [ ] All 4 methods implemented and functional
-- [ ] Error responses follow JSON-RPC 2.0 spec
-- [ ] Invalid methods return -32601
-- [ ] Invalid params return -32602
-- [ ] Request validation with proper error messages
-- [ ] Methods integrate with existing agent tools
+- [x] `POST /mcp` accepts JSON-RPC requests
+- [x] All 4 methods implemented and functional
+- [x] Error responses follow JSON-RPC 2.0 spec
+- [x] Invalid methods return -32601
+- [x] Invalid params return -32602
+- [x] Request validation with proper error messages
+- [x] Methods integrate with existing agent tools
 
 ### Files to Create
 
@@ -507,7 +507,7 @@ assert response.json()["error"]["code"] == -32601
 
 ## US 5.3: Web UI
 
-**Status:** Not Started
+**Status:** ✅ Completed
 
 ### Description
 
@@ -523,17 +523,17 @@ The UI is for demonstration only, not production use. It should:
 
 ### Tasks
 
-- [ ] Create `ui/index.html` with:
+- [x] Create `ui/index.html` with:
   - Document upload form
   - Document list display
   - Query input and results display
   - Summarization trigger
   - Risk analysis display
   - Document comparison interface
-- [ ] Style with minimal CSS (embedded or inline)
-- [ ] Implement JavaScript for API calls (fetch API)
-- [ ] Add loading states and error handling
-- [ ] Create `src/api/routes/static.py` to serve the UI
+- [x] Style with minimal CSS (embedded or inline)
+- [x] Implement JavaScript for API calls (fetch API)
+- [x] Add loading states and error handling
+- [x] Create `src/api/routes/static.py` to serve the UI
 
 ### UI Components
 
@@ -673,16 +673,16 @@ function renderComparison(differences) { ... }
 
 ### Acceptance Criteria
 
-- [ ] UI loads at `http://localhost:8000/`
-- [ ] Document upload works (drag-and-drop and file picker)
-- [ ] Document list refreshes after upload
-- [ ] Query returns answer with citations displayed
-- [ ] Summarization generates and displays summary
-- [ ] Risk analysis shows risks with severity
-- [ ] Document comparison shows differences
-- [ ] Loading states visible during API calls
-- [ ] Errors displayed clearly to user
-- [ ] Works in Chrome, Firefox, Safari
+- [x] UI loads at `http://localhost:8000/`
+- [x] Document upload works (drag-and-drop and file picker)
+- [x] Document list refreshes after upload
+- [x] Query returns answer with citations displayed
+- [x] Summarization generates and displays summary
+- [x] Risk analysis shows risks with severity
+- [x] Document comparison shows differences
+- [x] Loading states visible during API calls
+- [x] Errors displayed clearly to user
+- [x] Works in Chrome, Firefox, Safari
 
 ### Files to Create
 
@@ -710,10 +710,10 @@ async def serve_ui():
 
 ## Definition of Done (Epic 5)
 
-- [ ] All 3 User Stories completed
-- [ ] All REST API endpoints functional with proper error handling
-- [ ] MCP server accepts JSON-RPC requests
-- [ ] Web UI demonstrates all core features
-- [ ] OpenAPI documentation complete at `/docs`
-- [ ] All endpoints tested manually
-- [ ] Error responses consistent across all interfaces
+- [x] All 3 User Stories completed
+- [x] All REST API endpoints functional with proper error handling
+- [x] MCP server accepts JSON-RPC requests
+- [x] Web UI demonstrates all core features
+- [x] OpenAPI documentation complete at `/docs`
+- [x] All endpoints tested manually
+- [x] Error responses consistent across all interfaces
