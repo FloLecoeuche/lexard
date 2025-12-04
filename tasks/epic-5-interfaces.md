@@ -265,7 +265,7 @@ All endpoints use consistent error format:
 
 ## US 5.2: MCP Server Implementation
 
-**Status:** Not Started
+**Status:** ✅ Completed
 
 ### Description
 
@@ -284,16 +284,16 @@ The server uses JSON-RPC 2.0 protocol over HTTP.
 
 ### Tasks
 
-- [ ] Create `src/mcp/server.py` with JSON-RPC handler
-- [ ] Create `src/mcp/methods.py` with MCP method implementations:
+- [x] Create `src/mcp/server.py` with JSON-RPC handler
+- [x] Create `src/mcp/methods.py` with MCP method implementations:
   - `list_documents`
   - `analyze_document`
   - `ask_question`
   - `compare`
-- [ ] Create `src/mcp/schemas.py` with request/response models
-- [ ] Create `src/mcp/errors.py` with JSON-RPC error codes
-- [ ] Add MCP router to FastAPI app
-- [ ] Implement request validation and error handling
+- [x] Create `src/mcp/schemas.py` with request/response models
+- [x] Create `src/mcp/errors.py` with JSON-RPC error codes
+- [x] Add MCP router to FastAPI app
+- [x] Implement request validation and error handling
 
 ### MCP Protocol Specification
 
@@ -462,13 +462,13 @@ The server uses JSON-RPC 2.0 protocol over HTTP.
 
 ### Acceptance Criteria
 
-- [ ] `POST /mcp` accepts JSON-RPC requests
-- [ ] All 4 methods implemented and functional
-- [ ] Error responses follow JSON-RPC 2.0 spec
-- [ ] Invalid methods return -32601
-- [ ] Invalid params return -32602
-- [ ] Request validation with proper error messages
-- [ ] Methods integrate with existing agent tools
+- [x] `POST /mcp` accepts JSON-RPC requests
+- [x] All 4 methods implemented and functional
+- [x] Error responses follow JSON-RPC 2.0 spec
+- [x] Invalid methods return -32601
+- [x] Invalid params return -32602
+- [x] Request validation with proper error messages
+- [x] Methods integrate with existing agent tools
 
 ### Files to Create
 

@@ -10,6 +10,7 @@ from src.api.logging import get_logger, setup_logging
 from src.api.middleware import ErrorHandlerMiddleware, RequestIDMiddleware
 from src.api.routes import api_router
 from src.api.schemas import HealthResponse
+from src.mcp import mcp_router
 
 # Initialize logging
 setup_logging(level="info")
@@ -55,6 +56,10 @@ app = FastAPI(
             "name": "analysis",
             "description": "Document summarization, risk analysis, and comparison",
         },
+        {
+            "name": "mcp",
+            "description": "Model Context Protocol JSON-RPC 2.0 endpoint",
+        },
     ],
 )
 
@@ -73,6 +78,7 @@ app.add_middleware(
 
 # Include API routes
 app.include_router(api_router)
+app.include_router(mcp_router)
 
 
 async def check_qdrant() -> Literal["connected", "disconnected"]:
