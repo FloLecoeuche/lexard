@@ -1,0 +1,38 @@
+# Docker Compose Override Example
+# Copy this file to docker-compose.override.yml for local customizations
+# docker-compose.override.yml is gitignored
+
+version: '3.8'
+
+services:
+  qdrant:
+    # Example: Expose on different ports
+    # ports:
+    #   - '16333:6333'
+    #   - '16334:6334'
+
+    # Example: Add resource limits
+    # deploy:
+    #   resources:
+    #     limits:
+    #       memory: 2G
+
+  ollama:
+    # Example: Expose on different port
+    # ports:
+    #   - '21434:11434'
+
+    # Example: Enable GPU support (requires nvidia-docker)
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+
+    # Example: Add resource limits
+    # deploy:
+    #   resources:
+    #     limits:
+    #       memory: 8G

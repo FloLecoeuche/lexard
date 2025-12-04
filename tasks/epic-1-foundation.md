@@ -123,7 +123,7 @@ dev = [
 
 ## US 1.2: Docker Compose Setup
 
-**Status:** 🔲 Not Started
+**Status:** ✅ Completed
 
 ### Description
 

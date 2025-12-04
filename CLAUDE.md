@@ -178,7 +178,7 @@ Always return the standard error schema:
 
 ```bash
 # Create and activate virtual environment (required - macOS uses externally-managed Python)
-python3 -m venv .venv
+python -m venv .venv
 source .venv/bin/activate
 
 # Install dependencies (inside venv)
@@ -194,7 +194,7 @@ uvicorn src.api.main:app --reload
 pytest tests/ -v
 ```
 
-**Note:** Always use `python3` (not `python`) and run `pip` inside the virtual environment. Direct system-wide pip installs are blocked on macOS.
+**Note:** Always run `pip` inside the virtual environment. Direct system-wide pip installs are blocked on macOS.
 
 ## Critical Constraints
 
