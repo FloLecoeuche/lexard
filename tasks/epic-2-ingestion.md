@@ -269,7 +269,7 @@ def test_content_hash():
 
 ## US 2.3: Embeddings
 
-**Status:** 🔲 Not Started
+**Status:** ✅ Completed
 
 ### Description
 
