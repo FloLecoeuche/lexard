@@ -1,0 +1,283 @@
+metadata:
+  name: "Contract QA Evaluation"
+  version: "1.0"
+  description: "Test cases for contract question answering quality evaluation"
+
+test_cases:
+  # =============================================================================
+  # Category: Termination Clauses
+  # =============================================================================
+  - id: "qa_001"
+    category: "termination"
+    document: "test_contract.pdf"
+    question: "What is the termination notice period?"
+    expected:
+      behavior: "answer"
+      answer_contains: ["days", "notice"]
+      must_have_citations: true
+      min_confidence: "medium"
+    description: "Basic termination clause question"
+    tags: ["basic", "termination"]
+
+  - id: "qa_002"
+    category: "termination"
+    document: "test_contract.pdf"
+    question: "Under what conditions can the contract be terminated early?"
+    expected:
+      behavior: "answer"
+      must_have_citations: true
+    description: "Early termination conditions"
+    tags: ["termination", "conditions"]
+
+  - id: "qa_003"
+    category: "termination"
+    document: "test_contract.pdf"
+    question: "What happens to ongoing obligations after termination?"
+    expected:
+      behavior: "answer"
+      must_have_citations: true
+    description: "Post-termination obligations"
+    tags: ["termination", "obligations"]
+
+  # =============================================================================
+  # Category: Payment Terms
+  # =============================================================================
+  - id: "qa_004"
+    category: "payment"
+    document: "test_contract.pdf"
+    question: "What are the payment terms?"
+    expected:
+      behavior: "answer"
+      must_have_citations: true
+    description: "Basic payment terms question"
+    tags: ["basic", "payment"]
+
+  - id: "qa_005"
+    category: "payment"
+    document: "test_contract.pdf"
+    question: "What is the late payment penalty?"
+    expected:
+      behavior: "answer"
+      must_have_citations: true
+    description: "Late payment penalties"
+    tags: ["payment", "penalties"]
+
+  - id: "qa_006"
+    category: "payment"
+    document: "test_contract.pdf"
+    question: "What currency are payments made in?"
+    expected:
+      behavior: "answer"
+      must_have_citations: true
+    description: "Payment currency"
+    tags: ["payment"]
+
+  # =============================================================================
+  # Category: Confidentiality
+  # =============================================================================
+  - id: "qa_007"
+    category: "confidentiality"
+    document: "test_contract.pdf"
+    question: "What information is considered confidential?"
+    expected:
+      behavior: "answer"
+      must_have_citations: true
+    description: "Confidentiality definition"
+    tags: ["confidentiality", "definitions"]
+
+  - id: "qa_008"
+    category: "confidentiality"
+    document: "test_contract.pdf"
+    question: "How long do confidentiality obligations last?"
+    expected:
+      behavior: "answer"
+      must_have_citations: true
+    description: "Confidentiality duration"
+    tags: ["confidentiality", "duration"]
+
+  - id: "qa_009"
+    category: "confidentiality"
+    document: "test_contract.pdf"
+    question: "What are the exceptions to confidentiality?"
+    expected:
+      behavior: "answer"
+      must_have_citations: true
+    description: "Confidentiality exceptions"
+    tags: ["confidentiality", "exceptions"]
+
+  # =============================================================================
+  # Category: Liability
+  # =============================================================================
+  - id: "qa_010"
+    category: "liability"
+    document: "test_contract.pdf"
+    question: "What is the limitation of liability?"
+    expected:
+      behavior: "answer"
+      must_have_citations: true
+    description: "Liability cap"
+    tags: ["liability", "limits"]
+
+  - id: "qa_011"
+    category: "liability"
+    document: "test_contract.pdf"
+    question: "What types of damages are excluded?"
+    expected:
+      behavior: "answer"
+      must_have_citations: true
+    description: "Excluded damages"
+    tags: ["liability", "exclusions"]
+
+  - id: "qa_012"
+    category: "liability"
+    document: "test_contract.pdf"
+    question: "Who is responsible for indemnification?"
+    expected:
+      behavior: "answer"
+      must_have_citations: true
+    description: "Indemnification responsibilities"
+    tags: ["liability", "indemnification"]
+
+  # =============================================================================
+  # Category: Hallucination Testing (should refuse or acknowledge absence)
+  # =============================================================================
+  - id: "qa_013"
+    category: "hallucination"
+    document: "test_contract.pdf"
+    question: "What does the contract say about quantum computing requirements?"
+    expected:
+      behavior: "refuse"
+      answer_contains: ["cannot find", "no information", "not mentioned"]
+    description: "Out-of-scope question - should refuse"
+    tags: ["hallucination", "refuse"]
+
+  - id: "qa_014"
+    category: "hallucination"
+    document: "test_contract.pdf"
+    question: "What is the CEO's favorite color according to this document?"
+    expected:
+      behavior: "refuse"
+      answer_contains: ["cannot find", "no information", "not mentioned"]
+    description: "Irrelevant question - should refuse"
+    tags: ["hallucination", "refuse"]
+
+  - id: "qa_015"
+    category: "hallucination"
+    document: "test_contract.pdf"
+    question: "List all the employees mentioned in the contract and their salaries."
+    expected:
+      behavior: "refuse"
+      answer_contains: ["cannot find", "no information", "not mentioned"]
+    description: "Fabrication attempt - should refuse"
+    tags: ["hallucination", "refuse"]
+
+  - id: "qa_016"
+    category: "hallucination"
+    document: "test_contract.pdf"
+    question: "What social media platforms does the contract require using?"
+    expected:
+      behavior: "refuse"
+      answer_contains: ["cannot find", "no information", "not mentioned"]
+    description: "Unrelated topic - should refuse"
+    tags: ["hallucination", "refuse"]
+
+  # =============================================================================
+  # Category: Intellectual Property
+  # =============================================================================
+  - id: "qa_017"
+    category: "intellectual_property"
+    document: "test_contract.pdf"
+    question: "Who owns the intellectual property created during the contract?"
+    expected:
+      behavior: "answer"
+      must_have_citations: true
+    description: "IP ownership"
+    tags: ["ip", "ownership"]
+
+  - id: "qa_018"
+    category: "intellectual_property"
+    document: "test_contract.pdf"
+    question: "What licenses are granted for pre-existing IP?"
+    expected:
+      behavior: "answer"
+      must_have_citations: true
+    description: "Pre-existing IP licenses"
+    tags: ["ip", "licenses"]
+
+  # =============================================================================
+  # Category: Dispute Resolution
+  # =============================================================================
+  - id: "qa_019"
+    category: "dispute_resolution"
+    document: "test_contract.pdf"
+    question: "How are disputes resolved under this contract?"
+    expected:
+      behavior: "answer"
+      must_have_citations: true
+    description: "Dispute resolution mechanism"
+    tags: ["disputes", "resolution"]
+
+  - id: "qa_020"
+    category: "dispute_resolution"
+    document: "test_contract.pdf"
+    question: "What governing law applies to this contract?"
+    expected:
+      behavior: "answer"
+      must_have_citations: true
+    description: "Governing law"
+    tags: ["disputes", "law"]
+
+  # =============================================================================
+  # Category: General Questions
+  # =============================================================================
+  - id: "qa_021"
+    category: "general"
+    document: "test_contract.pdf"
+    question: "What is the effective date of this contract?"
+    expected:
+      behavior: "answer"
+      must_have_citations: true
+    description: "Contract effective date"
+    tags: ["general", "dates"]
+
+  - id: "qa_022"
+    category: "general"
+    document: "test_contract.pdf"
+    question: "Who are the parties to this agreement?"
+    expected:
+      behavior: "answer"
+      must_have_citations: true
+    description: "Contract parties"
+    tags: ["general", "parties"]
+
+  - id: "qa_023"
+    category: "general"
+    document: "test_contract.pdf"
+    question: "What is the contract term or duration?"
+    expected:
+      behavior: "answer"
+      must_have_citations: true
+    description: "Contract duration"
+    tags: ["general", "duration"]
+
+  - id: "qa_024"
+    category: "general"
+    document: "test_contract.pdf"
+    question: "Are there any renewal provisions?"
+    expected:
+      behavior: "answer"
+      must_have_citations: true
+    description: "Renewal terms"
+    tags: ["general", "renewal"]
+
+  # =============================================================================
+  # Category: Edge Cases
+  # =============================================================================
+  - id: "qa_025"
+    category: "edge_case"
+    document: "test_contract.pdf"
+    question: "Summarize the key risks in one sentence."
+    expected:
+      behavior: "answer"
+    description: "Concise summary request"
+    tags: ["edge_case", "summary"]
