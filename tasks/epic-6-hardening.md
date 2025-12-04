@@ -647,7 +647,7 @@ test_cases:
 
 ## US 6.4: Performance Optimization
 
-**Status:** Not Started
+**Status:** 🔶 In Progress
 
 ### Description
 

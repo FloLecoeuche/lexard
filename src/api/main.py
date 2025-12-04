@@ -7,7 +7,7 @@ import httpx
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from src.api.logging import get_logger, setup_logging
+from src.api.logging import get_logger, get_metrics, setup_logging
 from src.api.middleware import ErrorHandlerMiddleware, RequestIDMiddleware
 from src.api.routes import api_router
 from src.api.routes.static import router as static_router
@@ -182,3 +182,25 @@ async def guardrails_metrics() -> GuardrailsMetricsResponse:
         input_block_rate=metrics.input_block_rate,
         output_block_rate=metrics.output_block_rate,
     )
+
+
+@app.get(
+    "/performance/metrics",
+    tags=["health"],
+    summary="Performance metrics",
+    description="Get performance metrics including operation timings and error rates.",
+)
+async def performance_metrics() -> dict:
+    """Get performance metrics for monitoring.
+
+    Returns metrics for all tracked operations including:
+    - count: Total number of operations
+    - avg_time_ms: Average execution time
+    - min_time_ms: Minimum execution time
+    - max_time_ms: Maximum execution time
+    - error_rate: Fraction of operations that resulted in errors
+    """
+    metrics = get_metrics()
+    return {
+        "metrics": metrics.get_all_metrics(),
+    }
