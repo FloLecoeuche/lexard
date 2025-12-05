@@ -34,8 +34,11 @@ def test_data_dir():
 @pytest.fixture(scope="session")
 async def api_client() -> AsyncGenerator[httpx.AsyncClient, None]:
     """Create async HTTP client for API."""
+    from httpx import ASGITransport
+
+    transport = ASGITransport(app=app)
     async with httpx.AsyncClient(
-        app=app,
+        transport=transport,
         base_url="http://test",
         timeout=120.0  # Long timeout for E2E tests
     ) as client:
