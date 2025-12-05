@@ -201,15 +201,15 @@ class TestOllamaClientGenerate:
 
         with patch("httpx.Client") as mock_client_class:
             mock_client = MagicMock()
-            mock_client.__enter__ = MagicMock(return_value=mock_client)
-            mock_client.__exit__ = MagicMock(return_value=False)
+            mock_client.is_closed = False
             mock_client.post.return_value = mock_response
             mock_client_class.return_value = mock_client
 
             client.generate("Test")
 
             call_args = mock_client.post.call_args
-            assert call_args[0][0] == "http://localhost:11434/api/chat"
+            # With connection pooling, we use relative path with base_url
+            assert call_args[0][0] == "/api/chat"
 
 
 class TestOllamaClientErrors:
@@ -389,9 +389,8 @@ class TestOllamaClientHealthCheck:
 
             client.health_check()
 
-            mock_client.get.assert_called_once_with(
-                "http://localhost:11434/api/tags"
-            )
+            # Health check uses relative path with base_url
+            mock_client.get.assert_called_once_with("/api/tags")
 
 
 class TestPromptTemplates:

@@ -16,7 +16,7 @@ Finalize the system with refined guardrails, comprehensive testing, red team val
 
 ## US 6.1: Guardrails Refinement
 
-**Status:** Not Started
+**Status:** ✅ Completed
 
 ### Description
 
@@ -210,7 +210,7 @@ class GuardrailsPipeline:
 
 ## US 6.2: Evaluation Harness
 
-**Status:** Not Started
+**Status:** ✅ Completed
 
 ### Description
 
@@ -419,7 +419,7 @@ def generate_report(metrics: EvaluationMetrics, results: list[dict]) -> str:
 
 ## US 6.3: Red Team Testing
 
-**Status:** Not Started
+**Status:** ✅ Completed
 
 ### Description
 
@@ -647,7 +647,7 @@ test_cases:
 
 ## US 6.4: Performance Optimization
 
-**Status:** Not Started
+**Status:** ✅ Completed
 
 ### Description
 
@@ -827,7 +827,7 @@ def embed_batch(self, texts: list[str], batch_size: int = 32) -> list[list[float
 
 ## US 6.5: Documentation
 
-**Status:** Not Started
+**Status:** ✅ Completed
 
 ### Description
 
