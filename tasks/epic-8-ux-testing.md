@@ -16,7 +16,7 @@ Enhance user experience with real-time upload progress tracking and validate sys
 
 ## US 8.1: Upload Progress Tracking
 
-**Status:** 🔲 Not Started
+**Status:** 🔶 In Progress
 
 ### Description
 
