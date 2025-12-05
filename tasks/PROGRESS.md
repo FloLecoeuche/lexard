@@ -6,14 +6,16 @@ This folder contains detailed specifications for each Epic and User Story. Each 
 
 ## Epic Status
 
-| Epic | Name               | Status         | Progress |
-| ---- | ------------------ | -------------- | -------- |
-| 1    | Foundation         | ✅ Completed   | 4/4 US   |
-| 2    | Ingestion Pipeline | ✅ Completed   | 5/5 US   |
-| 3    | RAG Engine         | ✅ Completed   | 5/5 US   |
-| 4    | Agent System       | ✅ Completed   | 5/5 US   |
-| 5    | Interfaces         | ✅ Completed   | 3/3 US   |
-| 6    | Hardening          | ✅ Completed   | 5/5 US   |
+| Epic | Name                  | Status         | Progress |
+| ---- | --------------------- | -------------- | -------- |
+| 1    | Foundation            | ✅ Completed   | 4/4 US   |
+| 2    | Ingestion Pipeline    | ✅ Completed   | 5/5 US   |
+| 3    | RAG Engine            | ✅ Completed   | 5/5 US   |
+| 4    | Agent System          | ✅ Completed   | 5/5 US   |
+| 5    | Interfaces            | ✅ Completed   | 3/3 US   |
+| 6    | Hardening             | ✅ Completed   | 5/5 US   |
+| 7    | French Support        | 🔲 Not Started | 0/2 US   |
+| 8    | UX & Testing          | 🔲 Not Started | 0/2 US   |
 
 **Legend:** 🔲 Not Started | 🔶 In Progress | ✅ Completed
 
@@ -25,6 +27,8 @@ This folder contains detailed specifications for each Epic and User Story. Each 
 - [Epic 4: Agent System](./epic-4-agent.md)
 - [Epic 5: Interfaces](./epic-5-interfaces.md)
 - [Epic 6: Hardening](./epic-6-hardening.md)
+- [Epic 7: Multilingual Support](./epic-7-multilingual.md)
+- [Epic 8: UX & Testing](./epic-8-ux-testing.md)
 
 ## Completed User Stories
 
