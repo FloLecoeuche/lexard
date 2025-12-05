@@ -1,5 +1,6 @@
 """Pytest fixtures for E2E tests."""
 import asyncio
+import os
 import re
 from pathlib import Path
 from typing import AsyncGenerator
@@ -9,6 +10,17 @@ import httpx
 
 from src.api.main import app
 from src.config import get_settings
+
+
+@pytest.fixture(scope="session", autouse=True)
+def setup_e2e_environment():
+    """Configure environment for E2E tests."""
+    # Set longer timeout for Ollama (CPU inference is slow)
+    os.environ["LEXARD_LLM__TIMEOUT_SECONDS"] = "180"
+    yield
+    # Cleanup
+    if "LEXARD_LLM__TIMEOUT_SECONDS" in os.environ:
+        del os.environ["LEXARD_LLM__TIMEOUT_SECONDS"]
 
 
 @pytest.fixture(scope="session")

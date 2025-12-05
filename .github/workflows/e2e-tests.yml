@@ -77,6 +77,7 @@ jobs:
           LEXARD_QDRANT__PORT: 6333
           LEXARD_LLM__BASE_URL: http://localhost:11434
           LEXARD_LLM__MODEL: mistral:7b-instruct
+          LEXARD_LLM__TIMEOUT_SECONDS: 180
           LEXARD_EMBEDDINGS__MODEL_NAME: intfloat/multilingual-e5-base
 
       - name: Upload test results
