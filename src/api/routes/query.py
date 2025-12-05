@@ -37,7 +37,7 @@ def get_rag_pipeline():
     )
     retriever = Retriever(embedding_service=embedding_service)
     context_builder = ContextBuilder()
-    llm_client = OllamaClient()
+    llm_client = OllamaClient(config=settings.llm)
 
     return RAGPipeline(
         retriever=retriever,

@@ -42,9 +42,11 @@ def get_qdrant_service():
 
 def get_llm_client():
     """Get Ollama LLM client instance (lazy import to avoid circular imports)."""
+    from src.config import get_settings
     from src.rag.llm import OllamaClient
 
-    return OllamaClient()
+    settings = get_settings()
+    return OllamaClient(config=settings.llm)
 
 
 def get_rag_pipeline():
@@ -65,7 +67,7 @@ def get_rag_pipeline():
     )
     retriever = Retriever(embedding_service=embedding_service)
     context_builder = ContextBuilder()
-    llm_client = OllamaClient()
+    llm_client = OllamaClient(config=settings.llm)
 
     return RAGPipeline(
         retriever=retriever,
