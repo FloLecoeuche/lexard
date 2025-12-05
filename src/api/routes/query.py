@@ -22,6 +22,7 @@ def get_document_registry():
 def get_rag_pipeline():
     """Get RAG pipeline instance (lazy import to avoid circular imports)."""
     from src.config import get_settings
+    from src.db.qdrant import QdrantService
     from src.rag.context import ContextBuilder
     from src.rag.embeddings import EmbeddingService
     from src.rag.llm import OllamaClient
@@ -35,7 +36,11 @@ def get_rag_pipeline():
         query_prefix=settings.embeddings.query_prefix,
         document_prefix=settings.embeddings.document_prefix,
     )
-    retriever = Retriever(embedding_service=embedding_service)
+    qdrant_service = QdrantService()
+    retriever = Retriever(
+        embedding_service=embedding_service,
+        qdrant_service=qdrant_service
+    )
     context_builder = ContextBuilder()
     llm_client = OllamaClient(config=settings.llm)
 
