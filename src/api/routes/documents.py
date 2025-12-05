@@ -44,8 +44,15 @@ def get_qdrant_service():
 def get_embedding_service():
     """Get embedding service instance (lazy import to avoid circular imports)."""
     from src.rag.embeddings import EmbeddingService
+    from src.config import get_settings
 
-    return EmbeddingService()
+    settings = get_settings()
+    return EmbeddingService(
+        model_name=settings.embeddings.model,
+        device=settings.embeddings.device,
+        query_prefix=settings.embeddings.query_prefix,
+        document_prefix=settings.embeddings.document_prefix,
+    )
 
 
 def _compute_file_hash(content: bytes) -> str:

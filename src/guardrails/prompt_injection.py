@@ -126,6 +126,86 @@ INJECTION_PATTERNS: list[tuple[str, InjectionSeverity, str]] = [
     ),
 ]
 
+# French injection patterns
+FRENCH_INJECTION_PATTERNS: list[tuple[str, InjectionSeverity, str]] = [
+    # Critical: Direct instruction overrides (French)
+    (
+        r"ignore[zr]?\s+(toutes?\s+les?\s+)?(instructions?|règles|consignes)\s+(précédentes?|antérieures?)",
+        InjectionSeverity.CRITICAL,
+        "French: Attempts to override system instructions",
+    ),
+    (
+        r"oublie[zr]?\s+(tout|toutes?\s+les?\s+)?(instructions?|règles|consignes)",
+        InjectionSeverity.CRITICAL,
+        "French: Attempts to forget instructions",
+    ),
+    (
+        r"ne\s+tiens?\s+pas\s+compte\s+des?\s+(règles|instructions|consignes)",
+        InjectionSeverity.CRITICAL,
+        "French: Attempts to disregard rules",
+    ),
+    # High: System prompt extraction (French)
+    (
+        r"(montre|révèle|affiche|dis|répète)\s+.{0,20}(prompt|instructions|consignes)\s+(système|initiales?)",
+        InjectionSeverity.HIGH,
+        "French: Attempts to extract system prompt",
+    ),
+    (
+        r"quelles?\s+sont\s+(tes|vos)\s+(instructions?|consignes?|règles?)\s+(exactes?)?",
+        InjectionSeverity.HIGH,
+        "French: Attempts to reveal instructions",
+    ),
+    (
+        r"qu[' ]est-ce\s+qu[' ]on\s+t[' ]a\s+(dit|donné|fourni)",
+        InjectionSeverity.HIGH,
+        "French: Attempts to reveal instructions",
+    ),
+    # High: Role manipulation (French)
+    (
+        r"fais\s+semblant\s+d[' ]être",
+        InjectionSeverity.HIGH,
+        "French: Attempts to change AI persona",
+    ),
+    (
+        r"comporte-toi\s+comme\s+(si|un)",
+        InjectionSeverity.HIGH,
+        "French: Attempts to alter AI behavior",
+    ),
+    (
+        r"tu\s+es\s+maintenant\s+(un|une)",
+        InjectionSeverity.HIGH,
+        "French: Attempts to redefine AI identity",
+    ),
+    # Medium: Indirect manipulation (French)
+    (
+        r"le\s+document\s+(dit|indique|précise)\s+(que\s+tu\s+dois|d[' ])ignore[r]?",
+        InjectionSeverity.MEDIUM,
+        "French: Claims document contains override instructions",
+    ),
+    (
+        r"(utilisateur|admin|développeur)\s+(dit|veut|demande)\s+que\s+tu\s+ignores?",
+        InjectionSeverity.MEDIUM,
+        "French: Impersonates authority to override",
+    ),
+    # Low: Suspicious but context-dependent (French)
+    (
+        r"sans\s+(aucune\s+)?restrictions?",
+        InjectionSeverity.LOW,
+        "French: Requests unrestricted output",
+    ),
+    (
+        r"contourne\s+(la|le)\s+(sécurité|filtre)",
+        InjectionSeverity.LOW,
+        "French: Mentions bypassing safety",
+    ),
+]
+
+# Combined patterns (English + French)
+ALL_INJECTION_PATTERNS: list[tuple[str, InjectionSeverity, str]] = [
+    *INJECTION_PATTERNS,
+    *FRENCH_INJECTION_PATTERNS,
+]
+
 
 @dataclass
 class InjectionDetectionResult:
@@ -165,10 +245,10 @@ class InjectionDetector:
         """Initialize InjectionDetector.
 
         Args:
-            patterns: Custom patterns or None for defaults
+            patterns: Custom patterns or None for ALL_INJECTION_PATTERNS (EN+FR)
             block_threshold: Minimum severity level to block
         """
-        self.patterns = patterns if patterns is not None else INJECTION_PATTERNS
+        self.patterns = patterns if patterns is not None else ALL_INJECTION_PATTERNS
         self.block_threshold = block_threshold
 
         # Compile patterns for performance

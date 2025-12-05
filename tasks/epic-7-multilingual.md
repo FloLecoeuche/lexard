@@ -31,7 +31,7 @@ French market requirements:
 
 ## US 7.1: French Language Support
 
-**Status:** 🔲 Not Started
+**Status:** ✅ Completed
 
 ### Description
 
