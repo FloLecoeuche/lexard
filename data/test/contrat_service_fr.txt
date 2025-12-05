@@ -1,0 +1,187 @@
+CONTRAT DE PRESTATION DE SERVICES
+
+Entre les soussignés:
+
+1. DataCloud Services SA, société anonyme au capital de 500.000 euros, immatriculée au RCS de Nantes sous le numéro 456 789 123, dont le siège social est situé au 10 Boulevard de l'Innovation, 44000 Nantes, France, représentée par Monsieur Pierre Dubois en sa qualité de Président Directeur Général,
+   ci-après dénommée "Le Prestataire"
+
+2. Retail Plus SAS, société par actions simplifiée au capital de 200.000 euros, immatriculée au RCS de Bordeaux sous le numéro 789 123 456, dont le siège social est situé au 45 Cours de l'Intendance, 33000 Bordeaux, France, représentée par Madame Sophie Bernard en sa qualité de Directrice Générale,
+   ci-après dénommée "Le Client"
+
+ci-après dénommées ensemble "Les Parties"
+
+PRÉAMBULE
+
+Le Client souhaite bénéficier des services d'hébergement et de gestion de données proposés par le Prestataire. Le Prestataire dispose de l'expertise et des ressources nécessaires pour fournir ces services. Les Parties ont décidé de formaliser leur relation contractuelle par le présent contrat.
+
+IL A ÉTÉ CONVENU CE QUI SUIT:
+
+ARTICLE 1 - OBJET DU CONTRAT
+
+Le présent contrat a pour objet de définir les conditions dans lesquelles le Prestataire fournira au Client les services suivants:
+
+1.1 Hébergement de données sur infrastructure cloud sécurisée
+1.2 Sauvegarde quotidienne automatisée
+1.3 Support technique 24h/24, 7j/7
+1.4 Mise à jour et maintenance des systèmes
+1.5 Monitoring et alertes en temps réel
+
+ARTICLE 2 - DURÉE DU CONTRAT
+
+2.1 Le présent contrat est conclu pour une durée initiale de vingt-quatre (24) mois à compter de sa date de signature.
+
+2.2 À l'issue de cette période initiale, le contrat sera renouvelé par tacite reconduction pour des périodes successives de douze (12) mois, sauf dénonciation par l'une des Parties moyennant un préavis de trois (3) mois avant l'échéance.
+
+2.3 La date d'effet du présent contrat est fixée au 1er février 2024.
+
+ARTICLE 3 - CONDITIONS FINANCIÈRES
+
+3.1 Prix des Services
+
+En contrepartie des services fournis, le Client versera au Prestataire une redevance mensuelle de cinq mille euros hors taxes (5.000 EUR HT), soit six mille euros TTC (6.000 EUR TTC) au taux de TVA en vigueur.
+
+3.2 Conditions de Paiement
+
+Les factures sont émises mensuellement, le premier jour de chaque mois. Le paiement doit être effectué dans un délai de trente (30) jours à compter de la date de facturation, par virement bancaire sur le compte indiqué sur la facture.
+
+Coordonnées bancaires du Prestataire:
+- IBAN: FR76 3000 4000 0100 0000 0000 123
+- BIC: BNPAFRPP
+
+3.3 Pénalités de Retard
+
+En cas de retard de paiement, des pénalités de retard seront automatiquement et de plein droit appliquées au taux de trois fois le taux d'intérêt légal. Une indemnité forfaitaire de quarante euros (40 EUR) pour frais de recouvrement sera également due.
+
+3.4 Révision des Prix
+
+Les prix pourront être révisés annuellement au 1er janvier de chaque année, sur la base de l'indice SYNTEC. Toute augmentation supérieure à 5% donnera au Client le droit de résilier le contrat sans pénalité.
+
+ARTICLE 4 - OBLIGATIONS DU PRESTATAIRE
+
+Le Prestataire s'engage à:
+
+4.1 Fournir les services conformément aux spécifications techniques annexées au présent contrat.
+
+4.2 Garantir un taux de disponibilité des services de 99,9% (SLA), mesuré mensuellement.
+
+4.3 Informer le Client de toute interruption programmée des services avec un préavis minimum de soixante-douze (72) heures.
+
+4.4 Mettre en oeuvre toutes les mesures de sécurité nécessaires à la protection des données du Client.
+
+4.5 Respecter les dispositions du Règlement Général sur la Protection des Données (RGPD).
+
+4.6 Fournir un rapport mensuel sur les performances des services et les incidents éventuels.
+
+ARTICLE 5 - OBLIGATIONS DU CLIENT
+
+Le Client s'engage à:
+
+5.1 Fournir au Prestataire toutes les informations nécessaires à la bonne exécution des services.
+
+5.2 Désigner un interlocuteur unique pour la gestion du contrat.
+
+5.3 Procéder au paiement des factures dans les délais convenus.
+
+5.4 Ne pas utiliser les services à des fins illicites ou contraires à l'ordre public.
+
+5.5 Informer le Prestataire de toute modification de ses besoins dans un délai raisonnable.
+
+ARTICLE 6 - PROPRIÉTÉ INTELLECTUELLE
+
+6.1 Chaque Partie conserve la propriété exclusive de ses droits de propriété intellectuelle préexistants.
+
+6.2 Les développements spécifiques réalisés par le Prestataire pour le Client dans le cadre du contrat resteront la propriété du Prestataire. Le Client bénéficiera d'une licence d'utilisation non exclusive et non transférable pour la durée du contrat.
+
+6.3 Les données du Client demeurent sa propriété exclusive.
+
+ARTICLE 7 - CONFIDENTIALITÉ
+
+7.1 Chaque Partie s'engage à maintenir confidentielles toutes les informations échangées dans le cadre du présent contrat.
+
+7.2 Cette obligation de confidentialité survivra à la fin du contrat pour une période de trois (3) ans.
+
+ARTICLE 8 - RESPONSABILITÉ
+
+8.1 Limitation de Responsabilité
+
+La responsabilité du Prestataire au titre du présent contrat est limitée au montant total des sommes versées par le Client au cours des douze (12) mois précédant le fait générateur du dommage.
+
+8.2 Exclusion de Responsabilité
+
+Le Prestataire ne pourra être tenu responsable des dommages indirects, tels que perte de chiffre d'affaires, perte de clientèle, perte de données, ou atteinte à l'image.
+
+8.3 Force Majeure
+
+Aucune des Parties ne sera tenue responsable de l'inexécution de ses obligations en cas de force majeure, telle que définie par la jurisprudence française.
+
+ARTICLE 9 - RÉSILIATION
+
+9.1 Résiliation pour Convenance
+
+Chaque Partie peut résilier le contrat à tout moment après la période initiale, moyennant un préavis de trois (3) mois notifié par lettre recommandée avec accusé de réception.
+
+9.2 Résiliation pour Faute
+
+En cas de manquement grave par l'une des Parties à ses obligations contractuelles, l'autre Partie pourra résilier le contrat de plein droit, après mise en demeure restée sans effet pendant trente (30) jours.
+
+9.3 Conséquences de la Résiliation
+
+En cas de résiliation, le Prestataire s'engage à restituer l'ensemble des données du Client dans un format standard, dans un délai de trente (30) jours. Des frais de migration pourront être facturés selon le barème en vigueur.
+
+ARTICLE 10 - PÉNALITÉS CONTRACTUELLES
+
+10.1 En cas de non-respect du SLA de disponibilité de 99,9%, le Client bénéficiera d'un avoir calculé comme suit:
+- Disponibilité entre 99% et 99,9%: avoir de 10% de la redevance mensuelle
+- Disponibilité entre 95% et 99%: avoir de 25% de la redevance mensuelle
+- Disponibilité inférieure à 95%: avoir de 50% de la redevance mensuelle
+
+10.2 Ces pénalités constituent un plafond et représentent la seule compensation due au Client en cas de défaillance du service.
+
+ARTICLE 11 - ASSURANCE
+
+Le Prestataire déclare avoir souscrit une assurance responsabilité civile professionnelle auprès de la compagnie Allianz, sous le numéro de police RC-2024-123456, couvrant les dommages pouvant résulter de l'exécution du présent contrat.
+
+ARTICLE 12 - PROTECTION DES DONNÉES PERSONNELLES
+
+12.1 Le Prestataire agit en qualité de sous-traitant au sens du RGPD pour le traitement des données personnelles du Client.
+
+12.2 Le Prestataire s'engage à:
+- Traiter les données uniquement sur instruction documentée du Client
+- Garantir la confidentialité des données
+- Mettre en oeuvre les mesures de sécurité appropriées
+- Assister le Client dans le respect de ses obligations RGPD
+- Supprimer ou restituer les données au terme du contrat
+
+12.3 Les données sont hébergées exclusivement sur des serveurs situés dans l'Union Européenne.
+
+ARTICLE 13 - LOI APPLICABLE ET JURIDICTION
+
+13.1 Le présent contrat est régi par le droit français.
+
+13.2 En cas de litige relatif à l'interprétation ou à l'exécution du présent contrat, les Parties s'efforceront de trouver une solution amiable.
+
+13.3 À défaut d'accord amiable dans un délai de trente (30) jours, tout litige sera soumis à la compétence exclusive du Tribunal de Commerce de Paris.
+
+ARTICLE 14 - DISPOSITIONS DIVERSES
+
+14.1 Le présent contrat, y compris ses annexes, constitue l'intégralité de l'accord entre les Parties et annule tout engagement antérieur.
+
+14.2 Toute modification du présent contrat devra faire l'objet d'un avenant écrit signé par les deux Parties.
+
+14.3 La nullité d'une clause n'affecte pas la validité des autres clauses du contrat.
+
+14.4 Le fait pour l'une des Parties de ne pas se prévaloir d'un manquement de l'autre Partie ne saurait être interprété comme une renonciation au bénéfice de la clause concernée.
+
+ANNEXES
+
+- Annexe 1: Spécifications techniques des services
+- Annexe 2: Procédures de support technique
+- Annexe 3: Plan de reprise d'activité
+
+Fait en deux exemplaires originaux, à Paris, le 15 janvier 2024.
+
+Pour DataCloud Services SA                 Pour Retail Plus SAS
+Monsieur Pierre Dubois                     Madame Sophie Bernard
+Président Directeur Général               Directrice Générale
+
+[Signature]                               [Signature]

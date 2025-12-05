@@ -133,6 +133,7 @@ class EvaluationRunner:
         hallucination_flagged = response.get("hallucination_flagged", False)
 
         # Determine actual behavior
+        # English refusal indicators
         refusal_indicators = [
             "cannot find",
             "no information",
@@ -141,6 +142,16 @@ class EvaluationRunner:
             "don't have",
             "not available",
             "outside the scope",
+            # French refusal indicators
+            "ne peux pas trouver",
+            "pas d'information",
+            "pas mentionné",
+            "pas trouvé",
+            "aucune information",
+            "n'est pas mentionné",
+            "ne figure pas",
+            "pas disponible",
+            "hors du champ",
         ]
         is_refusal = any(
             indicator in answer.lower() for indicator in refusal_indicators

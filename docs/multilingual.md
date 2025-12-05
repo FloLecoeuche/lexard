@@ -238,6 +238,8 @@ French queries may be slightly faster due to more efficient language detection c
 
 ## Testing
 
+### Unit Tests
+
 Run French-specific tests:
 
 ```bash
@@ -252,6 +254,67 @@ pytest tests/test_french_support.py::TestFrenchPromptInjection -v
 # Integration tests (requires services running)
 pytest tests/test_french_support.py::TestMultilingualEmbeddings::test_french_text_embedding -v -m integration
 ```
+
+### End-to-End Tests
+
+Run E2E tests for French workflow (requires running API server):
+
+```bash
+# Start services first
+docker-compose up -d
+uvicorn src.api.main:app --reload &
+
+# Run E2E tests
+pytest tests/e2e/test_french_workflow.py -v -m e2e
+
+# Run specific E2E test class
+pytest tests/e2e/test_french_workflow.py::TestFrenchQueries -v
+pytest tests/e2e/test_french_workflow.py::TestFrenchGuardrails -v
+pytest tests/e2e/test_french_workflow.py::TestCrossLanguage -v
+```
+
+### Evaluation Harness
+
+Run the evaluation harness to compare English and French performance:
+
+```bash
+# Run French evaluation dataset
+python -m tests.evaluation french_qa
+
+# Generate comparison report
+python -c "
+from tests.evaluation.runner import run_evaluation
+from tests.evaluation.french_report import generate_comparison_report
+
+# Run evaluations (requires API server and test documents)
+en_results, en_metrics = run_evaluation('contract_qa')
+fr_results, fr_metrics = run_evaluation('french_qa')
+
+# Generate report
+report = generate_comparison_report(en_metrics, fr_metrics)
+print(report)
+"
+```
+
+### Test Documents
+
+Sample French contracts for testing are located in:
+- `data/test/contrat_nda_fr.txt` - French NDA
+- `data/test/contrat_service_fr.txt` - French service agreement
+
+### French Evaluation Dataset
+
+The French evaluation dataset (`data/eval/french_qa.yaml`) contains 33 test cases covering:
+- Termination clauses (résiliation)
+- Payment terms (conditions de paiement)
+- Confidentiality (confidentialité)
+- Liability (responsabilité)
+- Hallucination testing
+- Cross-language queries (English on French documents)
+- Jurisdiction (juridiction)
+- Services & SLA
+- Data protection (RGPD)
+- Intellectual property (propriété intellectuelle)
 
 ## Limitations
 

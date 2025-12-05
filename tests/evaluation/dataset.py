@@ -67,6 +67,7 @@ class EvaluationDataset:
     version: str
     description: str
     test_cases: list[TestCase]
+    language: str = "en"  # Default to English
 
     def __len__(self) -> int:
         return len(self.test_cases)
@@ -135,6 +136,7 @@ class DatasetLoader:
             version=metadata.get("version", "1.0"),
             description=metadata.get("description", ""),
             test_cases=test_cases,
+            language=metadata.get("language", "en"),
         )
 
     def load_all(self) -> list[EvaluationDataset]:
