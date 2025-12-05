@@ -35,6 +35,7 @@ class AgentState:
     user_query: str
     document_id: str | None = None
     document_id_b: str | None = None  # For comparison
+    language: str = "en"  # Detected language ('en' or 'fr')
 
     # Processing
     intent: Intent | None = None

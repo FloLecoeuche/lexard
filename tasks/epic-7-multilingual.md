@@ -31,7 +31,7 @@ French market requirements:
 
 ## US 7.1: French Language Support
 
-**Status:** 🔲 Not Started
+**Status:** ✅ Completed
 
 ### Description
 
@@ -343,7 +343,7 @@ def test_french_injection_detection():
 
 ## US 7.2: French Validation & Testing
 
-**Status:** 🔲 Not Started
+**Status:** ✅ Completed
 
 ### Description
 

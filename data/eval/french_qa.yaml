@@ -1,0 +1,396 @@
+metadata:
+  name: "French Contract Q&A Evaluation"
+  version: "1.0"
+  language: "fr"
+  description: "Test cases for French contract question answering quality evaluation"
+
+test_cases:
+  # =============================================================================
+  # Category: Résiliation (Termination)
+  # =============================================================================
+  - id: "fr_001"
+    category: "termination"
+    document: "contrat_nda_fr.txt"
+    question: "Quelle est la période de préavis de résiliation?"
+    expected:
+      behavior: "answer"
+      answer_contains: ["30", "jours", "trente"]
+      must_have_citations: true
+    description: "Basic termination notice period question"
+    tags: ["basic", "termination", "french"]
+
+  - id: "fr_002"
+    category: "termination"
+    document: "contrat_service_fr.txt"
+    question: "Quel est le délai de préavis pour résilier le contrat?"
+    expected:
+      behavior: "answer"
+      answer_contains: ["trois", "3", "mois"]
+      must_have_citations: true
+    description: "Service contract termination notice"
+    tags: ["termination", "french"]
+
+  - id: "fr_003"
+    category: "termination"
+    document: "contrat_service_fr.txt"
+    question: "Dans quelles conditions peut-on résilier le contrat pour faute?"
+    expected:
+      behavior: "answer"
+      answer_contains: ["manquement", "mise en demeure", "30", "jours"]
+      must_have_citations: true
+    description: "Termination for breach conditions"
+    tags: ["termination", "breach", "french"]
+
+  # =============================================================================
+  # Category: Paiement (Payment)
+  # =============================================================================
+  - id: "fr_004"
+    category: "payment"
+    document: "contrat_service_fr.txt"
+    question: "Quelles sont les conditions de paiement?"
+    expected:
+      behavior: "answer"
+      answer_contains: ["30", "jours", "facture"]
+      must_have_citations: true
+    description: "Payment terms question"
+    tags: ["basic", "payment", "french"]
+
+  - id: "fr_005"
+    category: "payment"
+    document: "contrat_service_fr.txt"
+    question: "Quel est le montant de la redevance mensuelle?"
+    expected:
+      behavior: "answer"
+      answer_contains: ["5000", "5.000", "cinq mille"]
+      must_have_citations: true
+    description: "Monthly fee amount"
+    tags: ["payment", "amount", "french"]
+
+  - id: "fr_006"
+    category: "payment"
+    document: "contrat_service_fr.txt"
+    question: "Quelles sont les pénalités de retard de paiement?"
+    expected:
+      behavior: "answer"
+      answer_contains: ["trois fois", "taux", "intérêt", "légal"]
+      must_have_citations: true
+    description: "Late payment penalties"
+    tags: ["payment", "penalties", "french"]
+
+  - id: "fr_007"
+    category: "payment"
+    document: "contrat_service_fr.txt"
+    question: "Comment les prix sont-ils révisés?"
+    expected:
+      behavior: "answer"
+      answer_contains: ["SYNTEC", "annuellement", "janvier"]
+      must_have_citations: true
+    description: "Price revision mechanism"
+    tags: ["payment", "revision", "french"]
+
+  # =============================================================================
+  # Category: Confidentialité (Confidentiality)
+  # =============================================================================
+  - id: "fr_008"
+    category: "confidentiality"
+    document: "contrat_nda_fr.txt"
+    question: "Quelles informations sont considérées comme confidentielles?"
+    expected:
+      behavior: "answer"
+      answer_contains: ["secret", "technique", "commerciale", "financière"]
+      must_have_citations: true
+    description: "Definition of confidential information"
+    tags: ["confidentiality", "definitions", "french"]
+
+  - id: "fr_009"
+    category: "confidentiality"
+    document: "contrat_nda_fr.txt"
+    question: "Quelle est la durée des obligations de confidentialité?"
+    expected:
+      behavior: "answer"
+      answer_contains: ["cinq", "5", "ans"]
+      must_have_citations: true
+    description: "Confidentiality duration"
+    tags: ["confidentiality", "duration", "french"]
+
+  - id: "fr_010"
+    category: "confidentiality"
+    document: "contrat_nda_fr.txt"
+    question: "Quelles sont les exceptions aux obligations de confidentialité?"
+    expected:
+      behavior: "answer"
+      answer_contains: ["publiques", "loi", "indépendamment"]
+      must_have_citations: true
+    description: "Confidentiality exceptions"
+    tags: ["confidentiality", "exceptions", "french"]
+
+  - id: "fr_011"
+    category: "confidentiality"
+    document: "contrat_service_fr.txt"
+    question: "Combien de temps dure l'obligation de confidentialité après la fin du contrat?"
+    expected:
+      behavior: "answer"
+      answer_contains: ["trois", "3", "ans"]
+      must_have_citations: true
+    description: "Post-contract confidentiality"
+    tags: ["confidentiality", "duration", "french"]
+
+  # =============================================================================
+  # Category: Responsabilité (Liability)
+  # =============================================================================
+  - id: "fr_012"
+    category: "liability"
+    document: "contrat_service_fr.txt"
+    question: "Quelle est la limite de responsabilité du prestataire?"
+    expected:
+      behavior: "answer"
+      answer_contains: ["douze", "12", "mois", "montant"]
+      must_have_citations: true
+    description: "Liability limitation"
+    tags: ["liability", "limits", "french"]
+
+  - id: "fr_013"
+    category: "liability"
+    document: "contrat_service_fr.txt"
+    question: "Quels types de dommages sont exclus de la responsabilité?"
+    expected:
+      behavior: "answer"
+      answer_contains: ["indirect", "chiffre d'affaires", "clientèle", "image"]
+      must_have_citations: true
+    description: "Excluded damages"
+    tags: ["liability", "exclusions", "french"]
+
+  - id: "fr_014"
+    category: "liability"
+    document: "contrat_nda_fr.txt"
+    question: "Quelle est la pénalité en cas de violation de la confidentialité?"
+    expected:
+      behavior: "answer"
+      answer_contains: ["10.000", "dix mille", "euros"]
+      must_have_citations: true
+    description: "Breach penalty amount"
+    tags: ["liability", "penalties", "french"]
+
+  # =============================================================================
+  # Category: Hallucination (should refuse)
+  # =============================================================================
+  - id: "fr_015"
+    category: "hallucination"
+    document: "contrat_nda_fr.txt"
+    question: "Quel est le montant de l'assurance obligatoire dans ce contrat?"
+    expected:
+      behavior: "refuse"
+      answer_contains: ["ne peux pas trouver", "pas mentionné", "pas d'information"]
+    description: "Question about non-existent insurance - should refuse"
+    tags: ["hallucination", "refuse", "french"]
+
+  - id: "fr_016"
+    category: "hallucination"
+    document: "contrat_service_fr.txt"
+    question: "Quel est le nombre d'employés requis pour ce projet?"
+    expected:
+      behavior: "refuse"
+      answer_contains: ["ne peux pas trouver", "pas mentionné", "pas d'information"]
+    description: "Question about non-existent employee requirement"
+    tags: ["hallucination", "refuse", "french"]
+
+  - id: "fr_017"
+    category: "hallucination"
+    document: "contrat_nda_fr.txt"
+    question: "Quelles sont les exigences environnementales du contrat?"
+    expected:
+      behavior: "refuse"
+      answer_contains: ["ne peux pas trouver", "pas mentionné", "pas d'information"]
+    description: "Environmental requirements not in contract"
+    tags: ["hallucination", "refuse", "french"]
+
+  - id: "fr_018"
+    category: "hallucination"
+    document: "contrat_service_fr.txt"
+    question: "Quels sont les bonus de performance prévus?"
+    expected:
+      behavior: "refuse"
+      answer_contains: ["ne peux pas trouver", "pas mentionné", "pas d'information"]
+    description: "Performance bonuses not in contract"
+    tags: ["hallucination", "refuse", "french"]
+
+  # =============================================================================
+  # Category: Parties et Général (Parties and General)
+  # =============================================================================
+  - id: "fr_019"
+    category: "general"
+    document: "contrat_nda_fr.txt"
+    question: "Qui sont les parties au contrat?"
+    expected:
+      behavior: "answer"
+      answer_contains: ["ACME Solutions", "Tech Innovation"]
+      must_have_citations: true
+    description: "Contract parties - NDA"
+    tags: ["general", "parties", "french"]
+
+  - id: "fr_020"
+    category: "general"
+    document: "contrat_service_fr.txt"
+    question: "Qui sont les parties au contrat de service?"
+    expected:
+      behavior: "answer"
+      answer_contains: ["DataCloud Services", "Retail Plus"]
+      must_have_citations: true
+    description: "Contract parties - Service"
+    tags: ["general", "parties", "french"]
+
+  - id: "fr_021"
+    category: "general"
+    document: "contrat_nda_fr.txt"
+    question: "Quelle est la date d'entrée en vigueur du contrat?"
+    expected:
+      behavior: "answer"
+      answer_contains: ["15 janvier 2024", "janvier"]
+      must_have_citations: true
+    description: "Contract effective date - NDA"
+    tags: ["general", "dates", "french"]
+
+  - id: "fr_022"
+    category: "general"
+    document: "contrat_service_fr.txt"
+    question: "Quelle est la durée initiale du contrat?"
+    expected:
+      behavior: "answer"
+      answer_contains: ["24", "vingt-quatre", "mois"]
+      must_have_citations: true
+    description: "Initial contract duration"
+    tags: ["general", "duration", "french"]
+
+  # =============================================================================
+  # Category: Juridiction (Jurisdiction)
+  # =============================================================================
+  - id: "fr_023"
+    category: "jurisdiction"
+    document: "contrat_nda_fr.txt"
+    question: "Quelle loi régit ce contrat?"
+    expected:
+      behavior: "answer"
+      answer_contains: ["droit français", "français"]
+      must_have_citations: true
+    description: "Governing law - NDA"
+    tags: ["jurisdiction", "law", "french"]
+
+  - id: "fr_024"
+    category: "jurisdiction"
+    document: "contrat_service_fr.txt"
+    question: "Quel tribunal est compétent en cas de litige?"
+    expected:
+      behavior: "answer"
+      answer_contains: ["Paris", "Tribunal de Commerce"]
+      must_have_citations: true
+    description: "Court jurisdiction"
+    tags: ["jurisdiction", "court", "french"]
+
+  # =============================================================================
+  # Category: Services et SLA
+  # =============================================================================
+  - id: "fr_025"
+    category: "services"
+    document: "contrat_service_fr.txt"
+    question: "Quel est le taux de disponibilité garanti (SLA)?"
+    expected:
+      behavior: "answer"
+      answer_contains: ["99,9", "99.9"]
+      must_have_citations: true
+    description: "SLA availability guarantee"
+    tags: ["services", "sla", "french"]
+
+  - id: "fr_026"
+    category: "services"
+    document: "contrat_service_fr.txt"
+    question: "Quels services sont fournis par le prestataire?"
+    expected:
+      behavior: "answer"
+      answer_contains: ["hébergement", "sauvegarde", "support"]
+      must_have_citations: true
+    description: "Services provided"
+    tags: ["services", "scope", "french"]
+
+  - id: "fr_027"
+    category: "services"
+    document: "contrat_service_fr.txt"
+    question: "Quelles sont les pénalités en cas de non-respect du SLA?"
+    expected:
+      behavior: "answer"
+      answer_contains: ["avoir", "10%", "25%", "50%"]
+      must_have_citations: true
+    description: "SLA penalties"
+    tags: ["services", "penalties", "french"]
+
+  # =============================================================================
+  # Category: Protection des Données (Data Protection)
+  # =============================================================================
+  - id: "fr_028"
+    category: "data_protection"
+    document: "contrat_service_fr.txt"
+    question: "Où sont hébergées les données?"
+    expected:
+      behavior: "answer"
+      answer_contains: ["Union Européenne", "Europe"]
+      must_have_citations: true
+    description: "Data hosting location"
+    tags: ["data_protection", "gdpr", "french"]
+
+  - id: "fr_029"
+    category: "data_protection"
+    document: "contrat_service_fr.txt"
+    question: "Quel est le rôle du prestataire au sens du RGPD?"
+    expected:
+      behavior: "answer"
+      answer_contains: ["sous-traitant"]
+      must_have_citations: true
+    description: "GDPR role"
+    tags: ["data_protection", "gdpr", "french"]
+
+  # =============================================================================
+  # Category: Propriété Intellectuelle (Intellectual Property)
+  # =============================================================================
+  - id: "fr_030"
+    category: "intellectual_property"
+    document: "contrat_nda_fr.txt"
+    question: "À qui appartiennent les informations confidentielles?"
+    expected:
+      behavior: "answer"
+      answer_contains: ["propriété", "Divulgatrice"]
+      must_have_citations: true
+    description: "Ownership of confidential information"
+    tags: ["ip", "ownership", "french"]
+
+  - id: "fr_031"
+    category: "intellectual_property"
+    document: "contrat_service_fr.txt"
+    question: "À qui appartiennent les développements spécifiques?"
+    expected:
+      behavior: "answer"
+      answer_contains: ["Prestataire", "licence"]
+      must_have_citations: true
+    description: "Custom development ownership"
+    tags: ["ip", "ownership", "french"]
+
+  # =============================================================================
+  # Category: Cross-language (English question on French document)
+  # =============================================================================
+  - id: "fr_032"
+    category: "cross_language"
+    document: "contrat_nda_fr.txt"
+    question: "What is the confidentiality duration?"
+    expected:
+      behavior: "answer"
+      must_have_citations: true
+    description: "English question on French document - should work with multilingual embeddings"
+    tags: ["cross_language", "english_on_french"]
+
+  - id: "fr_033"
+    category: "cross_language"
+    document: "contrat_service_fr.txt"
+    question: "What is the monthly payment amount?"
+    expected:
+      behavior: "answer"
+      must_have_citations: true
+    description: "English question on French document"
+    tags: ["cross_language", "english_on_french"]

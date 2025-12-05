@@ -25,6 +25,15 @@ DEFAULT_PII_PATTERNS: dict[str, str] = {
     "ip_address": r"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b",
 }
 
+# French-specific PII patterns
+FRENCH_PII_PATTERNS: dict[str, str] = {
+    "fr_ssn": r"\b[12]\s?\d{2}\s?\d{2}\s?\d{2}\s?\d{3}\s?\d{3}\s?\d{2}\b",  # French SSN (Numéro de sécurité sociale)
+    "fr_phone": r"(\+33|0)[1-9](\s?\d{2}){4}",  # French phone numbers
+}
+
+# Combined patterns (English + French)
+ALL_PII_PATTERNS: dict[str, str] = {**DEFAULT_PII_PATTERNS, **FRENCH_PII_PATTERNS}
+
 # Default redaction placeholder
 DEFAULT_PLACEHOLDER = "[REDACTED]"
 
@@ -94,11 +103,11 @@ class PIIFilter:
 
         Args:
             enabled: Whether to enable PII filtering
-            patterns: Custom patterns dict. Uses defaults if None.
+            patterns: Custom patterns dict. Uses ALL_PII_PATTERNS (EN+FR) if None.
             placeholder: Text to replace PII with. Use {type} for pattern name.
         """
         self.enabled = enabled
-        self.patterns = patterns if patterns is not None else DEFAULT_PII_PATTERNS.copy()
+        self.patterns = patterns if patterns is not None else ALL_PII_PATTERNS.copy()
         self.placeholder = placeholder
 
         # Compile patterns for performance
