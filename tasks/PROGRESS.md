@@ -61,7 +61,7 @@ This folder contains detailed specifications for each Epic and User Story. Each 
 | 6.3   | Red Team Testing          | 2025-12-04   | 5651f61     |
 | 6.4   | Performance Optimization  | 2025-12-04   | 3aef045     |
 | 6.5   | Documentation             | 2025-12-05   | e41ab27     |
-| 7.1   | French Language Support   | 2025-12-05   | c4a6899     |
+| 7.1   | French Language Support   | 2025-12-05   | 3ccdd19     |
 
 <!-- Format: | US ID | Name | Completed Date | Commit Hash | -->
 
