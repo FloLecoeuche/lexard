@@ -827,7 +827,7 @@ def embed_batch(self, texts: list[str], batch_size: int = 32) -> list[list[float
 
 ## US 6.5: Documentation
 
-**Status:** 🔶 In Progress
+**Status:** ✅ Completed
 
 ### Description
 
