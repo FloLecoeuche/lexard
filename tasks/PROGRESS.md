@@ -14,7 +14,7 @@ This folder contains detailed specifications for each Epic and User Story. Each 
 | 4    | Agent System          | ✅ Completed   | 5/5 US   |
 | 5    | Interfaces            | ✅ Completed   | 3/3 US   |
 | 6    | Hardening             | ✅ Completed   | 5/5 US   |
-| 7    | French Support        | 🔶 In Progress | 0/2 US   |
+| 7    | French Support        | 🔶 In Progress | 1/2 US   |
 | 8    | UX & Testing          | 🔲 Not Started | 0/2 US   |
 
 **Legend:** 🔲 Not Started | 🔶 In Progress | ✅ Completed
