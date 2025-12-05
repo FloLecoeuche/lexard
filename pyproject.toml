@@ -19,6 +19,7 @@ dependencies = [
     "python-multipart>=0.0.6",
     "tenacity>=8.2.0",
     "langdetect>=1.0.9",
+    "sse-starlette>=1.8.0",
 ]
 
 [project.optional-dependencies]
