@@ -1,0 +1,97 @@
+ACCORD DE CONFIDENTIALITÉ (NDA)
+
+Entre les soussignés:
+
+1. ACME Solutions SAS, société par actions simplifiée au capital de 100.000 euros, immatriculée au RCS de Paris sous le numéro 123 456 789, dont le siège social est situé au 15 Rue de la Paix, 75002 Paris, France, représentée par Monsieur Jean Dupont en sa qualité de Directeur Général,
+   ci-après dénommée "La Partie Divulgatrice"
+
+2. Tech Innovation SARL, société à responsabilité limitée au capital de 50.000 euros, immatriculée au RCS de Lyon sous le numéro 987 654 321, dont le siège social est situé au 25 Avenue des Technologies, 69002 Lyon, France, représentée par Madame Marie Martin en sa qualité de Gérante,
+   ci-après dénommée "La Partie Réceptrice"
+
+ci-après dénommées ensemble "Les Parties"
+
+PRÉAMBULE
+
+Les Parties envisagent d'entrer en relation d'affaires concernant un projet de développement logiciel (ci-après le "Projet"). Dans ce cadre, la Partie Divulgatrice sera amenée à communiquer à la Partie Réceptrice des informations confidentielles.
+
+IL A ÉTÉ CONVENU CE QUI SUIT:
+
+ARTICLE 1 - OBJET
+
+Le présent accord a pour objet de définir les conditions dans lesquelles la Partie Réceptrice s'engage à préserver la confidentialité des informations qui lui seront communiquées par la Partie Divulgatrice dans le cadre du Projet.
+
+ARTICLE 2 - DÉFINITION DES INFORMATIONS CONFIDENTIELLES
+
+Sont considérées comme "Informations Confidentielles" toutes informations, données, documents, de quelque nature que ce soit (technique, commerciale, financière, stratégique), communiquées par la Partie Divulgatrice à la Partie Réceptrice, que ce soit par écrit, oralement ou par tout autre moyen, et notamment:
+
+a) Les secrets de fabrication, procédés, méthodes, formules, algorithmes et logiciels;
+b) Les plans d'affaires, stratégies commerciales et données financières;
+c) Les listes de clients et fournisseurs;
+d) Les projets de développement de produits ou services;
+e) Toute autre information expressément désignée comme confidentielle.
+
+ARTICLE 3 - OBLIGATIONS DE CONFIDENTIALITÉ
+
+3.1 La Partie Réceptrice s'engage à:
+- Garder strictement confidentielles les Informations Confidentielles;
+- Ne pas divulguer les Informations Confidentielles à des tiers sans l'accord préalable écrit de la Partie Divulgatrice;
+- Utiliser les Informations Confidentielles uniquement dans le cadre du Projet;
+- Limiter l'accès aux Informations Confidentielles aux seuls collaborateurs ayant besoin d'en connaître;
+- Informer ses collaborateurs de la nature confidentielle des informations et les soumettre aux mêmes obligations.
+
+3.2 La Partie Réceptrice prend toutes les mesures nécessaires pour assurer la protection des Informations Confidentielles, et au minimum les mêmes mesures de protection que celles qu'elle applique à ses propres informations confidentielles.
+
+ARTICLE 4 - EXCEPTIONS
+
+Les obligations de confidentialité ne s'appliquent pas aux informations:
+a) Qui étaient déjà connues de la Partie Réceptrice avant leur divulgation;
+b) Qui sont ou deviennent publiques sans faute de la Partie Réceptrice;
+c) Qui sont reçues légitimement d'un tiers sans restriction de confidentialité;
+d) Qui sont développées indépendamment par la Partie Réceptrice;
+e) Dont la divulgation est requise par la loi ou une autorité judiciaire.
+
+ARTICLE 5 - DURÉE DE CONFIDENTIALITÉ
+
+Les obligations de confidentialité prévues au présent accord demeurent en vigueur pendant une période de cinq (5) ans à compter de la date de signature du présent accord, quelle que soit la durée des discussions entre les Parties concernant le Projet.
+
+ARTICLE 6 - PROPRIÉTÉ DES INFORMATIONS
+
+Les Informations Confidentielles restent la propriété exclusive de la Partie Divulgatrice. Aucune licence ni aucun droit de propriété intellectuelle n'est accordé à la Partie Réceptrice sur les Informations Confidentielles.
+
+ARTICLE 7 - RESTITUTION DES DOCUMENTS
+
+À la première demande de la Partie Divulgatrice ou à l'issue des discussions relatives au Projet, la Partie Réceptrice s'engage à restituer ou détruire, à la discrétion de la Partie Divulgatrice, tous documents, copies, supports contenant des Informations Confidentielles, dans un délai de quinze (15) jours ouvrables.
+
+ARTICLE 8 - RÉSILIATION
+
+8.1 Le présent accord peut être résilié par l'une ou l'autre des Parties moyennant un préavis écrit de trente (30) jours adressé par lettre recommandée avec accusé de réception.
+
+8.2 La résiliation de l'accord ne libère pas les Parties de leurs obligations de confidentialité qui demeurent en vigueur conformément à l'Article 5.
+
+ARTICLE 9 - RESPONSABILITÉ ET SANCTIONS
+
+En cas de violation des obligations de confidentialité, la Partie Réceptrice sera tenue de réparer l'intégralité du préjudice subi par la Partie Divulgatrice. La Partie Divulgatrice pourra également solliciter toute mesure conservatoire ou d'urgence devant les juridictions compétentes.
+
+Une pénalité forfaitaire de dix mille euros (10.000 EUR) sera due par la Partie Réceptrice pour chaque violation constatée, sans préjudice de tous dommages et intérêts complémentaires.
+
+ARTICLE 10 - DISPOSITIONS GÉNÉRALES
+
+10.1 Le présent accord est soumis au droit français.
+
+10.2 Tout litige relatif à l'interprétation ou à l'exécution du présent accord sera soumis à la compétence exclusive des tribunaux de Paris.
+
+10.3 Le présent accord représente l'intégralité de l'entente entre les Parties concernant la confidentialité des informations échangées et annule et remplace tout accord antérieur portant sur le même objet.
+
+10.4 Toute modification du présent accord devra faire l'objet d'un avenant écrit signé par les deux Parties.
+
+ARTICLE 11 - ENTRÉE EN VIGUEUR
+
+Le présent accord entre en vigueur à compter de sa signature par les deux Parties, soit le 15 janvier 2024.
+
+Fait en deux exemplaires originaux, à Paris, le 15 janvier 2024.
+
+Pour ACME Solutions SAS                    Pour Tech Innovation SARL
+Monsieur Jean Dupont                       Madame Marie Martin
+Directeur Général                          Gérante
+
+[Signature]                                [Signature]
