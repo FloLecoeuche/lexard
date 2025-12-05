@@ -18,6 +18,7 @@ dependencies = [
     "tiktoken>=0.5.0",
     "python-multipart>=0.0.6",
     "tenacity>=8.2.0",
+    "langdetect>=1.0.9",
 ]
 
 [project.optional-dependencies]

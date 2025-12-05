@@ -122,6 +122,8 @@ class EmbeddingService:
         device: str = "cpu",
         cache_size: int = 1000,
         enable_cache: bool = True,
+        query_prefix: str = "",
+        document_prefix: str = "",
     ):
         """Initialize embedding service.
 
@@ -130,12 +132,19 @@ class EmbeddingService:
             device: Device to run model on ('cpu' or 'cuda')
             cache_size: Maximum number of embeddings to cache
             enable_cache: Whether to enable embedding caching
+            query_prefix: Prefix to add to queries (e.g., 'query: ' for E5 models)
+            document_prefix: Prefix to add to documents (e.g., 'passage: ' for E5 models)
         """
         self._model: "SentenceTransformer | None" = None
         self.model_name = model_name
         self.device = device
         self.enable_cache = enable_cache
         self._cache = LRUCache(max_size=cache_size) if enable_cache else None
+
+        # Auto-detect E5 models and apply prefixes
+        self.use_prefixes = "e5" in model_name.lower()
+        self.query_prefix = query_prefix if self.use_prefixes else ""
+        self.document_prefix = document_prefix if self.use_prefixes else ""
 
     @property
     def model(self) -> "SentenceTransformer":
@@ -230,7 +239,7 @@ class EmbeddingService:
             raise EmbeddingError(f"Embedding generation failed: {e}") from e
 
     def embed_query(self, query: str) -> np.ndarray:
-        """Embed a single query string with caching.
+        """Embed a single query string with caching and E5 prefix.
 
         Args:
             query: Query text to embed
@@ -244,17 +253,20 @@ class EmbeddingService:
         if not query or not query.strip():
             raise EmbeddingError("Query cannot be empty")
 
-        # Check cache first
+        # Apply E5 query prefix if needed
+        text = f"{self.query_prefix}{query}" if self.use_prefixes else query
+
+        # Check cache first (using original query as key)
         if self._cache is not None:
             cached = self._cache.get(query)
             if cached is not None:
                 logger.debug("Cache hit for query embedding")
                 return cached
 
-        embeddings = self.embed([query], batch_size=1, show_progress=False)
+        embeddings = self.embed([text], batch_size=1, show_progress=False)
         result = embeddings[0]
 
-        # Cache the result
+        # Cache the result (using original query as key)
         if self._cache is not None:
             self._cache.put(query, result)
 
@@ -282,12 +294,37 @@ class EmbeddingService:
             self._cache.clear()
             logger.info("Embedding cache cleared")
 
+    def embed_documents(
+        self,
+        texts: list[str],
+        batch_size: int = 32,
+        show_progress: bool | None = None,
+    ) -> np.ndarray:
+        """Embed a list of documents with E5 document prefix.
+
+        Args:
+            texts: List of document texts to embed
+            batch_size: Number of texts to process per batch
+            show_progress: Show progress bar. If None, auto-enables for >100 texts.
+
+        Returns:
+            numpy array of shape (len(texts), dimension)
+
+        Raises:
+            EmbeddingError: If embedding generation fails
+        """
+        # Apply E5 document prefix if needed
+        if self.use_prefixes:
+            texts = [f"{self.document_prefix}{t}" for t in texts]
+
+        return self.embed(texts, batch_size=batch_size, show_progress=show_progress)
+
     def embed_chunks(
         self,
         chunks: list,
         batch_size: int = 32,
     ) -> np.ndarray:
-        """Embed a list of Chunk objects.
+        """Embed a list of Chunk objects with E5 document prefix.
 
         Convenience method that extracts content from Chunk objects.
 
@@ -302,7 +339,7 @@ class EmbeddingService:
             EmbeddingError: If embedding generation fails
         """
         texts = [chunk.content for chunk in chunks]
-        return self.embed(texts, batch_size=batch_size)
+        return self.embed_documents(texts, batch_size=batch_size)
 
 
 # Alias for backward compatibility

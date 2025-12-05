@@ -12,14 +12,20 @@ _classifier = IntentClassifier()
 
 
 def classify_intent_node(state: AgentState) -> dict:
-    """Classify user intent using IntentClassifier.
+    """Classify user intent using IntentClassifier and detect language.
 
     Uses keyword-based classification to determine the appropriate
-    tool for handling the user's request.
+    tool for handling the user's request. Also detects the language
+    (English or French) from the query.
     """
+    from src.rag.llm import detect_language
+
     result = _classifier.classify(state.user_query)
+    language = detect_language(state.user_query)
+
     return {
         "intent": result.intent,
+        "language": language,
         "status": AgentStatus.PROCESSING
     }
 

@@ -38,6 +38,8 @@ class EmbeddingsConfig(BaseModel):
     model: str = "all-mpnet-base-v2"
     batch_size: int = Field(default=32, ge=1)
     device: Literal["cpu", "cuda"] = "cpu"
+    query_prefix: str = ""
+    document_prefix: str = ""
 
 
 class ChunkingConfig(BaseModel):

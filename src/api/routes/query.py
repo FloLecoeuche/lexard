@@ -29,7 +29,12 @@ def get_rag_pipeline():
     from src.rag.retriever import Retriever
 
     settings = get_settings()
-    embedding_service = EmbeddingService()
+    embedding_service = EmbeddingService(
+        model_name=settings.embeddings.model,
+        device=settings.embeddings.device,
+        query_prefix=settings.embeddings.query_prefix,
+        document_prefix=settings.embeddings.document_prefix,
+    )
     retriever = Retriever(embedding_service=embedding_service)
     context_builder = ContextBuilder()
     llm_client = OllamaClient()

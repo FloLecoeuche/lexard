@@ -2,6 +2,8 @@
 
 Provides a client for interacting with Ollama's API for LLM generation
 with proper error handling, timeouts, and response parsing.
+
+Also provides language detection utilities for multilingual support.
 """
 
 import logging
@@ -12,6 +14,37 @@ import httpx
 from src.config import LLMConfig
 
 logger = logging.getLogger(__name__)
+
+
+def detect_language(text: str) -> str:
+    """Detect language of input text (en or fr).
+
+    Uses langdetect library to identify language. Supports French and English,
+    defaulting to English if detection fails or language is neither.
+
+    Args:
+        text: Input text to detect language from
+
+    Returns:
+        'fr' for French, 'en' for English (default)
+
+    Examples:
+        >>> detect_language("What is the notice period?")
+        'en'
+        >>> detect_language("Quelle est la période de préavis?")
+        'fr'
+    """
+    if not text or not text.strip():
+        return "en"
+
+    try:
+        from langdetect import detect
+
+        lang = detect(text)
+        return "fr" if lang == "fr" else "en"
+    except Exception as e:
+        logger.debug("Language detection failed: %s. Defaulting to English.", e)
+        return "en"
 
 
 # Custom exceptions for LLM operations
