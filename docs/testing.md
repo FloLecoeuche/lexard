@@ -311,17 +311,21 @@ pip install -e ".[dev]"
 
 ## Performance Benchmarks
 
-Expected execution times (on standard hardware):
+Expected execution times (on standard hardware with CPU inference):
 
-- Individual test: 5-15 seconds
-- Complete test suite: 5-10 minutes
-- CI pipeline: 15-30 minutes (includes service setup)
+- Individual upload test: 15-25 seconds
+- Individual query test (with LLM): 60-180 seconds (varies by CPU speed)
+- Complete test suite: 30-60 minutes
+- CI pipeline: 45-90 minutes (includes service setup)
+
+**Note:** LLM query tests are slow due to CPU-based inference in Ollama. The timeout is set to 180 seconds to accommodate slower systems. Tests with GPU acceleration will be significantly faster.
 
 Tests exceeding these times should be investigated for:
 - Service availability issues
 - Network connectivity problems
-- Resource constraints
+- Resource constraints (ensure Docker has 24GB+ RAM for Ollama)
 - Inefficient test implementation
+- Concurrent test execution causing resource contention
 
 ## Test Data Privacy
 
