@@ -9,6 +9,20 @@ Create a new epic based on the user's request. You MUST follow the established f
 
 ---
 
+## CRITICAL: Read-Only Information Gathering
+
+**IMPORTANT:** This command is for PLANNING only. When gathering information:
+
+1. **DO** read files, documents, and configuration to understand the codebase
+2. **DO** use `ls`, `find`, `wc -l` to explore file structure
+3. **DO NOT** execute tests, builds, or any long-running commands
+4. **DO NOT** run `pytest`, `npm test`, `make`, or similar commands
+5. **ASK FIRST** if you need to execute anything that takes more than a few seconds
+
+If you need to run tests or long commands to understand the current state, **ask the user for permission first** and explain why it's needed.
+
+---
+
 ## Step 1: Analyze Existing Epics
 
 Before creating the new epic, read `tasks/PROGRESS.md` to:
