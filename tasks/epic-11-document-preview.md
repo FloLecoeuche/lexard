@@ -165,7 +165,7 @@ async def get_document_file(doc_id: str, request: Request):
 
 ## US 11.2: Preview Modal UI Component
 
-**Status:** 🔲 Not Started
+**Status:** ✅ Completed
 
 ### Description
 
