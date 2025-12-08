@@ -8,7 +8,16 @@ Add a quick document preview feature to the Web UI, allowing users to view origi
 
 - Epic 5 (Interfaces) completed - Web UI functional
 - Document upload and storage working
-- Original files stored on filesystem
+
+## Architecture Decision
+
+**Storage: SQLite BLOB** (not filesystem)
+
+Original document files are stored as BLOBs in the SQLite database (`file_content` column) rather than on the filesystem. This ensures:
+- Multi-client access: Documents available from any machine connecting to the API
+- Single backup: One `lexard.db` file contains all data
+- ACID consistency: Document metadata and content always in sync
+- Sovereignty: No external storage dependencies
 
 ## User Stories
 
@@ -34,17 +43,20 @@ Requirements:
 
 ### Tasks
 
-- [ ] Add file path storage to document registry:
-  - Update `Document` model in `src/db/registry.py` to include `file_path` field
-  - Migrate existing documents (store path on upload)
+- [ ] Add file content storage to document registry:
+  - Add `file_content BLOB` column to documents table in `src/db/sqlite.py`
+  - Add migration for existing databases
+  - Update `Document` dataclass to NOT include file_content (keep it separate for performance)
+- [ ] Add registry methods for file content:
+  - `store_file_content(doc_id: str, content: bytes)` - Store file bytes
+  - `get_file_content(doc_id: str) -> bytes | None` - Retrieve file bytes
 - [ ] Create file serving endpoint:
-  - `GET /documents/{doc_id}/file` - Return original file
+  - `GET /documents/{doc_id}/file` - Return original file from database
   - Set correct `Content-Type` header based on file extension
   - Return `Content-Disposition: inline` for browser display
   - Handle 404 for missing documents/files
 - [ ] Update upload endpoint:
-  - Store original file in `data/documents/{doc_id}.{ext}`
-  - Save file path in document registry
+  - Store original file content in SQLite BLOB column
   - Preserve original filename for display
 - [ ] Add MIME type mapping:
   - `.pdf` → `application/pdf`
@@ -54,12 +66,42 @@ Requirements:
 ### Implementation
 
 ```python
+# src/db/sqlite.py - Add to schema
+SCHEMA_SQL = """
+CREATE TABLE IF NOT EXISTS documents (
+    ...
+    file_content BLOB,  -- Original file bytes for preview
+    ...
+);
+"""
+
+# src/db/sqlite.py - Add methods
+def store_file_content(self, doc_id: str, content: bytes) -> bool:
+    """Store file content as BLOB."""
+    conn = self._get_connection()
+    cursor = conn.execute(
+        "UPDATE documents SET file_content = ? WHERE id = ?",
+        (content, doc_id),
+    )
+    conn.commit()
+    return cursor.rowcount > 0
+
+def get_file_content(self, doc_id: str) -> bytes | None:
+    """Retrieve file content from BLOB."""
+    conn = self._get_connection()
+    cursor = conn.execute(
+        "SELECT file_content FROM documents WHERE id = ?",
+        (doc_id,),
+    )
+    row = cursor.fetchone()
+    return row[0] if row and row[0] else None
+```
+
+```python
 # src/api/routes/documents.py
 from fastapi import APIRouter, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import Response
 from pathlib import Path
-
-router = APIRouter()
 
 MIME_TYPES = {
     ".pdf": "application/pdf",
@@ -69,47 +111,28 @@ MIME_TYPES = {
 
 
 @router.get("/documents/{doc_id}/file")
-async def get_document_file(
-    doc_id: str,
-    registry: DocumentRegistry = Depends(get_registry),
-    settings: Settings = Depends(get_settings),
-):
-    """Serve original document file for preview.
+async def get_document_file(doc_id: str, request: Request):
+    """Serve original document file for preview from database."""
+    registry = get_document_registry()
 
-    Args:
-        doc_id: Document UUID
-
-    Returns:
-        Original file with appropriate Content-Type
-
-    Raises:
-        HTTPException: 404 if document or file not found
-    """
-    # Get document from registry
-    document = registry.get_document(doc_id)
+    # Get document metadata
+    document = registry.get(doc_id)
     if not document:
-        raise HTTPException(
-            status_code=404,
-            detail={"code": "DOCUMENT_NOT_FOUND", "message": f"Document {doc_id} not found"}
-        )
+        raise HTTPException(status_code=404, detail={"code": "DOCUMENT_NOT_FOUND"})
 
-    # Get file path
-    file_path = Path(document.file_path)
-    if not file_path.exists():
-        raise HTTPException(
-            status_code=404,
-            detail={"code": "FILE_NOT_FOUND", "message": "Original file no longer available"}
-        )
+    # Get file content from database
+    content = registry.get_file_content(doc_id)
+    if not content:
+        raise HTTPException(status_code=404, detail={"code": "FILE_NOT_FOUND"})
 
-    # Determine MIME type
-    suffix = file_path.suffix.lower()
+    # Determine MIME type from filename
+    suffix = Path(document.filename).suffix.lower()
     media_type = MIME_TYPES.get(suffix, "application/octet-stream")
 
-    return FileResponse(
-        path=file_path,
+    return Response(
+        content=content,
         media_type=media_type,
-        filename=document.filename,
-        headers={"Content-Disposition": f"inline; filename=\"{document.filename}\""}
+        headers={"Content-Disposition": f'inline; filename="{document.filename}"'}
     )
 ```
 
@@ -120,7 +143,7 @@ async def get_document_file(
 - [ ] DOCX files served with correct MIME type
 - [ ] TXT files served with `text/plain; charset=utf-8`
 - [ ] 404 returned for non-existent documents
-- [ ] 404 returned if original file deleted from disk
+- [ ] 404 returned if file content not stored in database
 - [ ] Original filename preserved in Content-Disposition header
 - [ ] No file path traversal vulnerabilities
 - [ ] Endpoint documented in OpenAPI spec
@@ -134,10 +157,9 @@ async def get_document_file(
 
 ### Files to Create/Modify
 
-1. `src/db/registry.py` (modify - add file_path field)
-2. `src/api/routes/documents.py` (modify - add file endpoint)
-3. `src/api/schemas.py` (modify - update Document schema if needed)
-4. `tests/test_document_file_endpoint.py` (new)
+1. `src/db/sqlite.py` (modify - add file_content BLOB column, store/get methods)
+2. `src/api/routes/documents.py` (modify - add file endpoint, update upload to store BLOB)
+3. `tests/test_document_file_endpoint.py` (new)
 
 ---
 
@@ -642,180 +664,59 @@ Add script tags to index.html:
 
 ---
 
-## US 11.3: File Storage on Upload
+## US 11.3: Integration Testing & Polish
 
 **Status:** 🔲 Not Started
 
 ### Description
 
-Update the document upload process to store original files on disk and record their paths in the document registry, enabling the preview feature.
+Integration testing for the document preview feature, ensuring end-to-end functionality and handling edge cases.
 
 ### Context
 
-Current upload process extracts text and discards original files. To enable preview, we need to:
-- Save original files to a designated directory
-- Track file paths in the document registry
-- Handle file cleanup on document deletion
+With US 11.1 (backend BLOB storage) and US 11.2 (frontend modal) complete, this story validates the full preview workflow:
+- Upload document → BLOB stored in SQLite
+- Click preview → Modal fetches and renders
+- Delete document → BLOB removed from database
 
 ### Tasks
 
-- [ ] Create document storage directory:
-  - Default: `data/documents/`
-  - Configurable via `config.yaml`
-  - Create directory on startup if not exists
-- [ ] Update upload flow:
-  - Save original file to `data/documents/{doc_id}.{ext}`
-  - Record file path in document registry
-  - Preserve original filename for display
-- [ ] Update document deletion:
-  - Delete original file when document is deleted
-  - Handle missing file gracefully (log warning, continue)
-- [ ] Add configuration options:
-  - `storage.documents_dir` - Directory for document files
-  - `storage.max_file_size_mb` - Maximum file size (default: 50)
-
-### Implementation
-
-```python
-# src/config.py - Add storage config
-class StorageSettings(BaseModel):
-    """Storage configuration."""
-    documents_dir: str = "data/documents"
-    max_file_size_mb: int = 50
-
-
-class Settings(BaseModel):
-    # ... existing fields ...
-    storage: StorageSettings = StorageSettings()
-```
-
-```python
-# src/api/routes/documents.py - Update upload
-import shutil
-from pathlib import Path
-
-async def process_document_with_progress(file: UploadFile, task_id: str):
-    """Process document and emit progress updates."""
-    settings = get_settings()
-
-    try:
-        # Create storage directory
-        storage_dir = Path(settings.storage.documents_dir)
-        storage_dir.mkdir(parents=True, exist_ok=True)
-
-        # Generate document ID
-        doc_id = str(uuid4())
-
-        # Determine file extension
-        original_filename = file.filename
-        extension = Path(original_filename).suffix.lower()
-
-        # Save original file
-        file_path = storage_dir / f"{doc_id}{extension}"
-
-        await progress_tracker.update(
-            task_id,
-            ProcessingStage.UPLOADING,
-            0.05,
-            f"Saving {original_filename}..."
-        )
-
-        # Save file to disk
-        content = await file.read()
-        with open(file_path, "wb") as f:
-            f.write(content)
-
-        # Continue with parsing...
-        await progress_tracker.update(
-            task_id,
-            ProcessingStage.PARSING,
-            0.1,
-            f"Parsing {original_filename}..."
-        )
-
-        text = await parse_document(content, original_filename)
-
-        # ... rest of processing ...
-
-        # Create document record with file path
-        document = Document(
-            id=doc_id,
-            title=original_filename,
-            filename=original_filename,
-            file_path=str(file_path),
-            upload_date=datetime.now(),
-            chunk_count=len(chunks),
-            page_count=page_count,
-        )
-
-        registry.add_document(document)
-
-        # ... completion ...
-
-    except Exception as e:
-        # Cleanup file on error
-        if 'file_path' in locals() and file_path.exists():
-            file_path.unlink()
-        raise
-```
-
-```python
-# src/api/routes/documents.py - Update delete
-@router.delete("/documents/{doc_id}")
-async def delete_document(
-    doc_id: str,
-    registry: DocumentRegistry = Depends(get_registry),
-    qdrant: QdrantService = Depends(get_qdrant),
-):
-    """Delete a document and its associated data."""
-    document = registry.get_document(doc_id)
-    if not document:
-        raise HTTPException(status_code=404, detail="Document not found")
-
-    # Delete original file
-    if document.file_path:
-        file_path = Path(document.file_path)
-        if file_path.exists():
-            file_path.unlink()
-            logger.info(f"Deleted file: {file_path}")
-        else:
-            logger.warning(f"File not found for cleanup: {file_path}")
-
-    # Delete from Qdrant
-    await qdrant.delete_document(doc_id)
-
-    # Delete from registry
-    registry.delete_document(doc_id)
-
-    return {"status": "deleted", "document_id": doc_id}
-```
+- [ ] End-to-end integration tests:
+  - Upload PDF → Preview → Verify renders
+  - Upload DOCX → Preview → Verify renders
+  - Upload TXT → Preview → Verify renders
+- [ ] Edge case handling:
+  - Large file preview (test with 10MB+ files)
+  - Unicode content in TXT files
+  - Multi-page PDF rendering
+- [ ] Migration testing:
+  - Existing documents (uploaded before BLOB feature) show graceful "preview unavailable" message
+- [ ] Error handling polish:
+  - Clear error messages for fetch failures
+  - Loading state handles slow database reads
+- [ ] Documentation:
+  - Update API docs with file endpoint
+  - Add preview feature to user guide
 
 ### Acceptance Criteria
 
-- [ ] Original files saved to `data/documents/` directory
-- [ ] File path recorded in document registry
-- [ ] Document deletion removes original file
-- [ ] Storage directory created automatically
-- [ ] File size limit enforced (50MB default)
-- [ ] Partial uploads cleaned up on error
-- [ ] Configuration supports custom storage directory
-- [ ] Existing documents still work (graceful handling of missing file_path)
+- [ ] Full workflow tested: upload → preview → delete
+- [ ] All file types (PDF, DOCX, TXT) preview correctly
+- [ ] Large files handled without timeout
+- [ ] Existing documents without BLOB show appropriate message
+- [ ] Error states display user-friendly messages
+- [ ] API documentation updated
 
 ### Tests
 
-- **New:** `tests/test_document_storage.py` - Test file save/delete on upload/removal
-- **Modified:** `tests/test_upload.py` - Verify file_path populated in registry
-- **Run:** `pytest tests/test_document_storage.py tests/test_upload.py -v`
-
-> Note: Test cleanup on error, file size limits, and directory creation.
+- **New:** `tests/test_preview_integration.py` - End-to-end preview tests
+- **Run:** `pytest tests/test_preview_integration.py -v`
 
 ### Files to Create/Modify
 
-1. `src/config.py` (modify - add storage settings)
-2. `config/config.yaml` (modify - add storage section)
-3. `src/db/registry.py` (modify - add file_path field to Document model)
-4. `src/api/routes/documents.py` (modify - save files, cleanup on delete)
-5. `tests/test_document_storage.py` (new)
+1. `tests/test_preview_integration.py` (new - integration tests)
+2. `docs/api.md` (modify - document file endpoint)
+3. `ui/index.html` (modify - handle legacy documents gracefully)
 
 ---
 
