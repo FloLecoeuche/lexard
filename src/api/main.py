@@ -64,6 +64,10 @@ app = FastAPI(
             "name": "mcp",
             "description": "Model Context Protocol JSON-RPC 2.0 endpoint",
         },
+        {
+            "name": "operations",
+            "description": "Operation progress tracking via Server-Sent Events",
+        },
     ],
 )
 

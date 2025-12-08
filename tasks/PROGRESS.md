@@ -19,7 +19,7 @@ This folder contains detailed specifications for each Epic and User Story. Each 
 | 9    | Multilingual Fix      | ✅ Completed   | 5/5 US   |
 | 10   | Test Suite Review     | ✅ Completed   | 5/5 US   |
 | 11   | Document Preview      | ✅ Completed   | 3/3 US   |
-| 12   | Progress Indicators   | 🔲 Not Started | 0/4 US   |
+| 12   | Progress Indicators   | 🔶 In Progress | 0/4 US   |
 | 13   | User Analytics        | 🔲 Not Started | 0/4 US   |
 
 **Legend:** 🔲 Not Started | 🔶 In Progress | ✅ Completed
