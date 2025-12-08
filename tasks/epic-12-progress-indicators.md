@@ -73,7 +73,7 @@ The "Generating" stage uses an animated progress bar (indeterminate or slow-movi
 
 ## US 12.1: Backend Progress Event Infrastructure
 
-**Status:** 🔶 In Progress
+**Status:** ✅ Completed
 
 ### Description
 
