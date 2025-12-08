@@ -7,7 +7,8 @@ import logging
 import tempfile
 from pathlib import Path
 
-from fastapi import APIRouter, BackgroundTasks, File, HTTPException, Request, UploadFile
+from fastapi import APIRouter, File, HTTPException, Request, UploadFile
+from fastapi.responses import Response
 from sse_starlette.sse import EventSourceResponse
 
 from src.api.exceptions import DocumentParseError
@@ -32,6 +33,13 @@ upload_router = APIRouter(tags=["documents"])
 # Maximum file size in bytes (50 MB)
 MAX_FILE_SIZE = 50 * 1024 * 1024
 ALLOWED_EXTENSIONS = {".pdf", ".docx", ".txt"}
+
+# MIME type mapping for document preview
+MIME_TYPES = {
+    ".pdf": "application/pdf",
+    ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ".txt": "text/plain; charset=utf-8",
+}
 
 
 def get_document_registry():
@@ -122,18 +130,19 @@ async def _process_document_with_progress(
             f"Parsing {filename}...",
         )
 
-        # Get file extension and save to temp file
-        suffix = Path(filename).suffix.lower()
-        with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp_file:
-            tmp_file.write(content)
-            tmp_path = Path(tmp_file.name)
+        # Run blocking extraction in thread to not block event loop
+        def do_extraction():
+            suffix = Path(filename).suffix.lower()
+            with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp_file:
+                tmp_file.write(content)
+                tmp_path = Path(tmp_file.name)
+            try:
+                extractor = get_extractor(tmp_path)
+                return extractor.extract(tmp_path)
+            finally:
+                tmp_path.unlink(missing_ok=True)
 
-        # Extract text from document
-        try:
-            extractor = get_extractor(tmp_path)
-            extraction_result = extractor.extract(tmp_path)
-        finally:
-            tmp_path.unlink(missing_ok=True)
+        extraction_result = await asyncio.to_thread(do_extraction)
 
         await progress_tracker.update(
             task_id,
@@ -151,12 +160,17 @@ async def _process_document_with_progress(
         embedding_service = get_embedding_service()
         settings = get_settings()
 
-        # Create document record
-        doc = registry.create(
-            title=title,
-            filename=filename,
-            file_hash=file_hash,
-        )
+        # Create document record (DB operations in thread)
+        def do_db_setup():
+            doc = registry.create(
+                title=title,
+                filename=filename,
+                file_hash=file_hash,
+            )
+            registry.store_file_content(doc.id, content)
+            return doc
+
+        doc = await asyncio.to_thread(do_db_setup)
 
         # Stage 2: Chunking (20-40%)
         await progress_tracker.update(
@@ -166,11 +180,14 @@ async def _process_document_with_progress(
             "Splitting into chunks...",
         )
 
-        chunker = Chunker(
-            chunk_size=settings.chunking.size,
-            overlap=settings.chunking.overlap,
-        )
-        chunks = chunker.chunk(extraction_result.pages)
+        def do_chunking():
+            chunker = Chunker(
+                chunk_size=settings.chunking.size,
+                overlap=settings.chunking.overlap,
+            )
+            return chunker.chunk(extraction_result.pages)
+
+        chunks = await asyncio.to_thread(do_chunking)
 
         await progress_tracker.update(
             task_id,
@@ -187,8 +204,8 @@ async def _process_document_with_progress(
             f"Generating embeddings for {len(chunks)} chunks...",
         )
 
-        # Generate embeddings (CPU-bound, may take time)
-        embeddings = embedding_service.embed_chunks(chunks)
+        # Generate embeddings (CPU-bound, run in thread)
+        embeddings = await asyncio.to_thread(embedding_service.embed_chunks, chunks)
 
         await progress_tracker.update(
             task_id,
@@ -205,24 +222,23 @@ async def _process_document_with_progress(
             "Indexing in vector database...",
         )
 
-        # Ensure collection exists
-        qdrant.ensure_collection()
+        # Run Qdrant operations in thread
+        def do_indexing():
+            qdrant.ensure_collection()
+            qdrant.upsert_chunks(
+                chunks=chunks,
+                embeddings=embeddings,
+                document_id=doc.id,
+                source_title=title,
+            )
+            registry.update_status(
+                doc.id,
+                status="processed",
+                page_count=extraction_result.total_pages,
+                chunk_count=len(chunks),
+            )
 
-        # Store in Qdrant
-        qdrant.upsert_chunks(
-            chunks=chunks,
-            embeddings=embeddings,
-            document_id=doc.id,
-            source_title=title,
-        )
-
-        # Update document status
-        registry.update_status(
-            doc.id,
-            status="processed",
-            page_count=extraction_result.total_pages,
-            chunk_count=len(chunks),
-        )
+        await asyncio.to_thread(do_indexing)
 
         # Mark complete
         await progress_tracker.mark_complete(
@@ -250,7 +266,6 @@ async def _process_document_with_progress(
 )
 async def upload_document(
     request: Request,
-    background_tasks: BackgroundTasks,
     file: UploadFile = File(..., description="Document file (PDF, DOCX, or TXT)"),
 ) -> dict:
     """Upload and process a new document with progress tracking."""
@@ -281,13 +296,16 @@ async def upload_document(
     # Create progress task
     task_id = progress_tracker.create_task(f"Uploading {file.filename}...")
 
-    # Start background processing
-    background_tasks.add_task(
-        _process_document_with_progress,
-        content,
-        file.filename,  # type: ignore[arg-type]
-        file_hash,
-        task_id,
+    # Use asyncio.create_task for true concurrent execution
+    # This allows SSE to stream progress updates in real-time
+    # (BackgroundTasks runs AFTER response, blocking the event loop)
+    asyncio.create_task(
+        _process_document_with_progress(
+            content,
+            file.filename,  # type: ignore[arg-type]
+            file_hash,
+            task_id,
+        )
     )
 
     return {
@@ -473,3 +491,66 @@ async def delete_document(
     registry.delete(document_id)
 
     return DeleteResponse(success=True, message="Document deleted successfully")
+
+
+@router.get(
+    "/{document_id}/file",
+    responses={404: {"model": ErrorResponse, "description": "Document or file not found"}},
+    summary="Get document file",
+    description="Serve the original document file for preview.",
+)
+async def get_document_file(
+    document_id: str,
+    request: Request,
+) -> Response:
+    """Serve original document file for preview.
+
+    Args:
+        document_id: Document UUID
+
+    Returns:
+        Original file with appropriate Content-Type
+
+    Raises:
+        HTTPException: If document or file not found
+    """
+    trace_id = getattr(request.state, "trace_id", "")
+    registry = get_document_registry()
+
+    # Get document metadata
+    doc = registry.get(document_id)
+    if not doc:
+        raise HTTPException(
+            status_code=404,
+            detail={
+                "error": {
+                    "code": "DOCUMENT_NOT_FOUND",
+                    "message": f"Document with ID {document_id} not found",
+                    "trace_id": trace_id,
+                }
+            },
+        )
+
+    # Get file content from database
+    content = registry.get_file_content(document_id)
+    if not content:
+        raise HTTPException(
+            status_code=404,
+            detail={
+                "error": {
+                    "code": "FILE_NOT_FOUND",
+                    "message": "File content not available for this document",
+                    "trace_id": trace_id,
+                }
+            },
+        )
+
+    # Determine MIME type from filename
+    suffix = Path(doc.filename).suffix.lower()
+    media_type = MIME_TYPES.get(suffix, "application/octet-stream")
+
+    return Response(
+        content=content,
+        media_type=media_type,
+        headers={"Content-Disposition": f'inline; filename="{doc.filename}"'},
+    )

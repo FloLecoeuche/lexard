@@ -128,48 +128,187 @@
         .document-item {
             padding: 0.75rem;
             background: #f8fafc;
-            border-radius: 6px;
+            border-radius: 8px;
             cursor: pointer;
             transition: all 0.2s;
             display: flex;
-            justify-content: space-between;
+            gap: 0.75rem;
             align-items: center;
+            border: 1px solid transparent;
         }
 
         .document-item:hover {
-            background: #e2e8f0;
+            background: #f1f5f9;
+            border-color: #e2e8f0;
         }
 
         .document-item.selected {
-            background: #dbeafe;
-            border: 1px solid #2563eb;
+            background: #eff6ff;
+            border-color: #2563eb;
         }
 
-        .document-item .title {
+        /* File type icon - A4 document shape */
+        .doc-icon {
+            flex-shrink: 0;
+        }
+
+        .file-type-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 2.25rem;
+            height: 2.75rem;
+            border-radius: 4px;
+            font-size: 0.5625rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+        }
+
+        /* Document info section */
+        .doc-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .doc-info .title {
             font-size: 0.875rem;
             font-weight: 500;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            flex: 1;
+            color: #1e293b;
+            margin-bottom: 0.25rem;
         }
 
-        .document-item .meta {
+        .doc-info .meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        /* Page count */
+        .page-count {
             font-size: 0.75rem;
             color: #64748b;
         }
 
-        .delete-btn {
-            background: none;
-            border: none;
-            color: #ef4444;
-            cursor: pointer;
-            padding: 0.25rem;
-            opacity: 0.6;
+        /* Language badge in document item */
+        .doc-lang-badge {
+            font-size: 0.625rem;
+            font-weight: 600;
+            padding: 0.125rem 0.375rem;
+            border-radius: 4px;
         }
 
-        .delete-btn:hover {
+        .doc-lang-badge.en {
+            background: #ecfdf5;
+            color: #059669;
+        }
+
+        .doc-lang-badge.fr {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        /* Actions menu */
+        .doc-actions {
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .actions-toggle {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            /* 44x44px minimum touch target (Apple HIG) */
+            min-width: 2.75rem;
+            min-height: 2.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            line-height: 1;
+            border-radius: 6px;
+            transition: all 0.15s;
+            margin: -0.5rem;
+        }
+
+        .actions-toggle:hover {
+            background: #e2e8f0;
+            color: #64748b;
+        }
+
+        .actions-toggle:active {
+            background: #cbd5e1;
+        }
+
+        .actions-menu {
+            position: absolute;
+            right: 0;
+            top: 100%;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            min-width: 140px;
+            z-index: 100;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-8px);
+            transition: all 0.15s;
+        }
+
+        .actions-menu.open {
             opacity: 1;
+            visibility: visible;
+            transform: translateY(4px);
+        }
+
+        .actions-menu button {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            width: 100%;
+            padding: 0.625rem 0.875rem;
+            background: none;
+            border: none;
+            text-align: left;
+            cursor: pointer;
+            font-size: 0.875rem;
+            color: #374151;
+            transition: background 0.15s;
+        }
+
+        .actions-menu button:first-child {
+            border-radius: 8px 8px 0 0;
+        }
+
+        .actions-menu button:last-child {
+            border-radius: 0 0 8px 8px;
+        }
+
+        .actions-menu button:hover {
+            background: #f8fafc;
+        }
+
+        .actions-menu button.danger {
+            color: #dc2626;
+        }
+
+        .actions-menu button.danger:hover {
+            background: #fef2f2;
+        }
+
+        .actions-menu .menu-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            width: 1.25rem;
+            height: 1.25rem;
+            line-height: 1;
         }
 
         /* Main Panel */
@@ -397,10 +536,18 @@
         /* Loading */
         .loading {
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
             padding: 2rem;
             color: #64748b;
+            gap: 0.5rem;
+        }
+
+        .loading-hint {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            margin: 0;
         }
 
         .spinner {
@@ -410,7 +557,6 @@
             border-top-color: #2563eb;
             border-radius: 50%;
             animation: spin 1s linear infinite;
-            margin-right: 0.5rem;
         }
 
         @keyframes spin {
@@ -632,7 +778,143 @@
         .result-header h3 {
             margin-bottom: 0;
         }
+
+        /* Modal overlay */
+        .preview-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s, visibility 0.2s;
+        }
+
+        .preview-modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .preview-modal-content {
+            background: white;
+            width: 90%;
+            height: 90%;
+            max-width: 1200px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+
+        .preview-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .preview-modal-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #1e293b;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .preview-modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #64748b;
+            cursor: pointer;
+            padding: 0.25rem;
+            line-height: 1;
+        }
+
+        .preview-modal-close:hover {
+            color: #1e293b;
+        }
+
+        .preview-modal-body {
+            flex: 1;
+            overflow: auto;
+            padding: 1rem;
+            background: #f8fafc;
+        }
+
+        /* Document viewer containers */
+        .pdf-viewer {
+            width: 100%;
+            height: 100%;
+        }
+
+        .pdf-viewer canvas {
+            display: block;
+            margin: 0 auto 1rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .docx-viewer {
+            background: white;
+            padding: 2rem;
+            min-height: 100%;
+        }
+
+        .txt-viewer {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 6px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.875rem;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-x: auto;
+        }
+
+        /* Preview loading state */
+        .preview-loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #64748b;
+        }
+
+        .preview-loading .spinner {
+            width: 40px;
+            height: 40px;
+            margin-bottom: 1rem;
+        }
+
+        /* Preview error state */
+        .preview-error {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #991b1b;
+            text-align: center;
+        }
+
+        .preview-error-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
     </style>
+
+    <!-- PDF.js for PDF rendering -->
+    <script src="/static/js/pdf.min.js"></script>
+
+    <!-- docx-preview for DOCX rendering -->
+    <script src="/static/js/docx-preview.min.js"></script>
 </head>
 <body>
     <header>
@@ -715,6 +997,19 @@
         <a href="/docs" target="_blank">API Documentation</a>
     </footer>
 
+    <!-- Preview Modal -->
+    <div id="preview-modal" class="preview-modal">
+        <div class="preview-modal-content">
+            <div class="preview-modal-header">
+                <span class="preview-modal-title" id="preview-title">Document Preview</span>
+                <button class="preview-modal-close" id="preview-close">&times;</button>
+            </div>
+            <div class="preview-modal-body" id="preview-body">
+                <!-- Document content rendered here -->
+            </div>
+        </div>
+    </div>
+
     <script>
         // State
         let selectedDocumentId = null;
@@ -768,32 +1063,126 @@
                 return;
             }
 
-            documentList.innerHTML = documents.map(doc => `
-                <li class="document-item ${doc.id === selectedDocumentId ? 'selected' : ''}" data-id="${doc.id}">
-                    <div>
-                        <div class="title">${escapeHtml(doc.title || doc.filename)}</div>
-                        <div class="meta">${doc.page_count || 0} pages</div>
-                    </div>
-                    <button class="delete-btn" data-id="${doc.id}" title="Delete">&#x2715;</button>
-                </li>
-            `).join('');
+            documentList.innerHTML = documents.map(doc => {
+                const ext = getFileExtension(doc.filename);
+                const icon = getFileIcon(ext);
+                const langBadge = doc.language ? getDocLangBadge(doc.language) : '';
 
-            // Add click handlers
+                return `
+                <li class="document-item ${doc.id === selectedDocumentId ? 'selected' : ''}" data-id="${doc.id}">
+                    <span class="doc-icon">${icon}</span>
+                    <div class="doc-info">
+                        <div class="title">${escapeHtml(doc.title || doc.filename)}</div>
+                        <div class="meta">
+                            ${langBadge}
+                            <span class="page-count">${doc.page_count || 0} pages</span>
+                        </div>
+                    </div>
+                    <div class="doc-actions">
+                        <button class="actions-toggle" data-id="${doc.id}" title="Actions">&#8942;</button>
+                        <div class="actions-menu" data-menu-id="${doc.id}">
+                            <button class="preview-action" data-id="${doc.id}" data-filename="${escapeHtml(doc.filename)}">
+                                <span class="menu-icon">&#128065;</span> Preview
+                            </button>
+                            <button class="delete-action danger" data-id="${doc.id}">
+                                <span class="menu-icon">&#128465;</span> Delete
+                            </button>
+                        </div>
+                    </div>
+                </li>
+            `}).join('');
+
+            // Add click handlers for document selection
             documentList.querySelectorAll('.document-item').forEach(item => {
                 item.addEventListener('click', (e) => {
-                    if (!e.target.classList.contains('delete-btn')) {
-                        selectDocument(item.dataset.id);
-                    }
+                    // Ignore clicks on actions area
+                    if (e.target.closest('.doc-actions')) return;
+                    selectDocument(item.dataset.id);
                 });
             });
 
-            documentList.querySelectorAll('.delete-btn').forEach(btn => {
+            // Add click handlers for actions toggle
+            documentList.querySelectorAll('.actions-toggle').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
+                    const docId = btn.dataset.id;
+                    toggleActionsMenu(docId);
+                });
+            });
+
+            // Add preview handlers
+            documentList.querySelectorAll('.preview-action').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    closeAllMenus();
+                    openPreviewModal(btn.dataset.id, btn.dataset.filename);
+                });
+            });
+
+            // Add delete handlers
+            documentList.querySelectorAll('.delete-action').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    closeAllMenus();
                     deleteDocument(btn.dataset.id);
                 });
             });
         }
+
+        // Helper functions for document display
+        function getFileExtension(filename) {
+            return filename.split('.').pop().toLowerCase();
+        }
+
+        function getFileIcon(ext) {
+            // White text on solid colored background for readability
+            const configs = {
+                'pdf': { bg: '#dc2626' },
+                'docx': { bg: '#2563eb' },
+                'txt': { bg: '#6b7280' }
+            };
+            const config = configs[ext] || configs['pdf'];
+            return `<span class="file-type-icon" style="background:${config.bg};color:white">${ext.toUpperCase()}</span>`;
+        }
+
+        function getDocLangBadge(language) {
+            if (!language) return '';
+            const lang = language.toLowerCase();
+            if (lang === 'fr') {
+                return '<span class="doc-lang-badge fr">FR</span>';
+            } else if (lang === 'en') {
+                return '<span class="doc-lang-badge en">EN</span>';
+            }
+            return '';
+        }
+
+        function toggleActionsMenu(docId) {
+            // Close all other menus first
+            document.querySelectorAll('.actions-menu.open').forEach(menu => {
+                if (menu.dataset.menuId !== docId) {
+                    menu.classList.remove('open');
+                }
+            });
+
+            // Toggle the clicked menu
+            const menu = document.querySelector(`.actions-menu[data-menu-id="${docId}"]`);
+            if (menu) {
+                menu.classList.toggle('open');
+            }
+        }
+
+        function closeAllMenus() {
+            document.querySelectorAll('.actions-menu.open').forEach(menu => {
+                menu.classList.remove('open');
+            });
+        }
+
+        // Close menus when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.doc-actions')) {
+                closeAllMenus();
+            }
+        });
 
         function selectDocument(id) {
             selectedDocumentId = id;
@@ -804,7 +1193,8 @@
             const formData = new FormData();
             formData.append('file', file);
 
-            showUploadLoading();
+            // Show progress UI immediately with "Uploading" stage
+            showUploadProgressUI(file.name);
 
             try {
                 const response = await fetch('/upload', {
@@ -832,6 +1222,27 @@
             }
         }
 
+        function showUploadProgressUI(filename) {
+            // Show progress UI immediately instead of simple spinner
+            uploadZone.innerHTML = `
+                <div class="upload-progress" id="progress-container">
+                    <div class="stage-header">
+                        <span class="stage-icon" id="stage-icon">📤</span>
+                        <span class="stage-label" id="stage-label">Uploading</span>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-fill" id="progress-bar" style="width: 0%"></div>
+                    </div>
+                    <div class="progress-details">
+                        <span class="progress-percent" id="progress-percent">0%</span>
+                        <span class="progress-message" id="progress-message">Sending ${escapeHtml(filename)}...</span>
+                    </div>
+                    <div class="progress-timestamp" id="progress-timestamp"></div>
+                    <div class="progress-error" id="progress-error" style="display: none;"></div>
+                </div>
+            `;
+        }
+
         async function trackUploadProgress(taskId, filename) {
             const STAGE_LABELS = {
                 uploading: 'Uploading',
@@ -853,25 +1264,7 @@
                 failed: '❌'
             };
 
-            // Show progress UI
-            uploadZone.innerHTML = `
-                <div class="upload-progress" id="progress-container">
-                    <div class="stage-header">
-                        <span class="stage-icon" id="stage-icon">⏳</span>
-                        <span class="stage-label" id="stage-label">Initializing...</span>
-                    </div>
-                    <div class="progress-bar-container">
-                        <div class="progress-bar-fill" id="progress-bar" style="width: 0%"></div>
-                    </div>
-                    <div class="progress-details">
-                        <span class="progress-percent" id="progress-percent">0%</span>
-                        <span class="progress-message" id="progress-message">Starting...</span>
-                    </div>
-                    <div class="progress-timestamp" id="progress-timestamp"></div>
-                    <div class="progress-error" id="progress-error" style="display: none;"></div>
-                </div>
-            `;
-
+            // Reuse existing progress UI elements (already created by showUploadProgressUI)
             const stageIcon = document.getElementById('stage-icon');
             const stageLabel = document.getElementById('stage-label');
             const progressBar = document.getElementById('progress-bar');
@@ -1274,7 +1667,7 @@
 
         // UI helpers
         function showLoading(element) {
-            element.innerHTML = '<div class="loading"><div class="spinner"></div>Loading...</div>';
+            element.innerHTML = '<div class="loading"><div class="spinner"></div>Loading...<p class="loading-hint">Please do not refresh the page</p></div>';
         }
 
         function showError(element, message) {
@@ -1296,6 +1689,166 @@
                 ? 'Réponse en français (détecté automatiquement)'
                 : 'Response in English (auto-detected)';
             return `<span class="language-badge ${langClass}" title="${tooltip}">${label}</span>`;
+        }
+
+        // Preview modal functions
+        let pdfJsLib = null;
+
+        function setupPreview() {
+            const previewModal = document.getElementById('preview-modal');
+            const closeBtn = document.getElementById('preview-close');
+
+            // Close on X button
+            closeBtn.addEventListener('click', closePreviewModal);
+
+            // Close on backdrop click
+            previewModal.addEventListener('click', (e) => {
+                if (e.target === previewModal) {
+                    closePreviewModal();
+                }
+            });
+
+            // Close on Escape key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && previewModal.classList.contains('active')) {
+                    closePreviewModal();
+                }
+            });
+        }
+
+        function openPreviewModal(docId, filename) {
+            const modal = document.getElementById('preview-modal');
+            const title = document.getElementById('preview-title');
+            const body = document.getElementById('preview-body');
+
+            // Set title
+            title.textContent = filename;
+
+            // Show loading state
+            body.innerHTML = `
+                <div class="preview-loading">
+                    <div class="spinner"></div>
+                    <span>Loading document...</span>
+                </div>
+            `;
+
+            // Show modal
+            modal.classList.add('active');
+
+            // Fetch and render document
+            renderDocumentPreview(docId, filename, body);
+        }
+
+        function closePreviewModal() {
+            const modal = document.getElementById('preview-modal');
+            modal.classList.remove('active');
+
+            // Clear content to free memory
+            const body = document.getElementById('preview-body');
+            body.innerHTML = '';
+        }
+
+        async function renderDocumentPreview(docId, filename, container) {
+            try {
+                const response = await fetch(`/documents/${docId}/file`);
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    const errorCode = error.detail?.error?.code || error.detail?.code || '';
+
+                    // User-friendly message for legacy documents without BLOB
+                    if (errorCode === 'FILE_NOT_FOUND') {
+                        throw new Error('Preview not available for this document. It was uploaded before preview support was added. Please re-upload to enable preview.');
+                    }
+                    throw new Error(error.detail?.error?.message || error.detail || 'Failed to fetch document');
+                }
+
+                const blob = await response.blob();
+                const extension = filename.split('.').pop().toLowerCase();
+
+                switch (extension) {
+                    case 'pdf':
+                        await renderPdfPreview(blob, container);
+                        break;
+                    case 'docx':
+                        await renderDocxPreview(blob, container);
+                        break;
+                    case 'txt':
+                        await renderTxtPreview(blob, container);
+                        break;
+                    default:
+                        throw new Error(`Unsupported file type: ${extension}`);
+                }
+            } catch (error) {
+                container.innerHTML = `
+                    <div class="preview-error">
+                        <span class="preview-error-icon">&#9888;</span>
+                        <p>Failed to load document preview</p>
+                        <p style="font-size: 0.875rem; color: #64748b;">${escapeHtml(error.message)}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function renderPdfPreview(blob, container) {
+            // Load PDF.js if not already loaded
+            if (!pdfJsLib) {
+                pdfJsLib = window.pdfjsLib;
+                if (!pdfJsLib) {
+                    throw new Error('PDF.js library not loaded');
+                }
+                pdfJsLib.GlobalWorkerOptions.workerSrc = '/static/js/pdf.worker.min.js';
+            }
+
+            const arrayBuffer = await blob.arrayBuffer();
+            const pdf = await pdfJsLib.getDocument({ data: arrayBuffer }).promise;
+
+            container.innerHTML = '<div class="pdf-viewer" id="pdf-container"></div>';
+            const pdfContainer = document.getElementById('pdf-container');
+
+            // Render all pages
+            for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+                const page = await pdf.getPage(pageNum);
+                const scale = 1.5;
+                const viewport = page.getViewport({ scale });
+
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+
+                await page.render({
+                    canvasContext: context,
+                    viewport: viewport
+                }).promise;
+
+                pdfContainer.appendChild(canvas);
+            }
+        }
+
+        async function renderDocxPreview(blob, container) {
+            // docx-preview library
+            if (!window.docx) {
+                throw new Error('docx-preview library not loaded');
+            }
+
+            container.innerHTML = '<div class="docx-viewer" id="docx-container"></div>';
+            const docxContainer = document.getElementById('docx-container');
+
+            await window.docx.renderAsync(blob, docxContainer, null, {
+                className: 'docx-content',
+                inWrapper: true,
+                ignoreWidth: false,
+                ignoreHeight: false,
+                ignoreFonts: false,
+                breakPages: true,
+                useBase64URL: true
+            });
+        }
+
+        async function renderTxtPreview(blob, container) {
+            const text = await blob.text();
+            container.innerHTML = `<pre class="txt-viewer">${escapeHtml(text)}</pre>`;
         }
 
         // Tab switching
@@ -1367,6 +1920,7 @@
             setupUploadHandlers();
             setupDragDrop();
             setupButtons();
+            setupPreview();
 
             await checkHealth();
             await loadDocuments();

@@ -25,12 +25,18 @@ CREATE TABLE IF NOT EXISTS documents (
     version INTEGER DEFAULT 1,
     parent_document_id TEXT REFERENCES documents(id),
     uploaded_at TEXT DEFAULT CURRENT_TIMESTAMP,
-    status TEXT DEFAULT 'processing'  -- processing | processed | failed
+    status TEXT DEFAULT 'processing',  -- processing | processed | failed
+    file_content BLOB  -- Original file bytes for preview
 );
 
 CREATE INDEX IF NOT EXISTS idx_file_hash ON documents(file_hash);
 CREATE INDEX IF NOT EXISTS idx_parent_document ON documents(parent_document_id);
 CREATE INDEX IF NOT EXISTS idx_status ON documents(status);
+"""
+
+# Migration SQL to add file_content column to existing databases
+MIGRATION_ADD_FILE_CONTENT = """
+ALTER TABLE documents ADD COLUMN file_content BLOB;
 """
 
 
@@ -72,6 +78,19 @@ class DocumentRegistry:
         conn = self._get_connection()
         conn.executescript(SCHEMA_SQL)
         conn.commit()
+        # Run migration for existing databases
+        self._migrate_add_file_content(conn)
+
+    def _migrate_add_file_content(self, conn: sqlite3.Connection) -> None:
+        """Add file_content column if it doesn't exist (migration for existing DBs)."""
+        cursor = conn.execute("PRAGMA table_info(documents)")
+        columns = [row[1] for row in cursor.fetchall()]
+        if "file_content" not in columns:
+            try:
+                conn.execute(MIGRATION_ADD_FILE_CONTENT)
+                conn.commit()
+            except sqlite3.OperationalError:
+                pass  # Column already exists or other issue
 
     def _get_connection(self) -> sqlite3.Connection:
         """Get database connection with row factory configured.
@@ -279,3 +298,38 @@ class DocumentRegistry:
         cursor = conn.execute("SELECT COUNT(*) FROM documents")
         row = cursor.fetchone()
         return row[0] if row else 0
+
+    def store_file_content(self, doc_id: str, content: bytes) -> bool:
+        """Store original file content as BLOB.
+
+        Args:
+            doc_id: Document UUID
+            content: Raw file bytes
+
+        Returns:
+            True if file content was stored, False if document not found
+        """
+        conn = self._get_connection()
+        cursor = conn.execute(
+            "UPDATE documents SET file_content = ? WHERE id = ?",
+            (content, doc_id),
+        )
+        conn.commit()
+        return cursor.rowcount > 0
+
+    def get_file_content(self, doc_id: str) -> bytes | None:
+        """Retrieve original file content from BLOB.
+
+        Args:
+            doc_id: Document UUID
+
+        Returns:
+            File bytes if found and stored, None otherwise
+        """
+        conn = self._get_connection()
+        cursor = conn.execute(
+            "SELECT file_content FROM documents WHERE id = ?",
+            (doc_id,),
+        )
+        row = cursor.fetchone()
+        return row[0] if row and row[0] else None

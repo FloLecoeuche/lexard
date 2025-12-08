@@ -248,6 +248,34 @@ curl -X DELETE http://localhost:8000/documents/550e8400-e29b-41d4-a716-446655440
 
 ---
 
+#### GET /documents/{document_id}/file
+
+Retrieve the original document file for preview.
+
+**cURL Example**
+
+```bash
+curl http://localhost:8000/documents/550e8400-e29b-41d4-a716-446655440000/file \
+  -o document.pdf
+```
+
+**Response: 200 OK**
+
+Returns the original file with appropriate headers:
+- `Content-Type`: MIME type based on file extension
+  - PDF: `application/pdf`
+  - DOCX: `application/vnd.openxmlformats-officedocument.wordprocessingml.document`
+  - TXT: `text/plain; charset=utf-8`
+- `Content-Disposition`: `inline; filename="original_filename.ext"`
+
+**Errors:**
+- `404 Not Found` - Document does not exist (`DOCUMENT_NOT_FOUND`)
+- `404 Not Found` - File content not available (`FILE_NOT_FOUND`) - This occurs for documents uploaded before preview support was added
+
+**Note:** Documents uploaded before the preview feature was added will not have file content stored. Re-upload the document to enable preview functionality.
+
+---
+
 ### Query
 
 #### POST /query

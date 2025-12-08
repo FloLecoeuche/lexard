@@ -25,7 +25,7 @@ Original document files are stored as BLOBs in the SQLite database (`file_conten
 
 ## US 11.1: Document File Serving Endpoint
 
-**Status:** 🔲 Not Started
+**Status:** ✅ Completed
 
 ### Description
 
@@ -165,7 +165,7 @@ async def get_document_file(doc_id: str, request: Request):
 
 ## US 11.2: Preview Modal UI Component
 
-**Status:** 🔲 Not Started
+**Status:** ✅ Completed
 
 ### Description
 
@@ -666,7 +666,7 @@ Add script tags to index.html:
 
 ## US 11.3: Integration Testing & Polish
 
-**Status:** 🔲 Not Started
+**Status:** ✅ Completed
 
 ### Description
 
