@@ -18,7 +18,7 @@ This folder contains detailed specifications for each Epic and User Story. Each 
 | 8    | UX & Testing          | ✅ Completed   | 2/2 US   |
 | 9    | Multilingual Fix      | ✅ Completed   | 5/5 US   |
 | 10   | Test Suite Review     | ✅ Completed   | 5/5 US   |
-| 11   | Document Preview      | 🔶 In Progress | 2/3 US   |
+| 11   | Document Preview      | ✅ Completed   | 3/3 US   |
 | 12   | Streaming Responses   | 🔲 Not Started | 0/4 US   |
 
 **Legend:** 🔲 Not Started | 🔶 In Progress | ✅ Completed
@@ -85,6 +85,7 @@ This folder contains detailed specifications for each Epic and User Story. Each 
 | 10.5  | Unnecessary Tests Removal      | 2025-12-08 | 9fdea06  |
 | 11.1  | Document File Serving Endpoint | 2025-12-08 | 1f517aa  |
 | 11.2  | Preview Modal UI Component     | 2025-12-08 | 17dd3ab  |
+| 11.3  | Integration Testing & Polish   | 2025-12-08 | b5156b7  |
 
 <!-- Format: | US ID | Name | Completed Date | Commit Hash | -->
 
