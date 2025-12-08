@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lexard Analytics Dashboard</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #f8fafc;
+            color: #1e293b;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background: #1e293b;
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        #logout-btn {
+            background: transparent;
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+        }
+
+        #logout-btn:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: rgba(255,255,255,0.5);
+        }
+
+        main {
+            flex: 1;
+            padding: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Auth Form */
+        #auth-form {
+            max-width: 400px;
+            margin: 4rem auto;
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        #auth-form h2 {
+            margin-bottom: 1.5rem;
+            font-size: 1.25rem;
+            text-align: center;
+        }
+
+        #auth-form input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        #auth-form input:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        #auth-form button {
+            width: 100%;
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 0.75rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        #auth-form button:hover {
+            background: #1d4ed8;
+        }
+
+        #auth-error {
+            color: #ef4444;
+            font-size: 0.875rem;
+            text-align: center;
+            margin-top: 1rem;
+            display: none;
+        }
+
+        /* Dashboard */
+        #dashboard {
+            display: none;
+        }
+
+        .refresh-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .refresh-row h2 {
+            font-size: 1.25rem;
+        }
+
+        #refresh-btn {
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        #refresh-btn:hover {
+            background: #e2e8f0;
+        }
+
+        #last-updated {
+            font-size: 0.75rem;
+            color: #64748b;
+        }
+
+        /* Metrics Grid */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .metric-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .metric-card h3 {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #64748b;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-card .value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .metric-card.highlight {
+            background: #2563eb;
+        }
+
+        .metric-card.highlight h3,
+        .metric-card.highlight .value {
+            color: white;
+        }
+
+        /* Sections */
+        .section {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+
+        .section-header {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .section-header h3 {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        th {
+            background: #f8fafc;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        td {
+            font-size: 0.875rem;
+        }
+
+        tr:hover td {
+            background: #f8fafc;
+        }
+
+        /* Badge */
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .badge.returning {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .badge.new {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #64748b;
+        }
+
+        /* No Data */
+        .no-data {
+            text-align: center;
+            padding: 2rem;
+            color: #94a3b8;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Lexard Analytics</h1>
+        <button id="logout-btn" onclick="logout()" style="display: none;">Logout</button>
+    </header>
+
+    <main>
+        <!-- Password Form (shown initially) -->
+        <div id="auth-form">
+            <h2>Analytics Dashboard</h2>
+            <input type="password" id="password" placeholder="Enter password" onkeyup="handlePasswordKeyup(event)">
+            <button onclick="authenticate()">Login</button>
+            <p id="auth-error"></p>
+        </div>
+
+        <!-- Dashboard (hidden until authenticated) -->
+        <div id="dashboard">
+            <div class="refresh-row">
+                <div>
+                    <h2>Dashboard Overview</h2>
+                    <span id="last-updated"></span>
+                </div>
+                <button id="refresh-btn" onclick="loadMetrics()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M23 4v6h-6M1 20v-6h6"/>
+                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                    </svg>
+                    Refresh
+                </button>
+            </div>
+
+            <!-- Summary Cards -->
+            <div class="metrics-grid" id="metrics-grid">
+                <div class="metric-card highlight">
+                    <h3>Daily Active Users</h3>
+                    <p class="value" id="dau">-</p>
+                </div>
+                <div class="metric-card">
+                    <h3>New Users Today</h3>
+                    <p class="value" id="new-users">-</p>
+                </div>
+                <div class="metric-card">
+                    <h3>Returning Users</h3>
+                    <p class="value" id="returning-users">-</p>
+                </div>
+                <div class="metric-card">
+                    <h3>Queries Today</h3>
+                    <p class="value" id="queries-today">-</p>
+                </div>
+                <div class="metric-card">
+                    <h3>Uploads Today</h3>
+                    <p class="value" id="uploads-today">-</p>
+                </div>
+                <div class="metric-card">
+                    <h3>Total Browsers</h3>
+                    <p class="value" id="total-browsers">-</p>
+                </div>
+                <div class="metric-card">
+                    <h3>Total Sessions</h3>
+                    <p class="value" id="total-sessions">-</p>
+                </div>
+                <div class="metric-card">
+                    <h3>Total Events</h3>
+                    <p class="value" id="total-events">-</p>
+                </div>
+            </div>
+
+            <!-- Feature Usage -->
+            <div class="section">
+                <div class="section-header">
+                    <h3>Feature Usage (Last 7 Days)</h3>
+                </div>
+                <table id="feature-usage-table">
+                    <thead>
+                        <tr>
+                            <th>Feature</th>
+                            <th>Usage Count</th>
+                            <th>Unique Sessions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="feature-usage-body">
+                        <tr><td colspan="3" class="loading">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Recent Sessions -->
+            <div class="section">
+                <div class="section-header">
+                    <h3>Recent Sessions</h3>
+                </div>
+                <table id="sessions-table">
+                    <thead>
+                        <tr>
+                            <th>Session</th>
+                            <th>Browser</th>
+                            <th>Started</th>
+                            <th>User Type</th>
+                            <th>Events</th>
+                            <th>Queries</th>
+                            <th>Uploads</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sessions-body">
+                        <tr><td colspan="7" class="loading">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Recent Events -->
+            <div class="section">
+                <div class="section-header">
+                    <h3>Recent Events</h3>
+                </div>
+                <table id="events-table">
+                    <thead>
+                        <tr>
+                            <th>Event</th>
+                            <th>Session</th>
+                            <th>Time</th>
+                            <th>Properties</th>
+                        </tr>
+                    </thead>
+                    <tbody id="events-body">
+                        <tr><td colspan="4" class="loading">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const BASE_PATH = '/internal/metrics-a7x9k2';
+        let adminToken = sessionStorage.getItem('lexard_admin_token');
+        let refreshInterval = null;
+
+        // Check if already authenticated
+        if (adminToken) {
+            showDashboard();
+        }
+
+        function handlePasswordKeyup(event) {
+            if (event.key === 'Enter') {
+                authenticate();
+            }
+        }
+
+        async function authenticate() {
+            const password = document.getElementById('password').value;
+            const errorEl = document.getElementById('auth-error');
+
+            try {
+                const response = await fetch(`${BASE_PATH}/auth`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password }),
+                });
+
+                if (!response.ok) {
+                    errorEl.textContent = 'Invalid password';
+                    errorEl.style.display = 'block';
+                    return;
+                }
+
+                const data = await response.json();
+                adminToken = data.token;
+                sessionStorage.setItem('lexard_admin_token', adminToken);
+                showDashboard();
+            } catch (error) {
+                errorEl.textContent = 'Connection error';
+                errorEl.style.display = 'block';
+            }
+        }
+
+        function showDashboard() {
+            document.getElementById('auth-form').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'block';
+            document.getElementById('logout-btn').style.display = 'block';
+            loadMetrics();
+
+            // Auto-refresh every 60 seconds
+            refreshInterval = setInterval(loadMetrics, 60000);
+        }
+
+        async function loadMetrics() {
+            const headers = { 'X-Admin-Token': adminToken };
+
+            try {
+                // Load all data in parallel
+                const [summaryRes, featureRes, sessionsRes, eventsRes] = await Promise.all([
+                    fetch(`${BASE_PATH}/summary`, { headers }),
+                    fetch(`${BASE_PATH}/feature-usage`, { headers }),
+                    fetch(`${BASE_PATH}/sessions?limit=20`, { headers }),
+                    fetch(`${BASE_PATH}/events?limit=50`, { headers }),
+                ]);
+
+                // Check for auth errors
+                if (summaryRes.status === 401) {
+                    logout();
+                    return;
+                }
+
+                const summary = await summaryRes.json();
+                const features = await featureRes.json();
+                const sessions = await sessionsRes.json();
+                const events = await eventsRes.json();
+
+                // Update summary metrics
+                document.getElementById('dau').textContent = summary.daily_active_users;
+                document.getElementById('new-users').textContent = summary.new_users_today;
+                document.getElementById('returning-users').textContent = summary.returning_users_today;
+                document.getElementById('queries-today').textContent = summary.queries_today;
+                document.getElementById('uploads-today').textContent = summary.documents_uploaded_today;
+                document.getElementById('total-browsers').textContent = summary.total_browsers;
+                document.getElementById('total-sessions').textContent = summary.total_sessions;
+                document.getElementById('total-events').textContent = summary.total_events;
+
+                // Update feature usage table
+                const featureBody = document.getElementById('feature-usage-body');
+                if (features.length === 0) {
+                    featureBody.innerHTML = '<tr><td colspan="3" class="no-data">No feature usage data</td></tr>';
+                } else {
+                    featureBody.innerHTML = features.map(f => `
+                        <tr>
+                            <td>${escapeHtml(f.feature)}</td>
+                            <td>${f.usage_count}</td>
+                            <td>${f.unique_sessions}</td>
+                        </tr>
+                    `).join('');
+                }
+
+                // Update sessions table
+                const sessionsBody = document.getElementById('sessions-body');
+                if (sessions.length === 0) {
+                    sessionsBody.innerHTML = '<tr><td colspan="7" class="no-data">No sessions yet</td></tr>';
+                } else {
+                    sessionsBody.innerHTML = sessions.map(s => `
+                        <tr>
+                            <td><code>${escapeHtml(s.session_id)}</code></td>
+                            <td><code>${escapeHtml(s.browser_id)}</code></td>
+                            <td>${formatTime(s.started_at)}</td>
+                            <td>${s.is_returning_user
+                                ? '<span class="badge returning">Returning</span>'
+                                : '<span class="badge new">New</span>'}</td>
+                            <td>${s.event_count}</td>
+                            <td>${s.query_count}</td>
+                            <td>${s.docs_uploaded}</td>
+                        </tr>
+                    `).join('');
+                }
+
+                // Update events table
+                const eventsBody = document.getElementById('events-body');
+                if (events.length === 0) {
+                    eventsBody.innerHTML = '<tr><td colspan="4" class="no-data">No events yet</td></tr>';
+                } else {
+                    eventsBody.innerHTML = events.map(e => `
+                        <tr>
+                            <td>${escapeHtml(e.event_name)}</td>
+                            <td><code>${escapeHtml(e.session_id)}</code></td>
+                            <td>${formatTime(e.created_at)}</td>
+                            <td><code>${escapeHtml(truncateProperties(e.properties))}</code></td>
+                        </tr>
+                    `).join('');
+                }
+
+                // Update last updated timestamp
+                document.getElementById('last-updated').textContent =
+                    `Last updated: ${new Date().toLocaleTimeString()}`;
+
+            } catch (error) {
+                console.error('Failed to load metrics:', error);
+            }
+        }
+
+        async function logout() {
+            if (adminToken) {
+                try {
+                    await fetch(`${BASE_PATH}/logout`, {
+                        method: 'POST',
+                        headers: { 'X-Admin-Token': adminToken },
+                    });
+                } catch (e) {
+                    // Ignore errors
+                }
+            }
+
+            sessionStorage.removeItem('lexard_admin_token');
+            adminToken = null;
+
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+                refreshInterval = null;
+            }
+
+            document.getElementById('auth-form').style.display = 'block';
+            document.getElementById('dashboard').style.display = 'none';
+            document.getElementById('logout-btn').style.display = 'none';
+            document.getElementById('password').value = '';
+            document.getElementById('auth-error').style.display = 'none';
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function formatTime(timestamp) {
+            if (!timestamp) return '-';
+            const date = new Date(timestamp);
+            return date.toLocaleString();
+        }
+
+        function truncateProperties(propsStr) {
+            if (!propsStr || propsStr === '{}') return '{}';
+            if (propsStr.length > 60) {
+                return propsStr.substring(0, 60) + '...';
+            }
+            return propsStr;
+        }
+    </script>
+</body>
+</html>

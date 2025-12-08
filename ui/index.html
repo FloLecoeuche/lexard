@@ -1119,6 +1119,66 @@
     </div>
 
     <script>
+        // ==================== ANALYTICS ====================
+        const Analytics = {
+            getBrowserId() {
+                let browserId = localStorage.getItem('lexard_browser_id');
+                if (!browserId) {
+                    browserId = crypto.randomUUID();
+                    localStorage.setItem('lexard_browser_id', browserId);
+                }
+                return browserId;
+            },
+
+            getSessionId() {
+                let sessionId = sessionStorage.getItem('lexard_session_id');
+                if (!sessionId) {
+                    sessionId = crypto.randomUUID();
+                    sessionStorage.setItem('lexard_session_id', sessionId);
+                    // Auto-track session start
+                    this._send('session_started', {});
+                }
+                return sessionId;
+            },
+
+            track(eventName, properties = {}) {
+                // Ensure session is initialized
+                this.getSessionId();
+                this._send(eventName, properties);
+            },
+
+            _send(eventName, properties) {
+                const payload = {
+                    event_name: eventName,
+                    browser_id: this.getBrowserId(),
+                    session_id: sessionStorage.getItem('lexard_session_id'),
+                    properties: properties,
+                };
+
+                // Fire-and-forget with keepalive for page unload
+                fetch('/analytics/events', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                    keepalive: true,
+                }).catch(() => {}); // Silently ignore errors
+            },
+
+            init() {
+                // Initialize session (triggers session_started)
+                this.getSessionId();
+
+                // Track session end on page unload
+                window.addEventListener('beforeunload', () => {
+                    this._send('session_ended', {});
+                });
+            },
+        };
+
+        // Initialize analytics on page load
+        Analytics.init();
+
+        // ==================== APPLICATION STATE ====================
         // State
         let selectedDocumentId = null;
         let documents = [];
@@ -1486,6 +1546,8 @@
         async function uploadDocument(file) {
             const formData = new FormData();
             formData.append('file', file);
+            const uploadStartTime = Date.now();
+            const fileExtension = file.name.split('.').pop().toLowerCase();
 
             // Show progress UI immediately with "Uploading" stage
             showUploadProgressUI(file.name);
@@ -1508,9 +1570,15 @@
                     throw new Error('Upload response missing task_id. Response: ' + JSON.stringify(data));
                 }
 
-                // Now track progress via SSE
-                await trackUploadProgress(data.task_id, data.filename);
+                // Now track progress via SSE (will track completion internally)
+                await trackUploadProgress(data.task_id, data.filename, uploadStartTime, fileExtension);
             } catch (error) {
+                // Track upload failure
+                Analytics.track('document_upload_failed', {
+                    error_type: error.message,
+                    file_type: fileExtension,
+                    duration_ms: Date.now() - uploadStartTime,
+                });
                 alert('Upload failed: ' + error.message);
                 hideUploadLoading();
             }
@@ -1537,7 +1605,7 @@
             `;
         }
 
-        async function trackUploadProgress(taskId, filename) {
+        async function trackUploadProgress(taskId, filename, uploadStartTime, fileExtension) {
             const STAGE_LABELS = {
                 uploading: 'Uploading',
                 parsing: 'Parsing document',
@@ -1588,6 +1656,11 @@
                 // Handle completion
                 if (update.stage === 'complete') {
                     eventSource.close();
+                    // Track successful upload
+                    Analytics.track('document_uploaded', {
+                        file_type: fileExtension,
+                        duration_ms: Date.now() - uploadStartTime,
+                    });
                     // Extract document ID from message
                     const match = update.message.match(/Document ID: ([a-f0-9-]+)/);
                     if (match) {
@@ -1607,6 +1680,12 @@
 
                 // Handle failure
                 if (update.stage === 'failed') {
+                    // Track upload failure
+                    Analytics.track('document_upload_failed', {
+                        error_type: update.error || update.message,
+                        file_type: fileExtension,
+                        duration_ms: Date.now() - uploadStartTime,
+                    });
                     progressBar.classList.add('failed');
                     progressError.style.display = 'block';
                     progressError.textContent = `Error: ${update.error || update.message}`;
@@ -1672,6 +1751,12 @@
             }
 
             const resultBox = document.getElementById('query-result');
+            const startTime = Date.now();
+
+            // Track query submission (only question length, not content - privacy)
+            Analytics.track('query_submitted', {
+                question_length: question.length,
+            });
 
             // Show progress UI
             showOperationProgress(resultBox, 'query');
@@ -1695,12 +1780,32 @@
 
                 // If operation_id present, track progress via SSE
                 if (data.operation_id) {
-                    await trackOperationProgress(data.operation_id, resultBox, 'query', renderAnswer);
+                    await trackOperationProgress(data.operation_id, resultBox, 'query', (result) => {
+                        // Track query completion
+                        Analytics.track('query_completed', {
+                            duration_ms: Date.now() - startTime,
+                            confidence: result.confidence,
+                            citation_count: result.citation_chunks?.length || 0,
+                            language: result.language,
+                        });
+                        renderAnswer(result);
+                    });
                 } else {
                     // Fallback: direct result (backward compatibility)
+                    Analytics.track('query_completed', {
+                        duration_ms: Date.now() - startTime,
+                        confidence: data.confidence,
+                        citation_count: data.citation_chunks?.length || 0,
+                        language: data.language,
+                    });
                     renderAnswer(data);
                 }
             } catch (error) {
+                // Track query failure
+                Analytics.track('query_failed', {
+                    error_type: error.message,
+                    duration_ms: Date.now() - startTime,
+                });
                 showError(resultBox, error.message);
             }
         }
@@ -1745,6 +1850,12 @@
 
             const style = document.getElementById('summary-style').value;
             const resultBox = document.getElementById('summary-result');
+            const startTime = Date.now();
+
+            // Track summarize request
+            Analytics.track('summarize_requested', {
+                style: style,
+            });
 
             // Show progress UI
             showOperationProgress(resultBox, 'summarize');
@@ -1768,12 +1879,32 @@
 
                 // If operation_id present, track progress via SSE
                 if (data.operation_id) {
-                    await trackOperationProgress(data.operation_id, resultBox, 'summarize', renderSummary);
+                    await trackOperationProgress(data.operation_id, resultBox, 'summarize', (result) => {
+                        // Track summarize completion
+                        Analytics.track('summarize_completed', {
+                            duration_ms: Date.now() - startTime,
+                            style: style,
+                            word_count: result.word_count,
+                            language: result.language,
+                        });
+                        renderSummary(result);
+                    });
                 } else {
                     // Fallback: direct result (backward compatibility)
+                    Analytics.track('summarize_completed', {
+                        duration_ms: Date.now() - startTime,
+                        style: style,
+                        word_count: data.word_count,
+                        language: data.language,
+                    });
                     renderSummary(data);
                 }
             } catch (error) {
+                // Track summarize failure
+                Analytics.track('summarize_failed', {
+                    error_type: error.message,
+                    duration_ms: Date.now() - startTime,
+                });
                 showError(resultBox, error.message);
             }
         }
@@ -1815,6 +1946,10 @@
             }
 
             const resultBox = document.getElementById('risks-result');
+            const startTime = Date.now();
+
+            // Track risks request
+            Analytics.track('risks_requested', {});
 
             // Show progress UI
             showOperationProgress(resultBox, 'risks');
@@ -1837,12 +1972,32 @@
 
                 // If operation_id present, track progress via SSE
                 if (data.operation_id) {
-                    await trackOperationProgress(data.operation_id, resultBox, 'risks', renderRisks);
+                    await trackOperationProgress(data.operation_id, resultBox, 'risks', (result) => {
+                        // Track risks completion
+                        Analytics.track('risks_completed', {
+                            duration_ms: Date.now() - startTime,
+                            risk_count: result.risks?.length || 0,
+                            overall_risk_level: result.overall_risk_level,
+                            language: result.language,
+                        });
+                        renderRisks(result);
+                    });
                 } else {
                     // Fallback: direct result (backward compatibility)
+                    Analytics.track('risks_completed', {
+                        duration_ms: Date.now() - startTime,
+                        risk_count: data.risks?.length || 0,
+                        overall_risk_level: data.overall_risk_level,
+                        language: data.language,
+                    });
                     renderRisks(data);
                 }
             } catch (error) {
+                // Track risks failure
+                Analytics.track('risks_failed', {
+                    error_type: error.message,
+                    duration_ms: Date.now() - startTime,
+                });
                 showError(resultBox, error.message);
             }
         }
@@ -1917,6 +2072,11 @@
             }
 
             const resultBox = document.getElementById('compare-result');
+            const startTime = Date.now();
+
+            // Track compare request
+            Analytics.track('compare_requested', {});
+
             showLoading(resultBox);
 
             try {
@@ -1935,8 +2095,22 @@
                 }
 
                 const data = await response.json();
+
+                // Track compare completion
+                Analytics.track('compare_completed', {
+                    duration_ms: Date.now() - startTime,
+                    differences_count: data.differences?.length || 0,
+                    overall_similarity: data.overall_similarity,
+                    language: data.language,
+                });
+
                 renderComparison(data);
             } catch (error) {
+                // Track compare failure
+                Analytics.track('compare_failed', {
+                    error_type: error.message,
+                    duration_ms: Date.now() - startTime,
+                });
                 showError(resultBox, error.message);
             }
         }

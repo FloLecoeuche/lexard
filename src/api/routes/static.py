@@ -5,6 +5,8 @@ from pathlib import Path
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
 
+from src.config import get_settings
+
 router = APIRouter(tags=["ui"])
 
 UI_DIR = Path(__file__).parent.parent.parent.parent / "ui"
@@ -18,6 +20,23 @@ async def serve_ui() -> FileResponse:
         UI_DIR / "index.html",
         media_type="text/html"
     )
+
+
+@router.get("/internal/{dashboard_path}", include_in_schema=False)
+async def serve_admin_ui(dashboard_path: str) -> FileResponse:
+    """Serve the admin analytics dashboard.
+
+    Only serves if the path matches the configured dashboard path.
+    """
+    settings = get_settings()
+    if dashboard_path != settings.admin.dashboard_path:
+        raise HTTPException(status_code=404, detail="Not found")
+
+    admin_page = UI_DIR / "admin-a7x9k2.html"
+    if not admin_page.exists():
+        raise HTTPException(status_code=404, detail="Dashboard not found")
+
+    return FileResponse(admin_page, media_type="text/html")
 
 
 @router.get("/static/js/{filename}", include_in_schema=False)
