@@ -11,6 +11,7 @@ Lexard is a B2B document intelligence solution that provides contract analysis, 
 - **Risk Analysis** - Identify legal, financial, and operational risks
 - **Document Summarization** - Generate executive or detailed summaries
 - **Document Comparison** - Compare two contracts and identify differences
+- **Multilingual Support** - Full French and English support with cross-language queries
 - **Guardrails** - Hallucination detection, PII redaction, prompt injection blocking
 - **Sovereign Architecture** - No external APIs, all processing runs locally
 
@@ -66,6 +67,7 @@ Visit [http://localhost:8000](http://localhost:8000) to use the web interface.
 ```
 
 **Tech Stack:**
+
 - **Backend:** Python 3.11, FastAPI
 - **Agent:** LangChain + LangGraph
 - **Vector DB:** Qdrant (HNSW, cosine similarity)
@@ -134,6 +136,7 @@ curl -X POST http://localhost:8000/compare \
 - **[Quickstart Guide](docs/quickstart.md)** - Get started in 5 minutes
 - **[API Reference](docs/api.md)** - Complete REST API documentation
 - **[Configuration Guide](docs/configuration.md)** - Configuration options
+- **[Multilingual Guide](docs/multilingual.md)** - French language support and cross-language queries
 - **[Development Guide](docs/development.md)** - Development setup
 - **[Deployment Guide](docs/deployment.md)** - Production deployment
 - **[Troubleshooting](docs/troubleshooting.md)** - Common issues and solutions
@@ -155,7 +158,7 @@ Once running, visit:
 
 ## Project Status
 
-Lexard is under active development. Current phase: **Epic 6 - Hardening**
+Lexard is under active development. Current phase: **Epic 9 - Multilingual Support**
 
 - ✅ Core ingestion pipeline
 - ✅ RAG engine with citations
@@ -165,7 +168,9 @@ Lexard is under active development. Current phase: **Epic 6 - Hardening**
 - ✅ Evaluation harness
 - ✅ Red team testing
 - ✅ Performance optimization
-- 🔶 Documentation (in progress)
+- ✅ Documentation
+- ✅ French language support
+- 🔶 Integration testing (in progress)
 
 See [tasks/PROGRESS.md](tasks/PROGRESS.md) for detailed status.
 
@@ -248,19 +253,9 @@ Contributions welcome! Please:
 5. Ensure all tests pass: `pytest tests/ -v`
 6. Submit a pull request to `develop`
 
-## Roadmap
-
-- [ ] Multi-document queries
-- [ ] Custom risk categories
-- [ ] Document versioning
-- [ ] API authentication
-- [ ] Multi-language support
-- [ ] Advanced reranking
-- [ ] Streaming responses
-
 ## License
 
-MIT License - see [LICENSE](LICENSE) for details.
+License - see [LICENSE](LICENSE) for details.
 
 ## Support
 
@@ -271,6 +266,7 @@ MIT License - see [LICENSE](LICENSE) for details.
 ## Acknowledgments
 
 Built with:
+
 - [FastAPI](https://fastapi.tiangolo.com/)
 - [LangChain](https://www.langchain.com/)
 - [LangGraph](https://www.langchain.com/langgraph)
