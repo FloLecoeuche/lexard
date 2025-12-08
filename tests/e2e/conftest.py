@@ -12,6 +12,60 @@ from src.api.main import app
 from src.config import get_settings
 
 
+# Service availability checking
+def check_api_available() -> bool:
+    """Check if API server is available."""
+    try:
+        # Use sync client for checking
+        with httpx.Client(timeout=5.0) as client:
+            response = client.get("http://localhost:8000/health")
+            return response.status_code == 200
+    except (httpx.RequestError, httpx.TimeoutException):
+        return False
+
+
+def check_ollama_available() -> bool:
+    """Check if Ollama service is available."""
+    try:
+        with httpx.Client(timeout=5.0) as client:
+            response = client.get("http://localhost:11434/api/version")
+            return response.status_code == 200
+    except (httpx.RequestError, httpx.TimeoutException):
+        return False
+
+
+def check_qdrant_available() -> bool:
+    """Check if Qdrant service is available."""
+    try:
+        with httpx.Client(timeout=5.0) as client:
+            response = client.get("http://localhost:6333/healthz")
+            return response.status_code == 200
+    except (httpx.RequestError, httpx.TimeoutException):
+        return False
+
+
+# Pytest skip markers based on service availability
+requires_api = pytest.mark.skipif(
+    not check_api_available(),
+    reason="API server not available at localhost:8000"
+)
+
+requires_ollama = pytest.mark.skipif(
+    not check_ollama_available(),
+    reason="Ollama not available at localhost:11434"
+)
+
+requires_qdrant = pytest.mark.skipif(
+    not check_qdrant_available(),
+    reason="Qdrant not available at localhost:6333"
+)
+
+requires_all_services = pytest.mark.skipif(
+    not (check_api_available() and check_ollama_available() and check_qdrant_available()),
+    reason="One or more services not available (API, Ollama, Qdrant)"
+)
+
+
 @pytest.fixture(scope="session", autouse=True)
 def setup_e2e_environment():
     """Configure environment for E2E tests."""
@@ -109,10 +163,18 @@ async def upload_document(
     Raises:
         AssertionError: If upload fails
     """
+    # Determine MIME type based on file extension
+    mime_types = {
+        ".pdf": "application/pdf",
+        ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        ".txt": "text/plain",
+    }
+    mime_type = mime_types.get(file_path.suffix.lower(), "application/octet-stream")
+
     with open(file_path, "rb") as f:
         response = await client.post(
             "/upload",
-            files={"file": (file_path.name, f, "application/pdf" if file_path.suffix == ".pdf" else "application/vnd.openxmlformats-officedocument.wordprocessingml.document")}
+            files={"file": (file_path.name, f, mime_type)}
         )
 
     assert response.status_code == 200, f"Upload failed: {response.text}"

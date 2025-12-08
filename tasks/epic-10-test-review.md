@@ -175,7 +175,7 @@ def test_summarizer_with_real_ollama():  # DON'T DO THIS IN UNIT TESTS
 
 ## US 10.3: E2E & Integration Test Fixes
 
-**Status:** 🔲 Not Started
+**Status:** 🔶 In Progress
 
 ### Description
 
