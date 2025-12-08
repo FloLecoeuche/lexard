@@ -280,6 +280,13 @@ class OpenAICompatibleClient:
 - [ ] Unit tests pass for both sync and async streaming
 - [ ] Non-streaming `generate()` still works (backward compatibility)
 
+### Tests
+
+- **Modified:** `tests/test_llm.py` - Add streaming generator tests
+- **Run:** `pytest tests/test_llm.py -v -k streaming`
+
+> Note: Use mock HTTP responses to test streaming parsing without real Ollama.
+
 ### Files to Modify
 
 1. `src/rag/llm.py` - Add streaming methods and `StreamChunk`
@@ -461,6 +468,13 @@ class RAGPipeline:
 - [ ] Error events include helpful messages
 - [ ] Non-streaming `query()` still works
 - [ ] Unit tests pass for streaming pipeline
+
+### Tests
+
+- **Modified:** `tests/test_pipeline.py` - Add `query_stream()` tests
+- **Run:** `pytest tests/test_pipeline.py -v -k stream`
+
+> Note: Test event ordering (metadata → tokens → done) and error handling.
 
 ### Files to Modify
 
@@ -662,6 +676,13 @@ async def summarize_document_stream(
 2. `src/api/routes/analysis.py` - Add `/summarize/stream`, `/risks/stream`
 3. `src/agent/tools/summarizer.py` - Add `summarize_stream()`
 4. `src/agent/tools/risk_detector.py` - Add `analyze_stream()`
+
+### Tests
+
+- **New:** `tests/test_streaming_endpoints.py` - Test SSE response format
+- **Run:** `pytest tests/test_streaming_endpoints.py -v`
+
+> Note: Use TestClient with httpx to consume SSE streams. Verify headers and event format.
 
 ---
 
@@ -913,6 +934,14 @@ function handleStreamEvent(event, answerDiv, citationsDiv, citationsContent) {
 - [ ] No UI flicker or layout shifts
 - [ ] Works on slow connections
 
+### Tests
+
+- **None:** UI-only changes (no Python backend tests)
+- **Manual:** Test streaming display in browser with real queries
+- **Run:** Manual browser testing
+
+> Note: UI is a single HTML file. Verify typing cursor, fallback behavior, and stop button.
+
 ### Files to Modify
 
 1. `ui/index.html` - Add streaming JavaScript and CSS
@@ -1063,6 +1092,14 @@ class SummarizerTool:
 - [ ] Error events include helpful messages
 - [ ] Non-streaming methods still work
 - [ ] Tests pass for streaming tools
+
+### Tests
+
+- **Modified:** `tests/test_summarizer.py` - Add `summarize_stream()` tests
+- **Modified:** `tests/test_risk_detector.py` - Add `analyze_stream()` tests
+- **Run:** `pytest tests/test_summarizer.py tests/test_risk_detector.py -v -k stream`
+
+> Note: Test event sequence and language-aware streaming.
 
 ### Files to Modify
 

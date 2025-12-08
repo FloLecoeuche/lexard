@@ -125,6 +125,13 @@ async def get_document_file(
 - [ ] No file path traversal vulnerabilities
 - [ ] Endpoint documented in OpenAPI spec
 
+### Tests
+
+- **New:** `tests/test_document_file_endpoint.py` - Test file serving endpoint
+- **Run:** `pytest tests/test_document_file_endpoint.py -v`
+
+> Note: Test MIME types, 404 handling, and path traversal protection.
+
 ### Files to Create/Modify
 
 1. `src/db/registry.py` (modify - add file_path field)
@@ -617,6 +624,14 @@ Add script tags to index.html:
 - [ ] No external CDN calls (PDF.js and docx-preview bundled locally)
 - [ ] Memory cleaned up when modal closes
 
+### Tests
+
+- **None:** UI-only changes (no Python backend tests)
+- **Manual:** Test preview modal for PDF, DOCX, TXT files in browser
+- **Run:** Manual browser testing
+
+> Note: Verify modal opens/closes, documents render, and error states display correctly.
+
 ### Files to Create/Modify
 
 1. `ui/index.html` (modify - add modal, styles, JavaScript)
@@ -785,6 +800,14 @@ async def delete_document(
 - [ ] Partial uploads cleaned up on error
 - [ ] Configuration supports custom storage directory
 - [ ] Existing documents still work (graceful handling of missing file_path)
+
+### Tests
+
+- **New:** `tests/test_document_storage.py` - Test file save/delete on upload/removal
+- **Modified:** `tests/test_upload.py` - Verify file_path populated in registry
+- **Run:** `pytest tests/test_document_storage.py tests/test_upload.py -v`
+
+> Note: Test cleanup on error, file size limits, and directory creation.
 
 ### Files to Create/Modify
 

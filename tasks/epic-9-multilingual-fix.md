@@ -187,6 +187,14 @@ if __name__ == "__main__":
 - [ ] English queries still work correctly
 - [ ] Documentation updated
 
+### Tests
+
+- **Modified:** `tests/test_embeddings.py` - Update for new model name
+- **New:** `tests/test_migration.py` - Test migration script logic (mock Qdrant)
+- **Run:** `pytest tests/test_embeddings.py tests/test_migration.py -v`
+
+> Note: Migration script is primarily tested manually with `--dry-run`. Unit test validates helper functions only.
+
 ### Files to Modify
 
 1. `config/config.yaml` - Update embeddings config
@@ -452,6 +460,14 @@ def query(
 - [ ] Unit tests pass for both languages
 - [ ] No regression in English query quality
 
+### Tests
+
+- **Modified:** `tests/test_pipeline.py` - Add language detection and response tests
+- **Modified:** `tests/test_llm.py` - Test `detect_language_from_chunks()` and bilingual prompts
+- **Run:** `pytest tests/test_pipeline.py tests/test_llm.py -v`
+
+> Note: Test French doc + English query → French response (key behavior).
+
 ### Files to Modify
 
 1. `src/rag/llm.py` - Add bilingual prompts, `detect_language_from_chunks()`
@@ -604,6 +620,15 @@ async def summarize_document(req: SummarizeRequest, request: Request) -> Summari
 - [ ] English functionality unchanged
 - [ ] Unit tests pass for both languages
 
+### Tests
+
+- **Modified:** `tests/test_summarizer.py` - Add French summarization tests
+- **Modified:** `tests/test_risk_detector.py` - Add French risk analysis tests
+- **Modified:** `tests/test_diff.py` - Add French comparison tests
+- **Run:** `pytest tests/test_summarizer.py tests/test_risk_detector.py tests/test_diff.py -v`
+
+> Note: Mock LLM responses to verify correct prompts are selected based on language.
+
 ### Files to Modify
 
 1. `src/agent/tools/summarizer.py` - Language-aware summarization
@@ -701,6 +726,14 @@ export function LanguageBadge({ language }: LanguageBadgeProps) {
 - [ ] Tooltip explains auto-detection
 - [ ] UI renders French text correctly (accents, etc.)
 - [ ] No layout issues with French content
+
+### Tests
+
+- **None:** UI-only changes (no Python backend tests)
+- **Manual:** Verify language badge displays correctly for EN/FR responses
+- **Run:** Manual browser testing with French and English documents
+
+> Note: UI is a single HTML file. No automated frontend tests in this project.
 
 ### Files to Modify
 
@@ -916,6 +949,14 @@ curl -X POST /query -d '{
 - [ ] README mentions French support
 - [ ] CLAUDE.md reflects current embedding model
 - [ ] All existing English tests still pass
+
+### Tests
+
+- **New:** `tests/integration/test_french_workflow.py` - French language workflow tests
+- **New:** `tests/e2e/test_multilingual_e2e.py` - End-to-end multilingual tests
+- **Run:** `pytest tests/integration/test_french_workflow.py tests/e2e/test_multilingual_e2e.py -v`
+
+> Note: This US is primarily about creating tests. Run full test suite at the end.
 
 ### Files to Create/Modify
 
