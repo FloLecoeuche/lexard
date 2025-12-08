@@ -346,6 +346,51 @@ Run instructions added to:
 2. **Evaluation/Performance are optional** - Require services, better for manual QA
 3. **Consider adding warmup iteration** for performance benchmarks to avoid cold start skewing
 
-## Next Steps
+## US 10.5: Unnecessary Tests Removal
 
-- US 10.5: Present removal recommendations (with user approval)
+**Status:** ✅ Complete
+**Date:** 2025-12-08
+**User Decision:** No tests removed
+
+### Summary
+
+After comprehensive analysis, **no tests were recommended for removal**. The test suite is well-organized and not redundant.
+
+### Key Findings
+
+1. **"Duplicate" tests are actually complementary:**
+   - Language detection: Unit tests (4) test function isolation, Integration tests (12) test content variations
+   - Bilingual prompts: Three test files test different components (agent API vs RAG API vs integration)
+
+2. **No trivial, dead code, over-mocked, or flaky tests found**
+
+3. **Parameterization not recommended:**
+   - Time savings would be <1s
+   - Individual test names are more debuggable
+   - Current test count (469) is not excessive
+
+### Metrics
+
+| Metric | Value |
+|--------|-------|
+| Tests analyzed | 469 |
+| Tests removed | 0 |
+| CI time | ~12.2s |
+
+### Detailed Report
+
+See [REMOVAL_REPORT.md](./REMOVAL_REPORT.md) for full analysis.
+
+---
+
+## Epic 10 Complete
+
+All User Stories for Epic 10 (Test Suite Review) have been completed:
+
+| US | Name | Status |
+|----|------|--------|
+| 10.1 | Test Audit & Inventory | ✅ |
+| 10.2 | Unit Test Fixes & Cleanup | ✅ |
+| 10.3 | E2E & Integration Test Fixes | ✅ |
+| 10.4 | Specialized Test Suites Review | ✅ |
+| 10.5 | Unnecessary Tests Removal | ✅ |
