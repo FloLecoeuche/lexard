@@ -159,8 +159,8 @@ async def test_compare_with_invalid_document_ids(api_client, sample_contract_en_
     response = await api_client.post(
         "/compare",
         json={
-            "document_id_1": sample_contract_en_pdf,
-            "document_id_2": fake_doc_id
+            "doc_a": sample_contract_en_pdf,
+            "doc_b": fake_doc_id
         }
     )
 

@@ -84,11 +84,15 @@ def assert_comparison_response_valid(data: dict[str, Any]) -> None:
     """
     assert "differences" in data, "Response missing 'differences' field"
     assert isinstance(data["differences"], list), "differences must be list"
+    assert "overall_similarity" in data, "Response missing 'overall_similarity' field"
 
     # Can be empty if documents are identical
     for i, diff in enumerate(data["differences"]):
-        assert "category" in diff, f"Difference {i} missing 'category'"
-        assert "description" in diff, f"Difference {i} missing 'description'"
+        assert "section" in diff, f"Difference {i} missing 'section'"
+        assert "change_type" in diff, f"Difference {i} missing 'change_type'"
+        assert "similarity" in diff, f"Difference {i} missing 'similarity'"
+        assert "doc_a_excerpt" in diff, f"Difference {i} missing 'doc_a_excerpt'"
+        assert "doc_b_excerpt" in diff, f"Difference {i} missing 'doc_b_excerpt'"
 
 
 def contains_french_text(text: str) -> bool:
