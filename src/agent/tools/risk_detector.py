@@ -106,7 +106,9 @@ class RiskDetectorTool:
     """
 
     RISK_ANALYSIS_PROMPTS = {
-        "en": """Analyze the following contract excerpt for potential risks.
+        "en": """You are analyzing a contract in English. You MUST respond entirely in English.
+
+Analyze the following contract excerpt for potential risks.
 
 EXCERPT (Page {page}):
 {content}
@@ -121,23 +123,27 @@ Identify any risks in these categories:
 For each risk found, provide:
 - Category: one of [legal_liability, financial_penalty, data_protection, termination, ambiguous_language, other]
 - Severity: low/medium/high
-- Description: Brief explanation of the risk
+- Description: Brief explanation of the risk (MUST be in English)
 - Clause: Quote the relevant text exactly
-- Recommendation: How to mitigate (optional)
+- Recommendation: How to mitigate (MUST be in English)
 
 If no risks are found, respond with exactly: NO_RISKS_FOUND
+
+IMPORTANT: All description and recommendation fields MUST be written in English.
 
 If risks are found, respond with valid JSON only:
 {{"risks": [
   {{
     "category": "category_name",
     "severity": "low|medium|high",
-    "description": "...",
+    "description": "English description here",
     "clause": "quoted text...",
-    "recommendation": "..."
+    "recommendation": "English recommendation here"
   }}
 ]}}""",
-        "fr": """Analysez l'extrait de contrat suivant pour identifier les risques potentiels.
+        "fr": """Vous analysez un contrat en français. Vous DEVEZ répondre entièrement en français.
+
+Analysez l'extrait de contrat suivant pour identifier les risques potentiels.
 
 EXTRAIT (Page {page}):
 {content}
@@ -152,20 +158,22 @@ Identifiez les risques dans ces catégories:
 Pour chaque risque trouvé, fournissez:
 - Catégorie: une parmi [legal_liability, financial_penalty, data_protection, termination, ambiguous_language, other]
 - Gravité: low/medium/high
-- Description: Brève explication du risque
+- Description: Brève explication du risque (DOIT être en français)
 - Clause: Citation exacte du texte concerné
-- Recommandation: Comment atténuer (optionnel)
+- Recommandation: Comment atténuer (DOIT être en français)
 
 Si aucun risque n'est trouvé, répondez exactement: NO_RISKS_FOUND
+
+IMPORTANT: Tous les champs description et recommendation DOIVENT être rédigés en français.
 
 Si des risques sont trouvés, répondez uniquement avec du JSON valide:
 {{"risks": [
   {{
     "category": "nom_categorie",
     "severity": "low|medium|high",
-    "description": "...",
+    "description": "Description en français ici",
     "clause": "texte cité...",
-    "recommendation": "..."
+    "recommendation": "Recommandation en français ici"
   }}
 ]}}""",
     }
