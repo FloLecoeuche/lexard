@@ -29,9 +29,11 @@ Répondez uniquement en vous basant sur le contexte ci-dessus. Incluez des citat
 }
 
 # Document summarization prompts
+# IMPORTANT: Response language follows DOCUMENT language, not query language
 CHUNK_SUMMARY_PROMPTS = {
     "en": """Summarize the following document excerpt in 2-3 sentences.
 Focus on key facts, obligations, and important details.
+IMPORTANT: You MUST respond in English.
 
 EXCERPT:
 {content}
@@ -39,6 +41,7 @@ EXCERPT:
 SUMMARY:""",
     "fr": """Résumez l'extrait de document suivant en 2-3 phrases.
 Concentrez-vous sur les faits clés, les obligations et les détails importants.
+IMPORTANT: Vous DEVEZ répondre en français.
 
 EXTRAIT:
 {content}
@@ -48,6 +51,7 @@ RÉSUMÉ:""",
 
 AGGREGATION_PROMPTS = {
     "en": """Based on these section summaries, create a cohesive document summary.
+IMPORTANT: You MUST respond in English regardless of the source language.
 
 SECTION SUMMARIES:
 {summaries}
@@ -65,6 +69,7 @@ FORMAT:
 - Point 2
 ...""",
     "fr": """Basé sur ces résumés de sections, créez un résumé cohérent du document.
+IMPORTANT: Vous DEVEZ répondre en français quelle que soit la langue source.
 
 RÉSUMÉS DES SECTIONS:
 {summaries}
@@ -84,8 +89,10 @@ FORMAT:
 }
 
 # Risk analysis prompts
+# IMPORTANT: Response language follows DOCUMENT language, not query language
 RISK_ANALYSIS_PROMPTS = {
     "en": """Analyze the following contract excerpt for potential risks.
+IMPORTANT: You MUST respond in English.
 
 EXCERPT:
 {content}
@@ -103,6 +110,7 @@ For each risk, provide:
 FORMAT:
 - [Type] [Severity]: Description""",
     "fr": """Analysez l'extrait de contrat suivant pour identifier les risques potentiels.
+IMPORTANT: Vous DEVEZ répondre en français.
 
 EXTRAIT:
 {content}
@@ -122,8 +130,10 @@ FORMAT:
 }
 
 # Document comparison prompts
+# IMPORTANT: Response language follows DOCUMENT language, not query language
 DIFF_PROMPTS = {
     "en": """Compare these two contract excerpts and identify key differences.
+IMPORTANT: You MUST respond in English.
 
 DOCUMENT A:
 {doc_a}
@@ -139,6 +149,7 @@ Identify differences in:
 
 For each difference, specify which document contains what.""",
     "fr": """Comparez ces deux extraits de contrat et identifiez les différences clés.
+IMPORTANT: Vous DEVEZ répondre en français.
 
 DOCUMENT A:
 {doc_a}
