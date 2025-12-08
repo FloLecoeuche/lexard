@@ -393,3 +393,123 @@ class TestLongDocuments:
 
         # Should process at most MAX_CHUNKS
         assert result.chunk_count == 50
+
+
+class TestLanguageSupport:
+    """Test multilingual support for summarization."""
+
+    @pytest.fixture
+    def french_chunks(self):
+        """Create French language chunks for testing."""
+        return [
+            MockPoint(payload={
+                "content": "Ceci est le premier extrait concernant les termes et conditions du contrat.",
+                "page": 1,
+                "chunk_index": 0,
+                "document_id": "doc-fr"
+            }),
+            MockPoint(payload={
+                "content": "Ceci est le deuxième extrait sur le paiement et la tarification.",
+                "page": 1,
+                "chunk_index": 1,
+                "document_id": "doc-fr"
+            }),
+        ]
+
+    def test_result_includes_language_field(self):
+        """Test SummaryResult includes language field."""
+        result = SummaryResult(
+            executive_summary="Summary",
+            key_points=["Point 1"],
+            language="fr"
+        )
+        assert result.language == "fr"
+
+    def test_result_default_language_is_english(self):
+        """Test SummaryResult defaults to English."""
+        result = SummaryResult(
+            executive_summary="Summary",
+            key_points=["Point 1"]
+        )
+        assert result.language == "en"
+
+    @pytest.mark.asyncio
+    async def test_summarize_with_explicit_language(self, summarizer, sample_chunks):
+        """Test summarization with explicit language parameter."""
+        summarizer.qdrant_service.client.scroll.return_value = (sample_chunks, None)
+        summarizer.llm.generate.return_value = LLMResponse(
+            content="""## Résumé Exécutif
+Résumé du document.
+
+## Points Clés
+- Point 1
+- Point 2""",
+            model="test",
+            total_tokens=50,
+            finish_reason="stop"
+        )
+
+        result = await summarizer.summarize("doc-123", language="fr")
+
+        assert result.language == "fr"
+
+    @pytest.mark.asyncio
+    async def test_auto_detect_french_language(self, summarizer, french_chunks):
+        """Test language auto-detection from French chunks."""
+        summarizer.qdrant_service.client.scroll.return_value = (french_chunks, None)
+        summarizer.llm.generate.return_value = LLMResponse(
+            content="Résumé",
+            model="test",
+            total_tokens=10,
+            finish_reason="stop"
+        )
+
+        result = await summarizer.summarize("doc-fr")
+
+        assert result.language == "fr"
+
+    @pytest.mark.asyncio
+    async def test_empty_chunk_returns_french_message(self, summarizer):
+        """Test empty chunk returns French message when language is French."""
+        empty_chunk = MockPoint(payload={"content": "", "page": 1, "chunk_index": 0})
+
+        result = await summarizer._summarize_chunk(empty_chunk, language="fr")
+
+        assert result == "[Extrait vide]"
+
+    @pytest.mark.asyncio
+    async def test_french_aggregate_empty_summaries(self, summarizer):
+        """Test French message when no valid summaries available."""
+        summaries = [
+            {"page": 1, "chunk_index": 0, "summary": "[Résumé non disponible]"},
+        ]
+
+        result = await summarizer._aggregate_summaries(summaries, language="fr")
+
+        assert "Impossible de générer" in result["executive_summary"]
+
+    def test_parse_french_response_format(self, summarizer):
+        """Test parsing French-formatted response."""
+        text = """## Résumé Exécutif
+Ceci est un résumé exécutif bien structuré avec plusieurs phrases.
+Il couvre les points principaux du document.
+
+## Points Clés
+- Premier point clé
+- Deuxième point clé
+- Troisième point clé"""
+
+        result = summarizer._parse_summary_response(text, language="fr")
+
+        assert len(result["key_points"]) == 3
+        assert "Premier point clé" in result["key_points"]
+
+    def test_detect_language_from_chunks(self, summarizer, french_chunks):
+        """Test language detection from chunks."""
+        language = summarizer._detect_language_from_chunks(french_chunks)
+        assert language == "fr"
+
+    def test_detect_language_empty_chunks(self, summarizer):
+        """Test language detection defaults to English for empty chunks."""
+        language = summarizer._detect_language_from_chunks([])
+        assert language == "en"

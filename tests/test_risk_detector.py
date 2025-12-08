@@ -685,3 +685,137 @@ class TestLongDocuments:
         # Should process at most MAX_CHUNKS (50)
         # Each chunk calls generate once
         assert risk_detector.llm.generate.call_count == 50
+
+
+class TestLanguageSupport:
+    """Test multilingual support for risk detection."""
+
+    @pytest.fixture
+    def french_chunks(self):
+        """Create French language chunks for testing."""
+        return [
+            MockPoint(
+                payload={
+                    "content": "Le prestataire s'engage à indemniser le client de tout préjudice.",
+                    "page": 1,
+                    "chunk_index": 0,
+                    "document_id": "doc-fr",
+                }
+            ),
+            MockPoint(
+                payload={
+                    "content": "Les pénalités de retard s'élèvent à 5% par mois de retard.",
+                    "page": 2,
+                    "chunk_index": 1,
+                    "document_id": "doc-fr",
+                }
+            ),
+        ]
+
+    def test_result_includes_language_field(self):
+        """Test RiskAnalysisResult includes language field."""
+        result = RiskAnalysisResult(
+            risks=[],
+            overall_risk_level=RiskSeverity.LOW,
+            summary="No risks",
+            document_id="doc-123",
+            language="fr",
+        )
+        assert result.language == "fr"
+
+    def test_result_default_language_is_english(self):
+        """Test RiskAnalysisResult defaults to English."""
+        result = RiskAnalysisResult(
+            risks=[],
+            overall_risk_level=RiskSeverity.LOW,
+            summary="No risks",
+            document_id="doc-123",
+        )
+        assert result.language == "en"
+
+    @pytest.mark.asyncio
+    async def test_analyze_with_explicit_language(self, risk_detector, sample_chunks):
+        """Test analysis with explicit language parameter."""
+        risk_detector.qdrant_service.client.scroll.return_value = (sample_chunks, None)
+        risk_detector.llm.generate.return_value = LLMResponse(
+            content="NO_RISKS_FOUND",
+            model="test",
+            total_tokens=10,
+            finish_reason="stop",
+        )
+
+        result = await risk_detector.analyze("doc-123", language="fr")
+
+        assert result.language == "fr"
+
+    @pytest.mark.asyncio
+    async def test_auto_detect_french_language(self, risk_detector, french_chunks):
+        """Test language auto-detection from French chunks."""
+        risk_detector.qdrant_service.client.scroll.return_value = (french_chunks, None)
+        risk_detector.llm.generate.return_value = LLMResponse(
+            content="NO_RISKS_FOUND",
+            model="test",
+            total_tokens=10,
+            finish_reason="stop",
+        )
+
+        result = await risk_detector.analyze("doc-fr")
+
+        assert result.language == "fr"
+
+    def test_french_summary_no_risks(self, risk_detector):
+        """Test French summary when no risks found."""
+        summary = risk_detector._generate_summary([], language="fr")
+        assert "Aucun risque significatif" in summary
+
+    def test_french_summary_with_risks(self, risk_detector):
+        """Test French summary with risks."""
+        risks = [
+            Risk(
+                category=RiskCategory.LEGAL_LIABILITY,
+                severity=RiskSeverity.HIGH,
+                description="Risque élevé",
+                clause_excerpt="clause",
+                page=1,
+            ),
+            Risk(
+                category=RiskCategory.FINANCIAL_PENALTY,
+                severity=RiskSeverity.MEDIUM,
+                description="Risque moyen",
+                clause_excerpt="clause",
+                page=2,
+            ),
+        ]
+
+        summary = risk_detector._generate_summary(risks, language="fr")
+
+        assert "2 risques identifiés" in summary
+        assert "1 élevé" in summary
+        assert "1 moyen" in summary
+
+    def test_detect_language_from_chunks(self, risk_detector, french_chunks):
+        """Test language detection from chunks."""
+        language = risk_detector._detect_language_from_chunks(french_chunks)
+        assert language == "fr"
+
+    def test_detect_language_empty_chunks(self, risk_detector):
+        """Test language detection defaults to English for empty chunks."""
+        language = risk_detector._detect_language_from_chunks([])
+        assert language == "en"
+
+    @pytest.mark.asyncio
+    async def test_french_prompt_used(self, risk_detector, french_chunks):
+        """Test French prompt is used when language is French."""
+        risk_detector.qdrant_service.client.scroll.return_value = (french_chunks, None)
+        risk_detector.llm.generate.return_value = LLMResponse(
+            content="NO_RISKS_FOUND",
+            model="test",
+            total_tokens=10,
+            finish_reason="stop",
+        )
+
+        await risk_detector.analyze("doc-fr", language="fr")
+
+        # Verify French prompt was used (check for French keywords in call)
+        call_args = risk_detector.llm.generate.call_args[0][0]
+        assert "Analysez" in call_args or "EXTRAIT" in call_args
