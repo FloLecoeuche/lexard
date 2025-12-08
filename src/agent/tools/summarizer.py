@@ -200,11 +200,16 @@ RÉSUMÉS:
         Raises:
             ValueError: If no chunks found for document
         """
+        import asyncio
         from src.api.progress import OperationStage
 
         logger.info(
             f"Starting summarization with progress for document {document_id}, style={style}"
         )
+
+        # Wait for SSE client to connect before starting heavy work
+        if tracker and operation_id:
+            await tracker.wait_for_subscriber(operation_id, timeout=0.5)
 
         # Stage 1: Loading (0-15%)
         if tracker and operation_id:
@@ -214,6 +219,7 @@ RÉSUMÉS:
                 0.05,
                 "Loading document...",
             )
+            await asyncio.sleep(0)  # Yield to let SSE send the update
 
         # Retrieve all chunks for document
         chunks = await self._get_all_chunks(document_id)
@@ -228,6 +234,7 @@ RÉSUMÉS:
                 0.15,
                 f"Loaded {len(chunks)} sections",
             )
+            await asyncio.sleep(0)
 
         logger.info(f"Retrieved {len(chunks)} chunks for document {document_id}")
 
@@ -252,6 +259,7 @@ RÉSUMÉS:
                 0.20,
                 "Processing sections...",
             )
+            await asyncio.sleep(0)
 
         chunk_summaries = await self._summarize_chunks_batch_with_progress(
             chunks, language, tracker, operation_id
@@ -265,6 +273,7 @@ RÉSUMÉS:
                 0.60,
                 "Creating summary...",
             )
+            await asyncio.sleep(0)
 
         aggregated = await self._aggregate_summaries(chunk_summaries, language)
 
@@ -275,6 +284,7 @@ RÉSUMÉS:
                 0.85,
                 "Summary generated",
             )
+            await asyncio.sleep(0)
 
         # Stage 4: Validation (85-100%)
         if tracker and operation_id:
@@ -284,6 +294,7 @@ RÉSUMÉS:
                 0.90,
                 "Validating response...",
             )
+            await asyncio.sleep(0)
 
         # Build result
         result = SummaryResult(
@@ -302,6 +313,7 @@ RÉSUMÉS:
                 0.95,
                 "Building result...",
             )
+            await asyncio.sleep(0)
 
         logger.info(
             f"Summarization with progress complete: {result.word_count} words, "

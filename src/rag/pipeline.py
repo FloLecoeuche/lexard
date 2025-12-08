@@ -4,6 +4,7 @@ Combines retrieval, context building, and LLM generation to produce
 grounded answers with citations.
 """
 
+import asyncio
 import logging
 from dataclasses import dataclass
 from enum import Enum
@@ -350,6 +351,9 @@ class RAGPipeline:
             },
         )
 
+        # Wait for SSE client to connect before starting heavy work
+        await tracker.wait_for_subscriber(operation_id, timeout=0.5)
+
         # Stage 1: Retrieval (0-25%)
         await tracker.update(
             operation_id,
@@ -357,8 +361,14 @@ class RAGPipeline:
             0.1,
             "Finding relevant sections...",
         )
+        # Yield to let SSE send the update
+        await asyncio.sleep(0)
 
-        chunks = self.retriever.retrieve(question, document_id)
+        # Run retrieval in thread pool to not block event loop
+        # This includes embedding generation which is CPU-bound
+        chunks = await asyncio.to_thread(
+            self.retriever.retrieve, question, document_id
+        )
 
         await tracker.update(
             operation_id,
@@ -366,6 +376,7 @@ class RAGPipeline:
             0.25,
             f"Found {len(chunks)} relevant sections",
         )
+        await asyncio.sleep(0)
 
         # Handle no results
         if not chunks:
@@ -385,6 +396,7 @@ class RAGPipeline:
             0.30,
             "Building context from sections...",
         )
+        await asyncio.sleep(0)
 
         # Detect language from DOCUMENT CHUNKS (not query)
         if language is None:
@@ -403,6 +415,7 @@ class RAGPipeline:
             0.35,
             f"Context ready ({language.upper()})",
         )
+        await asyncio.sleep(0)
 
         # Stage 3: LLM Generation (35-90%)
         await tracker.update(
@@ -411,8 +424,12 @@ class RAGPipeline:
             0.40,
             "Generating answer...",
         )
+        await asyncio.sleep(0)
 
-        answer = self._generate_answer(question, context, language=language)
+        # Run LLM generation in thread pool (sync HTTP call would block event loop)
+        answer = await asyncio.to_thread(
+            self._generate_answer, question, context, language
+        )
 
         await tracker.update(
             operation_id,
@@ -420,6 +437,7 @@ class RAGPipeline:
             0.85,
             "Answer generated",
         )
+        await asyncio.sleep(0)
 
         # Stage 4: Validation (90-100%)
         await tracker.update(
@@ -428,6 +446,7 @@ class RAGPipeline:
             0.90,
             "Validating response...",
         )
+        await asyncio.sleep(0)
 
         # Calculate confidence from retrieval scores
         confidence = self._calculate_confidence(chunks)
@@ -438,6 +457,7 @@ class RAGPipeline:
             0.95,
             "Building citations...",
         )
+        await asyncio.sleep(0)
 
         # Build citation chunks
         citation_chunks = self._build_citation_chunks(chunks, context)
