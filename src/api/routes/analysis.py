@@ -1,8 +1,9 @@
 """Analysis routes for Lexard API (summarize, compare, risks)."""
 
+import asyncio
 import logging
 
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request
 
 from src.api.progress import get_operation_tracker
 from src.api.schemas import (
@@ -165,11 +166,24 @@ async def _execute_summarize_with_progress(
         style: Summary style
     """
     from src.agent.tools.summarizer import SummarizerTool
+    from src.api.progress import OperationStage
 
     tracker = get_operation_tracker()
+
+    # Send first progress event IMMEDIATELY (before any blocking work)
+    await tracker.update(
+        operation_id,
+        OperationStage.RETRIEVING,
+        0.05,
+        "Initializing...",
+    )
+
+    # Yield control to let HTTP response be sent before heavy work
+    await asyncio.sleep(0)
+
+    # Now load services
     qdrant = get_qdrant_service()
     llm = get_llm_client()
-
     summarizer = SummarizerTool(llm_client=llm, qdrant_service=qdrant)
 
     try:
@@ -211,7 +225,6 @@ Get the final result from `/operations/{operation_id}/result` after completion.
 async def summarize_document_async(
     req: SummarizeRequest,
     request: Request,
-    background_tasks: BackgroundTasks,
 ) -> AsyncOperationResponse:
     """Summarize a document with async progress tracking."""
     trace_id = getattr(request.state, "trace_id", "")
@@ -233,12 +246,14 @@ async def summarize_document_async(
         },
     )
 
-    # Start background processing
-    background_tasks.add_task(
-        _execute_summarize_with_progress,
-        operation_id=operation_id,
-        document_id=req.document_id,
-        style=req.style,
+    # Start background processing immediately with asyncio.create_task
+    # (BackgroundTasks waits until after response is sent, which is too late)
+    asyncio.create_task(
+        _execute_summarize_with_progress(
+            operation_id=operation_id,
+            document_id=req.document_id,
+            style=req.style,
+        )
     )
 
     return AsyncOperationResponse(
@@ -342,11 +357,24 @@ async def _execute_risks_with_progress(
         document_id: Document to analyze
     """
     from src.agent.tools.risk_detector import RiskDetectorTool
+    from src.api.progress import OperationStage
 
     tracker = get_operation_tracker()
+
+    # Send first progress event IMMEDIATELY (before any blocking work)
+    await tracker.update(
+        operation_id,
+        OperationStage.RETRIEVING,
+        0.05,
+        "Initializing...",
+    )
+
+    # Yield control to let HTTP response be sent before heavy work
+    await asyncio.sleep(0)
+
+    # Now load services
     qdrant = get_qdrant_service()
     llm = get_llm_client()
-
     risk_detector = RiskDetectorTool(llm_client=llm, qdrant_service=qdrant)
 
     try:
@@ -396,7 +424,6 @@ Get the final result from `/operations/{operation_id}/result` after completion.
 async def analyze_risks_async(
     req: RiskRequest,
     request: Request,
-    background_tasks: BackgroundTasks,
 ) -> AsyncOperationResponse:
     """Analyze document for risks with async progress tracking."""
     trace_id = getattr(request.state, "trace_id", "")
@@ -418,11 +445,13 @@ async def analyze_risks_async(
         },
     )
 
-    # Start background processing
-    background_tasks.add_task(
-        _execute_risks_with_progress,
-        operation_id=operation_id,
-        document_id=req.document_id,
+    # Start background processing immediately with asyncio.create_task
+    # (BackgroundTasks waits until after response is sent, which is too late)
+    asyncio.create_task(
+        _execute_risks_with_progress(
+            operation_id=operation_id,
+            document_id=req.document_id,
+        )
     )
 
     return AsyncOperationResponse(

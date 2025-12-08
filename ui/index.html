@@ -923,9 +923,28 @@
 
         .op-stage {
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             gap: 0.75rem;
             font-size: 0.875rem;
+        }
+
+        .op-stage-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0.125rem;
+        }
+
+        .op-stage-detail {
+            font-size: 0.75rem;
+            color: #64748b;
+            font-style: italic;
+            display: none;
+        }
+
+        .op-stage.active .op-stage-detail {
+            display: block;
+            color: #2563eb;
         }
 
         .op-stage-icon {
@@ -953,7 +972,6 @@
         }
 
         .op-stage-label {
-            flex: 1;
             color: #475569;
         }
 
@@ -980,45 +998,13 @@
             animation: spin 1s linear infinite;
         }
 
-        .op-progress-bar-container {
-            width: 100%;
-            height: 6px;
-            background-color: #e2e8f0;
-            border-radius: 3px;
-            overflow: hidden;
-            margin-bottom: 0.75rem;
+        .op-stage.failed .op-stage-icon {
+            color: #dc2626;
         }
 
-        .op-progress-bar-fill {
-            height: 100%;
-            background-color: #2563eb;
-            transition: width 0.3s ease;
-            border-radius: 3px;
-        }
-
-        .op-progress-bar-fill.animated {
-            background: linear-gradient(
-                90deg,
-                #2563eb 0%,
-                #60a5fa 50%,
-                #2563eb 100%
-            );
-            background-size: 200% 100%;
-            animation: shimmer 2s ease-in-out infinite;
-        }
-
-        .op-progress-bar-fill.failed {
-            background-color: #ef4444;
-        }
-
-        @keyframes shimmer {
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
-        }
-
-        .op-progress-message {
-            font-size: 0.875rem;
-            color: #64748b;
+        .op-stage.failed .op-stage-detail {
+            display: block;
+            color: #dc2626;
         }
 
         .op-progress-error {
@@ -1150,22 +1136,20 @@
                 }
             },
             summarize: {
-                stages: ['pending', 'loading', 'processing_chunks', 'aggregating', 'validating'],
+                stages: ['pending', 'retrieving', 'generating', 'validating'],
                 labels: {
                     pending: 'Starting...',
-                    loading: 'Loading document',
-                    processing_chunks: 'Processing sections',
-                    aggregating: 'Creating summary',
+                    retrieving: 'Loading document',
+                    generating: 'Creating summary',
                     validating: 'Validating response'
                 }
             },
             risks: {
-                stages: ['pending', 'loading', 'analyzing', 'evaluating', 'validating'],
+                stages: ['pending', 'retrieving', 'generating', 'validating'],
                 labels: {
                     pending: 'Starting...',
-                    loading: 'Loading document',
-                    analyzing: 'Analyzing clauses',
-                    evaluating: 'Evaluating risks',
+                    retrieving: 'Loading document',
+                    generating: 'Analyzing risks',
                     validating: 'Validating response'
                 }
             }
@@ -1185,53 +1169,34 @@
             const stagesHtml = displayStages.map(stage => `
                 <div class="op-stage" data-stage="${stage}">
                     <span class="op-stage-icon pending">&#9675;</span>
-                    <span class="op-stage-label">${config.labels[stage]}</span>
-                    <span class="op-stage-time"></span>
+                    <div class="op-stage-content">
+                        <span class="op-stage-label">${config.labels[stage]}</span>
+                        <span class="op-stage-detail"></span>
+                    </div>
                 </div>
             `).join('');
 
             container.innerHTML = `
                 <div class="operation-progress">
                     <div class="progress-stages">${stagesHtml}</div>
-                    <div class="op-progress-bar-container">
-                        <div class="op-progress-bar-fill" style="width: 0%"></div>
-                    </div>
-                    <div class="op-progress-message">Starting...</div>
                 </div>
             `;
         }
 
         // Update operation progress UI based on progress data
         function updateOperationProgressUI(container, progressData, operationType) {
-            const progressBar = container.querySelector('.op-progress-bar-fill');
-            const message = container.querySelector('.op-progress-message');
             const stages = container.querySelectorAll('.op-stage');
-
-            if (!progressBar || !message) return;
-
-            // Update progress bar
-            const percent = Math.round(progressData.progress * 100);
-            progressBar.style.width = `${percent}%`;
-
-            // Add animation class for generating/processing stages (slow, unpredictable)
-            const animatedStages = ['generating', 'aggregating', 'evaluating', 'processing_chunks'];
-            if (animatedStages.includes(progressData.stage)) {
-                progressBar.classList.add('animated');
-            } else {
-                progressBar.classList.remove('animated');
-            }
-
-            // Update message
-            message.textContent = progressData.message;
+            if (!stages.length) return;
 
             // Get stage order for this operation type
             const config = OPERATION_STAGES[operationType];
             const stageOrder = config ? config.stages.filter(s => s !== 'pending') : [];
             const currentStageIndex = stageOrder.indexOf(progressData.stage);
 
-            // Update stage icons
+            // Update stage icons and details
             stages.forEach((stageEl) => {
                 const icon = stageEl.querySelector('.op-stage-icon');
+                const detail = stageEl.querySelector('.op-stage-detail');
                 const stageName = stageEl.dataset.stage;
                 const stageIndex = stageOrder.indexOf(stageName);
 
@@ -1241,36 +1206,46 @@
                     stageEl.classList.add('complete');
                     icon.className = 'op-stage-icon complete';
                     icon.innerHTML = '&#10003;';
+                    if (detail) detail.textContent = '';
                 } else if (stageIndex === currentStageIndex) {
                     // Current stage
                     stageEl.classList.remove('complete');
                     stageEl.classList.add('active');
                     icon.className = 'op-stage-icon active';
                     icon.innerHTML = '<span class="op-mini-spinner"></span>';
+                    // Show the progress message as sub-detail
+                    if (detail) detail.textContent = progressData.message;
                 } else {
                     // Pending stage
                     stageEl.classList.remove('active', 'complete');
                     icon.className = 'op-stage-icon pending';
                     icon.innerHTML = '&#9675;';
+                    if (detail) detail.textContent = '';
                 }
             });
         }
 
         // Show error in operation progress
         function showOperationError(container, errorMessage, failedStage) {
-            const progressBar = container.querySelector('.op-progress-bar-fill');
-            const message = container.querySelector('.op-progress-message');
+            // Mark all stages as failed visually
+            const stages = container.querySelectorAll('.op-stage');
+            stages.forEach(stageEl => {
+                if (stageEl.classList.contains('active')) {
+                    stageEl.classList.remove('active');
+                    stageEl.classList.add('failed');
+                    const icon = stageEl.querySelector('.op-stage-icon');
+                    if (icon) {
+                        icon.className = 'op-stage-icon failed';
+                        icon.innerHTML = '&#10007;'; // X mark
+                    }
+                    const detail = stageEl.querySelector('.op-stage-detail');
+                    if (detail) {
+                        detail.textContent = `Failed: ${errorMessage}`;
+                    }
+                }
+            });
 
-            if (progressBar) {
-                progressBar.classList.remove('animated');
-                progressBar.classList.add('failed');
-            }
-
-            if (message) {
-                message.textContent = `Failed at: ${failedStage || 'Unknown stage'}`;
-            }
-
-            // Add error message
+            // Add error message below stages
             const existingError = container.querySelector('.op-progress-error');
             if (existingError) {
                 existingError.textContent = errorMessage;
