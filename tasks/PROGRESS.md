@@ -15,7 +15,7 @@ This folder contains detailed specifications for each Epic and User Story. Each 
 | 5    | Interfaces            | ✅ Completed   | 3/3 US   |
 | 6    | Hardening             | ✅ Completed   | 5/5 US   |
 | 7    | French Support        | ✅ Completed   | 2/2 US   |
-| 8    | UX & Testing          | 🔶 In Progress | 1/2 US   |
+| 8    | UX & Testing          | ✅ Completed   | 2/2 US   |
 | 9    | Multilingual Fix      | 🔲 Not Started | 0/5 US   |
 | 10   | Streaming Responses   | 🔲 Not Started | 0/5 US   |
 | 11   | Document Preview      | 🔲 Not Started | 0/3 US   |
@@ -70,6 +70,7 @@ This folder contains detailed specifications for each Epic and User Story. Each 
 | 7.1   | French Language Support   | 2025-12-05   | 3ccdd19     |
 | 7.2   | French Validation & Testing | 2025-12-05 | 1983a41     |
 | 8.1   | Upload Progress Tracking    | 2025-12-05 | c098288     |
+| 8.2   | End-to-End Test Suite       | 2025-12-08 | c24ff37     |
 
 <!-- Format: | US ID | Name | Completed Date | Commit Hash | -->
 
