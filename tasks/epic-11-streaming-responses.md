@@ -54,6 +54,21 @@ User asks question → Text starts appearing immediately → Words stream in rea
 - SSE infrastructure already exists (upload progress)
 - Both Ollama and OpenAI-compatible APIs support streaming
 
+## Important Design Notes
+
+### SSE Status Code Convention
+All SSE streaming endpoints MUST return HTTP 200, even for errors. Errors are communicated via `error` events in the stream, not HTTP status codes. This is standard SSE behavior and ensures consistent client handling.
+
+### Guardrails and Streaming
+**Important:** Streaming responses bypass some guardrails that require full response text (e.g., hallucination detection, PII redaction on complete responses). This is an acceptable tradeoff for:
+- Improved perceived latency (time to first token)
+- Better user experience (real-time feedback)
+
+For high-security use cases requiring full guardrails, use the non-streaming endpoints which remain available.
+
+### Cancellation Handling
+All streaming operations must support proper cancellation via `AbortController` (UI) and async generator cleanup (backend) to prevent resource leaks.
+
 ## User Stories
 
 ---
@@ -483,13 +498,13 @@ class RAGPipeline:
 
 ---
 
-## US 11.3: Streaming API Endpoints
+## US 11.3: Streaming API Endpoints & Agent Tools
 
 **Status:** 🔲 Not Started
 
 ### Description
 
-Create SSE streaming endpoints for query, summarize, and risk analysis that stream LLM responses to clients in real-time.
+Create SSE streaming endpoints for query, summarize, and risk analysis, along with the streaming agent tools that power them. This US combines API endpoints with their underlying tool implementations since they are tightly coupled.
 
 ### Context
 
@@ -498,7 +513,13 @@ New endpoints alongside existing ones:
 - `/summarize/stream` - Streaming version of `/summarize`
 - `/risks/stream` - Streaming version of `/risks`
 
+These endpoints depend on streaming agent tools:
+- **Summarizer**: Can stream each chunk summary, then final aggregation
+- **Risk Detector**: Can stream each identified risk as it's found
+
 ### Tasks
+
+#### API Endpoints
 
 - [ ] Create `/query/stream` endpoint:
   - Accept same request body as `/query`
@@ -514,8 +535,24 @@ New endpoints alongside existing ones:
 - [ ] Add proper error handling:
   - Yield error events for exceptions
   - Include trace_id in errors
+  - **All endpoints MUST return HTTP 200** (errors via events)
 - [ ] Add request validation (document exists, etc.)
 - [ ] Document endpoints in OpenAPI schema
+
+#### Agent Tools
+
+- [ ] Add `summarize_stream()` to SummarizerTool:
+  - Yield progress events as chunks are processed
+  - Yield chunk summaries as they're generated
+  - Stream final aggregation
+- [ ] Add `analyze_stream()` to RiskDetectorTool:
+  - Yield each risk as it's identified
+  - Stream overall assessment at end
+- [ ] Create `ToolStreamEvent` dataclass:
+  - `event_type: str` - "progress" | "chunk" | "result" | "done" | "error"
+  - `data: dict` - Event payload
+- [ ] Update tools to use language-aware streaming
+- [ ] Add tests for streaming tools
 
 ### Implementation Details
 
@@ -585,6 +622,7 @@ async def query_document_stream(
         return StreamingResponse(
             error_stream(),
             media_type="text/event-stream",
+            status_code=200,  # SSE always returns 200, errors in stream
         )
 
     # Get streaming pipeline
@@ -636,8 +674,17 @@ async def summarize_document_stream(
     doc = registry.get(req.document_id)
 
     if not doc or doc.status != "processed":
-        # Return error in stream
-        ...
+        # Return error in stream (always 200 for SSE)
+        async def error_stream():
+            yield SummaryStreamEvent(
+                event_type="error",
+                data={"code": "DOCUMENT_NOT_FOUND", "trace_id": trace_id}
+            ).to_sse()
+        return StreamingResponse(
+            error_stream(),
+            media_type="text/event-stream",
+            status_code=200,
+        )
 
     summarizer = SummarizerTool(...)
 
@@ -652,6 +699,7 @@ async def summarize_document_stream(
     return StreamingResponse(
         generate_stream(),
         media_type="text/event-stream",
+        status_code=200,  # Always 200 for SSE
         headers={
             "Cache-Control": "no-cache",
             "Connection": "keep-alive",
@@ -659,30 +707,146 @@ async def summarize_document_stream(
     )
 ```
 
+#### Streaming Summarizer Tool
+
+```python
+# src/agent/tools/summarizer.py
+
+@dataclass
+class SummaryStreamEvent:
+    """Event emitted during streaming summarization."""
+    event_type: str  # "progress" | "chunk_summary" | "aggregating" | "token" | "done" | "error"
+    data: dict
+
+    def to_sse(self) -> str:
+        return f"event: {self.event_type}\ndata: {json.dumps(self.data)}\n\n"
+
+
+class SummarizerTool:
+    async def summarize_stream(
+        self,
+        document_id: str,
+        style: str = "executive",
+        language: str | None = None,
+    ) -> AsyncGenerator[SummaryStreamEvent, None]:
+        """Stream document summarization.
+
+        Yields events:
+        1. progress - Overall progress updates
+        2. chunk_summary - Individual chunk summaries
+        3. aggregating - Starting final aggregation
+        4. token - Streaming aggregation tokens
+        5. done - Completion with metadata
+        """
+        chunks = await self.qdrant_service.get_chunks_by_document(document_id)
+        if not chunks:
+            yield SummaryStreamEvent(
+                event_type="error",
+                data={"message": f"No chunks found for document {document_id}"}
+            )
+            return
+
+        # Detect language from document chunks
+        if language is None:
+            language = detect_language_from_chunks(chunks)
+
+        yield SummaryStreamEvent(
+            event_type="progress",
+            data={
+                "total_chunks": len(chunks),
+                "language": language,
+                "message": f"Processing {len(chunks)} sections...",
+            }
+        )
+
+        # Summarize each chunk
+        chunk_summaries = []
+        for i, chunk in enumerate(chunks):
+            prompt = get_prompt("chunk_summary", language, content=chunk.content)
+
+            # Stream chunk summary
+            summary_parts = []
+            async for token_chunk in self.llm_client.async_generate_stream(prompt):
+                if token_chunk.token:
+                    summary_parts.append(token_chunk.token)
+
+            chunk_summary = "".join(summary_parts)
+            chunk_summaries.append(chunk_summary)
+
+            yield SummaryStreamEvent(
+                event_type="chunk_summary",
+                data={
+                    "chunk_index": i + 1,
+                    "total_chunks": len(chunks),
+                    "summary": chunk_summary,
+                }
+            )
+
+        # Aggregate summaries
+        yield SummaryStreamEvent(
+            event_type="aggregating",
+            data={"message": "Generating final summary..."}
+        )
+
+        combined = "\n\n".join(chunk_summaries)
+        aggregation_prompt = get_prompt("aggregation", language, summaries=combined)
+
+        full_summary = ""
+        async for token_chunk in self.llm_client.async_generate_stream(aggregation_prompt):
+            if token_chunk.token:
+                full_summary += token_chunk.token
+                yield SummaryStreamEvent(
+                    event_type="token",
+                    data={"token": token_chunk.token}
+                )
+
+        yield SummaryStreamEvent(
+            event_type="done",
+            data={
+                "summary": full_summary,
+                "key_points": self._extract_key_points(full_summary),
+                "word_count": len(full_summary.split()),
+                "language": language,
+            }
+        )
+```
+
 ### Acceptance Criteria
 
+#### API Endpoints
 - [ ] `/query/stream` streams answer tokens via SSE
 - [ ] `/summarize/stream` streams summary generation
 - [ ] `/risks/stream` streams risk analysis
 - [ ] All endpoints validate document exists first
+- [ ] All endpoints return HTTP 200 (errors via `error` events)
 - [ ] Error events include trace_id
 - [ ] Proper SSE headers set (no caching, no buffering)
 - [ ] Endpoints documented in OpenAPI
 - [ ] Client disconnection handled gracefully
 
+#### Agent Tools
+- [ ] `SummarizerTool.summarize_stream()` yields chunk-by-chunk progress
+- [ ] Final summary streams token-by-token
+- [ ] `RiskDetectorTool.analyze_stream()` yields risks as found
+- [ ] All streaming respects detected document language
+- [ ] Error events include helpful messages
+- [ ] Non-streaming methods still work
+
 ### Files to Create/Modify
 
 1. `src/api/routes/query.py` - Add `/query/stream`
 2. `src/api/routes/analysis.py` - Add `/summarize/stream`, `/risks/stream`
-3. `src/agent/tools/summarizer.py` - Add `summarize_stream()`
-4. `src/agent/tools/risk_detector.py` - Add `analyze_stream()`
+3. `src/agent/tools/summarizer.py` - Add `summarize_stream()` and `SummaryStreamEvent`
+4. `src/agent/tools/risk_detector.py` - Add `analyze_stream()` and `RiskStreamEvent`
 
 ### Tests
 
-- **New:** `tests/test_streaming_endpoints.py` - Test SSE response format
-- **Run:** `pytest tests/test_streaming_endpoints.py -v`
+- **New:** `tests/test_streaming_endpoints.py` - Test SSE response format and headers
+- **Modified:** `tests/test_summarizer.py` - Add `summarize_stream()` tests
+- **Modified:** `tests/test_risk_detector.py` - Add `analyze_stream()` tests
+- **Run:** `pytest tests/test_streaming_endpoints.py tests/test_summarizer.py tests/test_risk_detector.py -v -k stream`
 
-> Note: Use TestClient with httpx to consume SSE streams. Verify headers and event format.
+> Note: Use TestClient with httpx to consume SSE streams. Verify headers, event format, and event sequence.
 
 ---
 
@@ -719,9 +883,11 @@ The UI already uses SSE for upload progress, so the pattern is familiar. Key cha
 - [ ] Add visual feedback for streaming:
   - Typing indicator or cursor while streaming
   - Smooth text appearance animation (optional)
-- [ ] Handle stream cancellation:
-  - Close EventSource on navigation away
-  - Add "Stop" button to cancel generation
+- [ ] Handle stream cancellation with AbortController:
+  - Create AbortController for each streaming request
+  - Wire "Stop" button to `controller.abort()`
+  - Clean up on navigation away via `beforeunload` event
+  - Handle `AbortError` gracefully in catch block
 - [ ] Fallback to non-streaming on error:
   - If SSE fails, retry with regular endpoint
 
@@ -731,6 +897,9 @@ The UI already uses SSE for upload progress, so the pattern is familiar. Key cha
 
 ```javascript
 // ui/index.html
+
+// Global controller for cancellation
+let currentStreamController = null;
 
 async function askQuestionStreaming() {
     if (!selectedDocumentId) {
@@ -744,11 +913,19 @@ async function askQuestionStreaming() {
         return;
     }
 
+    // Cancel any existing stream
+    if (currentStreamController) {
+        currentStreamController.abort();
+    }
+
+    // Create new AbortController for this request
+    currentStreamController = new AbortController();
+
     const resultBox = document.getElementById('query-result');
 
-    // Show initial streaming state
+    // Show initial streaming state with stop button
     resultBox.innerHTML = `
-        <h3>Answer</h3>
+        <h3>Answer <button class="stop-btn" onclick="stopStreaming()">Stop</button></h3>
         <div class="answer-text" id="streaming-answer"><span class="typing-cursor"></span></div>
         <div class="citations" id="streaming-citations" style="display: none;">
             <h3>Citations</h3>
@@ -763,14 +940,15 @@ async function askQuestionStreaming() {
     let fullAnswer = '';
 
     try {
-        // Use fetch with POST to send body, then convert to EventSource
+        // Use fetch with POST and AbortController signal
         const response = await fetch('/query/stream', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 document_id: selectedDocumentId,
                 question: question
-            })
+            }),
+            signal: currentStreamController.signal  // Enable cancellation
         });
 
         if (!response.ok) {
@@ -800,15 +978,44 @@ async function askQuestionStreaming() {
             }
         }
 
-        // Remove cursor when done
+        // Remove cursor and stop button when done
         answerDiv.innerHTML = escapeHtml(fullAnswer);
+        hideStopButton();
 
     } catch (error) {
-        // Fallback to non-streaming
+        // Handle user cancellation gracefully
+        if (error.name === 'AbortError') {
+            console.log('Streaming cancelled by user');
+            answerDiv.innerHTML = escapeHtml(fullAnswer) + ' <em>(stopped)</em>';
+            hideStopButton();
+            return;
+        }
+
+        // Fallback to non-streaming for other errors
         console.warn('Streaming failed, falling back to regular query:', error);
         await askQuestion();
+    } finally {
+        currentStreamController = null;
     }
 }
+
+function stopStreaming() {
+    if (currentStreamController) {
+        currentStreamController.abort();
+    }
+}
+
+function hideStopButton() {
+    const stopBtn = document.querySelector('.stop-btn');
+    if (stopBtn) stopBtn.style.display = 'none';
+}
+
+// Clean up on page unload
+window.addEventListener('beforeunload', () => {
+    if (currentStreamController) {
+        currentStreamController.abort();
+    }
+});
 
 function parseSSEEvents(buffer) {
     const events = [];
@@ -879,10 +1086,26 @@ function handleStreamEvent(event, answerDiv, citationsDiv, citationsContent) {
 }
 ```
 
-#### CSS for Typing Cursor
+#### CSS for Typing Cursor and Stop Button
 
 ```css
 /* ui/index.html - Add to <style> */
+
+.stop-btn {
+    background: #ef4444;
+    color: white;
+    border: none;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    margin-left: 0.5rem;
+    vertical-align: middle;
+}
+
+.stop-btn:hover {
+    background: #dc2626;
+}
 
 .typing-cursor {
     display: inline-block;
@@ -948,175 +1171,13 @@ function handleStreamEvent(event, answerDiv, citationsDiv, citationsContent) {
 
 ---
 
-## US 11.5: Streaming Agent Tools
-
-**Status:** 🔲 Not Started
-
-### Description
-
-Add streaming support to agent tools (SummarizerTool, RiskDetectorTool) to enable streaming summaries and risk analyses.
-
-### Context
-
-These tools process documents in chunks, making them natural candidates for streaming:
-- **Summarizer**: Can stream each chunk summary, then final aggregation
-- **Risk Detector**: Can stream each identified risk as it's found
-
-### Tasks
-
-- [ ] Add `summarize_stream()` to SummarizerTool:
-  - Yield progress events as chunks are processed
-  - Yield chunk summaries as they're generated
-  - Stream final aggregation
-- [ ] Add `analyze_stream()` to RiskDetectorTool:
-  - Yield each risk as it's identified
-  - Stream overall assessment at end
-- [ ] Create `ToolStreamEvent` dataclass:
-  - `event_type: str` - "progress" | "chunk" | "result" | "done" | "error"
-  - `data: dict` - Event payload
-- [ ] Update tools to use language-aware streaming
-- [ ] Add tests for streaming tools
-
-### Implementation Details
-
-#### Streaming Summarizer
-
-```python
-# src/agent/tools/summarizer.py
-
-@dataclass
-class SummaryStreamEvent:
-    """Event emitted during streaming summarization."""
-    event_type: str  # "progress" | "chunk_summary" | "aggregating" | "token" | "done"
-    data: dict
-
-    def to_sse(self) -> str:
-        return f"event: {self.event_type}\ndata: {json.dumps(self.data)}\n\n"
-
-
-class SummarizerTool:
-    async def summarize_stream(
-        self,
-        document_id: str,
-        style: str = "executive",
-        language: str | None = None,
-    ) -> AsyncGenerator[SummaryStreamEvent, None]:
-        """Stream document summarization.
-
-        Yields events:
-        1. progress - Overall progress updates
-        2. chunk_summary - Individual chunk summaries
-        3. aggregating - Starting final aggregation
-        4. token - Streaming aggregation tokens
-        5. done - Completion with metadata
-        """
-        chunks = await self.qdrant_service.get_chunks_by_document(document_id)
-        if not chunks:
-            yield SummaryStreamEvent(
-                event_type="error",
-                data={"message": f"No chunks found for document {document_id}"}
-            )
-            return
-
-        # Detect language
-        if language is None:
-            language = detect_language_from_chunks(chunks)
-
-        yield SummaryStreamEvent(
-            event_type="progress",
-            data={
-                "total_chunks": len(chunks),
-                "language": language,
-                "message": f"Processing {len(chunks)} sections...",
-            }
-        )
-
-        # Summarize each chunk
-        chunk_summaries = []
-        for i, chunk in enumerate(chunks):
-            prompt = get_prompt("chunk_summary", language, content=chunk.content)
-
-            # Stream chunk summary
-            summary_parts = []
-            async for token_chunk in self.llm_client.async_generate_stream(prompt):
-                if token_chunk.token:
-                    summary_parts.append(token_chunk.token)
-
-            chunk_summary = "".join(summary_parts)
-            chunk_summaries.append(chunk_summary)
-
-            yield SummaryStreamEvent(
-                event_type="chunk_summary",
-                data={
-                    "chunk_index": i + 1,
-                    "total_chunks": len(chunks),
-                    "summary": chunk_summary,
-                }
-            )
-
-        # Aggregate summaries
-        yield SummaryStreamEvent(
-            event_type="aggregating",
-            data={"message": "Generating final summary..."}
-        )
-
-        combined = "\n\n".join(chunk_summaries)
-        aggregation_prompt = get_prompt("aggregation", language, summaries=combined)
-
-        full_summary = ""
-        async for token_chunk in self.llm_client.async_generate_stream(aggregation_prompt):
-            if token_chunk.token:
-                full_summary += token_chunk.token
-                yield SummaryStreamEvent(
-                    event_type="token",
-                    data={"token": token_chunk.token}
-                )
-
-        yield SummaryStreamEvent(
-            event_type="done",
-            data={
-                "summary": full_summary,
-                "key_points": self._extract_key_points(full_summary),
-                "word_count": len(full_summary.split()),
-                "language": language,
-            }
-        )
-```
-
-### Acceptance Criteria
-
-- [ ] `SummarizerTool.summarize_stream()` yields chunk-by-chunk progress
-- [ ] Final summary streams token-by-token
-- [ ] `RiskDetectorTool.analyze_stream()` yields risks as found
-- [ ] All streaming respects detected document language
-- [ ] Error events include helpful messages
-- [ ] Non-streaming methods still work
-- [ ] Tests pass for streaming tools
-
-### Tests
-
-- **Modified:** `tests/test_summarizer.py` - Add `summarize_stream()` tests
-- **Modified:** `tests/test_risk_detector.py` - Add `analyze_stream()` tests
-- **Run:** `pytest tests/test_summarizer.py tests/test_risk_detector.py -v -k stream`
-
-> Note: Test event sequence and language-aware streaming.
-
-### Files to Modify
-
-1. `src/agent/tools/summarizer.py` - Add `summarize_stream()`
-2. `src/agent/tools/risk_detector.py` - Add `analyze_stream()`
-3. `tests/test_agent_tools.py` - Add streaming tests
-
----
-
 ## Definition of Done (Epic 11)
 
-- [ ] All 5 User Stories completed
+- [ ] All 4 User Stories completed
 - [ ] LLM clients support streaming generation
 - [ ] RAG pipeline supports streaming queries
-- [ ] SSE endpoints created for query, summarize, risks
-- [ ] Web UI displays streaming responses
-- [ ] Agent tools support streaming operations
+- [ ] SSE endpoints created for query, summarize, risks (with agent tool streaming)
+- [ ] Web UI displays streaming responses with cancellation support
 - [ ] Fallback to non-streaming works
 - [ ] No regression in non-streaming functionality
 - [ ] Performance improvement measurable (time to first token)
@@ -1138,14 +1199,14 @@ US 11.1 (LLM Streaming)
     ↓
 US 11.2 (RAG Pipeline Streaming)
     ↓
-US 11.3 (API Endpoints) ←→ US 11.5 (Agent Tools)
+US 11.3 (API Endpoints & Agent Tools)
     ↓
 US 11.4 (Web UI)
 ```
 
 US 11.1 must be completed first (foundation).
 US 11.2 depends on 11.1.
-US 11.3 and 11.5 can be done in parallel after 11.2.
+US 11.3 combines endpoints and agent tools (previously 11.3 + 11.5) since they are tightly coupled.
 US 11.4 requires 11.3 (needs endpoints to consume).
 
 ## Rollback Plan
