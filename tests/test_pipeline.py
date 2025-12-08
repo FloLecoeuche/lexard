@@ -389,3 +389,180 @@ class TestCitationChunkBuilding:
         assert citation.page == 5
         assert citation.chunk_index == 3
         assert citation.score == 0.88
+
+
+class TestLanguageAwareQuery:
+    """Tests for language-aware RAG query."""
+
+    def test_response_includes_language_field(self):
+        """RAGResponse should include language field."""
+        response = RAGResponse(
+            answer="The answer",
+            citation_chunks=[],
+            confidence=Confidence.HIGH,
+            has_relevant_content=True,
+            language="en",
+        )
+        assert response.language == "en"
+
+    def test_response_language_defaults_to_english(self):
+        """RAGResponse language should default to 'en'."""
+        response = RAGResponse(
+            answer="The answer",
+            citation_chunks=[],
+            confidence=Confidence.HIGH,
+            has_relevant_content=True,
+        )
+        assert response.language == "en"
+
+    def test_query_detects_english_document_language(
+        self, pipeline, mock_retriever, mock_context_builder, mock_llm_client
+    ):
+        """Query should detect English from document chunks."""
+        chunks = [
+            make_chunk(content="This is a contract agreement between parties."),
+            make_chunk(content="The termination period shall be 30 days."),
+        ]
+        mock_retriever.retrieve.return_value = chunks
+        mock_context_builder.build.return_value = BuiltContext(
+            context_text="[1] Contract [2] Termination",
+            citations=[],
+            chunk_count=2,
+            total_tokens=20,
+            has_relevant_content=True,
+        )
+        mock_llm_client.generate.return_value = LLMResponse(
+            content="The answer is...",
+            model="test",
+            total_tokens=10,
+            finish_reason="stop",
+        )
+
+        response = pipeline.query("What is the notice period?")
+
+        assert response.language == "en"
+
+    def test_query_detects_french_document_language(
+        self, pipeline, mock_retriever, mock_context_builder, mock_llm_client
+    ):
+        """Query should detect French from document chunks."""
+        chunks = [
+            make_chunk(content="Ceci est un contrat de service entre les parties."),
+            make_chunk(content="La période de préavis est de 30 jours."),
+        ]
+        mock_retriever.retrieve.return_value = chunks
+        mock_context_builder.build.return_value = BuiltContext(
+            context_text="[1] Contrat [2] Préavis",
+            citations=[],
+            chunk_count=2,
+            total_tokens=20,
+            has_relevant_content=True,
+        )
+        mock_llm_client.generate.return_value = LLMResponse(
+            content="La réponse est...",
+            model="test",
+            total_tokens=10,
+            finish_reason="stop",
+        )
+
+        response = pipeline.query("What is the notice period?")
+
+        assert response.language == "fr"
+
+    def test_query_uses_french_prompts_for_french_document(
+        self, pipeline, mock_retriever, mock_context_builder, mock_llm_client
+    ):
+        """Query should use French prompts when document is French."""
+        chunks = [
+            make_chunk(content="Ceci est un contrat de service entre les parties."),
+        ]
+        mock_retriever.retrieve.return_value = chunks
+        mock_context_builder.build.return_value = BuiltContext(
+            context_text="[1] Contrat",
+            citations=[],
+            chunk_count=1,
+            total_tokens=10,
+            has_relevant_content=True,
+        )
+        mock_llm_client.generate.return_value = LLMResponse(
+            content="La réponse",
+            model="test",
+            total_tokens=5,
+            finish_reason="stop",
+        )
+
+        pipeline.query("What is this?")
+
+        # Check that French prompts are used
+        call_kwargs = mock_llm_client.generate.call_args[1]
+        assert "EXTRAITS DE DOCUMENTS" in call_kwargs["prompt"]  # French user prompt
+        assert "contrats d'entreprise" in call_kwargs["system_prompt"].lower()  # French system prompt
+
+    def test_query_uses_english_prompts_for_english_document(
+        self, pipeline, mock_retriever, mock_context_builder, mock_llm_client
+    ):
+        """Query should use English prompts when document is English."""
+        chunks = [
+            make_chunk(content="This is a contract between the parties."),
+        ]
+        mock_retriever.retrieve.return_value = chunks
+        mock_context_builder.build.return_value = BuiltContext(
+            context_text="[1] Contract",
+            citations=[],
+            chunk_count=1,
+            total_tokens=10,
+            has_relevant_content=True,
+        )
+        mock_llm_client.generate.return_value = LLMResponse(
+            content="The answer",
+            model="test",
+            total_tokens=5,
+            finish_reason="stop",
+        )
+
+        pipeline.query("What is this?")
+
+        # Check that English prompts are used
+        call_kwargs = mock_llm_client.generate.call_args[1]
+        assert "DOCUMENT EXCERPTS" in call_kwargs["prompt"]  # English user prompt
+        assert "contract analyst" in call_kwargs["system_prompt"].lower()  # English system prompt
+
+    def test_query_allows_language_override(
+        self, pipeline, mock_retriever, mock_context_builder, mock_llm_client
+    ):
+        """Query should allow explicit language override."""
+        chunks = [
+            make_chunk(content="This is English content."),  # English document
+        ]
+        mock_retriever.retrieve.return_value = chunks
+        mock_context_builder.build.return_value = BuiltContext(
+            context_text="[1] English",
+            citations=[],
+            chunk_count=1,
+            total_tokens=10,
+            has_relevant_content=True,
+        )
+        mock_llm_client.generate.return_value = LLMResponse(
+            content="La réponse",
+            model="test",
+            total_tokens=5,
+            finish_reason="stop",
+        )
+
+        # Force French even though document is English
+        response = pipeline.query("Question?", language="fr")
+
+        assert response.language == "fr"
+        call_kwargs = mock_llm_client.generate.call_args[1]
+        assert "EXTRAITS DE DOCUMENTS" in call_kwargs["prompt"]  # French prompt
+
+    def test_no_results_returns_english_language(
+        self, pipeline, mock_retriever
+    ):
+        """Query with no results should return 'en' as default language."""
+        mock_retriever.retrieve.return_value = []
+
+        response = pipeline.query("Unknown topic?")
+
+        assert response.language == "en"
+        assert response.has_relevant_content is False

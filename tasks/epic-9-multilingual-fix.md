@@ -207,7 +207,7 @@ if __name__ == "__main__":
 
 ## US 9.2: Language-Aware RAG Pipeline
 
-**Status:** 🔲 Not Started
+**Status:** ✅ Completed
 
 ### Description
 

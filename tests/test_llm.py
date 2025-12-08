@@ -13,7 +13,11 @@ from src.rag.llm import (
     LLMTimeoutError,
     OllamaClient,
     QA_SYSTEM_PROMPT,
+    QA_SYSTEM_PROMPTS,
+    QA_USER_PROMPTS,
     build_qa_prompt,
+    detect_language_from_chunks,
+    get_qa_system_prompt,
 )
 
 
@@ -458,3 +462,173 @@ class TestLLMExceptions:
         assert issubclass(LLMTimeoutError, LLMError)
         assert issubclass(LLMConnectionError, LLMError)
         assert issubclass(LLMGenerationError, LLMError)
+
+
+class TestBilingualPrompts:
+    """Tests for bilingual prompt templates."""
+
+    def test_qa_system_prompts_has_both_languages(self):
+        """QA_SYSTEM_PROMPTS should have both English and French."""
+        assert "en" in QA_SYSTEM_PROMPTS
+        assert "fr" in QA_SYSTEM_PROMPTS
+
+    def test_qa_user_prompts_has_both_languages(self):
+        """QA_USER_PROMPTS should have both English and French."""
+        assert "en" in QA_USER_PROMPTS
+        assert "fr" in QA_USER_PROMPTS
+
+    def test_english_system_prompt_content(self):
+        """English system prompt should contain key English instructions."""
+        prompt = QA_SYSTEM_PROMPTS["en"]
+        assert "contract analyst" in prompt.lower()
+        assert "ONLY answer based on" in prompt
+        assert "ALWAYS cite" in prompt
+        assert "[1]" in prompt
+
+    def test_french_system_prompt_content(self):
+        """French system prompt should contain key French instructions."""
+        prompt = QA_SYSTEM_PROMPTS["fr"]
+        assert "contrats d'entreprise" in prompt.lower()
+        assert "UNIQUEMENT" in prompt
+        assert "CITEZ TOUJOURS" in prompt
+        assert "[1]" in prompt
+
+    def test_english_user_prompt_placeholders(self):
+        """English user prompt should have context and question placeholders."""
+        prompt = QA_USER_PROMPTS["en"]
+        assert "{context}" in prompt
+        assert "{question}" in prompt
+        assert "DOCUMENT EXCERPTS" in prompt
+
+    def test_french_user_prompt_placeholders(self):
+        """French user prompt should have context and question placeholders."""
+        prompt = QA_USER_PROMPTS["fr"]
+        assert "{context}" in prompt
+        assert "{question}" in prompt
+        assert "EXTRAITS DE DOCUMENTS" in prompt
+
+    def test_legacy_alias_matches_english(self):
+        """Legacy QA_SYSTEM_PROMPT should match English version."""
+        assert QA_SYSTEM_PROMPT == QA_SYSTEM_PROMPTS["en"]
+
+
+class TestGetQaSystemPrompt:
+    """Tests for get_qa_system_prompt function."""
+
+    def test_returns_english_by_default(self):
+        """get_qa_system_prompt should return English by default."""
+        prompt = get_qa_system_prompt()
+        assert prompt == QA_SYSTEM_PROMPTS["en"]
+
+    def test_returns_english_when_specified(self):
+        """get_qa_system_prompt('en') should return English."""
+        prompt = get_qa_system_prompt("en")
+        assert prompt == QA_SYSTEM_PROMPTS["en"]
+
+    def test_returns_french_when_specified(self):
+        """get_qa_system_prompt('fr') should return French."""
+        prompt = get_qa_system_prompt("fr")
+        assert prompt == QA_SYSTEM_PROMPTS["fr"]
+
+    def test_fallback_to_english_for_unknown_language(self):
+        """get_qa_system_prompt should fallback to English for unknown languages."""
+        prompt = get_qa_system_prompt("de")  # German - not supported
+        assert prompt == QA_SYSTEM_PROMPTS["en"]
+
+
+class TestBuildQaPromptBilingual:
+    """Tests for bilingual build_qa_prompt function."""
+
+    def test_build_qa_prompt_english_default(self):
+        """build_qa_prompt should use English template by default."""
+        prompt = build_qa_prompt("What is X?", "Context here")
+        assert "What is X?" in prompt
+        assert "Context here" in prompt
+        assert "DOCUMENT EXCERPTS" in prompt
+
+    def test_build_qa_prompt_english_explicit(self):
+        """build_qa_prompt with language='en' should use English."""
+        prompt = build_qa_prompt("What is X?", "Context here", language="en")
+        assert "DOCUMENT EXCERPTS" in prompt
+        assert "QUESTION" in prompt
+
+    def test_build_qa_prompt_french(self):
+        """build_qa_prompt with language='fr' should use French."""
+        prompt = build_qa_prompt("Quelle est la durée?", "Contexte ici", language="fr")
+        assert "EXTRAITS DE DOCUMENTS" in prompt
+        assert "Quelle est la durée?" in prompt
+        assert "Contexte ici" in prompt
+
+    def test_build_qa_prompt_fallback_for_unknown_language(self):
+        """build_qa_prompt should fallback to English for unknown languages."""
+        prompt = build_qa_prompt("Question?", "Context", language="de")
+        assert "DOCUMENT EXCERPTS" in prompt  # English template
+
+
+class TestDetectLanguageFromChunks:
+    """Tests for detect_language_from_chunks function."""
+
+    def test_empty_chunks_returns_english(self):
+        """detect_language_from_chunks should return 'en' for empty list."""
+        assert detect_language_from_chunks([]) == "en"
+
+    def test_english_chunks_detected(self):
+        """detect_language_from_chunks should detect English from chunks."""
+
+        @dataclass
+        class MockChunk:
+            content: str
+
+        chunks = [
+            MockChunk(content="This is a contract agreement between parties."),
+            MockChunk(content="The termination period shall be 30 days."),
+            MockChunk(content="Payment is due within 15 business days."),
+        ]
+        assert detect_language_from_chunks(chunks) == "en"
+
+    def test_french_chunks_detected(self):
+        """detect_language_from_chunks should detect French from chunks."""
+
+        @dataclass
+        class MockChunk:
+            content: str
+
+        chunks = [
+            MockChunk(content="Ceci est un contrat de service entre les parties."),
+            MockChunk(content="La période de préavis est de 30 jours."),
+            MockChunk(content="Le paiement est dû dans les 15 jours ouvrables."),
+        ]
+        assert detect_language_from_chunks(chunks) == "fr"
+
+    def test_single_chunk_detection(self):
+        """detect_language_from_chunks should work with single chunk."""
+
+        @dataclass
+        class MockChunk:
+            content: str
+
+        # French
+        chunks_fr = [MockChunk(content="Le contrat prend fin après une période de 12 mois.")]
+        assert detect_language_from_chunks(chunks_fr) == "fr"
+
+        # English
+        chunks_en = [MockChunk(content="The contract terminates after a period of 12 months.")]
+        assert detect_language_from_chunks(chunks_en) == "en"
+
+    def test_samples_first_three_chunks(self):
+        """detect_language_from_chunks should sample from first 3 chunks."""
+
+        @dataclass
+        class MockChunk:
+            content: str
+
+        # First 3 are French, rest are English
+        chunks = [
+            MockChunk(content="Ceci est un contrat français."),
+            MockChunk(content="Les conditions générales suivent."),
+            MockChunk(content="Le paiement mensuel est requis."),
+            MockChunk(content="This is an English section."),
+            MockChunk(content="Payment terms are standard."),
+        ]
+        # Should detect French since it samples first 3
+        assert detect_language_from_chunks(chunks) == "fr"
