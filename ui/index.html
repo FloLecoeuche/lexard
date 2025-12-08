@@ -632,7 +632,164 @@
         .result-header h3 {
             margin-bottom: 0;
         }
+
+        /* Preview button on document item */
+        .preview-btn {
+            background: none;
+            border: none;
+            color: #64748b;
+            cursor: pointer;
+            padding: 0.25rem;
+            opacity: 0;
+            transition: opacity 0.2s;
+            font-size: 1rem;
+        }
+
+        .document-item:hover .preview-btn {
+            opacity: 0.6;
+        }
+
+        .preview-btn:hover {
+            opacity: 1 !important;
+            color: #2563eb;
+        }
+
+        /* Modal overlay */
+        .preview-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s, visibility 0.2s;
+        }
+
+        .preview-modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .preview-modal-content {
+            background: white;
+            width: 90%;
+            height: 90%;
+            max-width: 1200px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+
+        .preview-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .preview-modal-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #1e293b;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .preview-modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #64748b;
+            cursor: pointer;
+            padding: 0.25rem;
+            line-height: 1;
+        }
+
+        .preview-modal-close:hover {
+            color: #1e293b;
+        }
+
+        .preview-modal-body {
+            flex: 1;
+            overflow: auto;
+            padding: 1rem;
+            background: #f8fafc;
+        }
+
+        /* Document viewer containers */
+        .pdf-viewer {
+            width: 100%;
+            height: 100%;
+        }
+
+        .pdf-viewer canvas {
+            display: block;
+            margin: 0 auto 1rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .docx-viewer {
+            background: white;
+            padding: 2rem;
+            min-height: 100%;
+        }
+
+        .txt-viewer {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 6px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.875rem;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-x: auto;
+        }
+
+        /* Preview loading state */
+        .preview-loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #64748b;
+        }
+
+        .preview-loading .spinner {
+            width: 40px;
+            height: 40px;
+            margin-bottom: 1rem;
+        }
+
+        /* Preview error state */
+        .preview-error {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #991b1b;
+            text-align: center;
+        }
+
+        .preview-error-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
     </style>
+
+    <!-- PDF.js for PDF rendering -->
+    <script src="/static/js/pdf.min.js"></script>
+
+    <!-- docx-preview for DOCX rendering -->
+    <script src="/static/js/docx-preview.min.js"></script>
 </head>
 <body>
     <header>
@@ -715,6 +872,19 @@
         <a href="/docs" target="_blank">API Documentation</a>
     </footer>
 
+    <!-- Preview Modal -->
+    <div id="preview-modal" class="preview-modal">
+        <div class="preview-modal-content">
+            <div class="preview-modal-header">
+                <span class="preview-modal-title" id="preview-title">Document Preview</span>
+                <button class="preview-modal-close" id="preview-close">&times;</button>
+            </div>
+            <div class="preview-modal-body" id="preview-body">
+                <!-- Document content rendered here -->
+            </div>
+        </div>
+    </div>
+
     <script>
         // State
         let selectedDocumentId = null;
@@ -774,14 +944,18 @@
                         <div class="title">${escapeHtml(doc.title || doc.filename)}</div>
                         <div class="meta">${doc.page_count || 0} pages</div>
                     </div>
-                    <button class="delete-btn" data-id="${doc.id}" title="Delete">&#x2715;</button>
+                    <div style="display: flex; gap: 0.25rem;">
+                        <button class="preview-btn" data-id="${doc.id}" data-filename="${escapeHtml(doc.title || doc.filename)}" title="Preview">&#128065;</button>
+                        <button class="delete-btn" data-id="${doc.id}" title="Delete">&#x2715;</button>
+                    </div>
                 </li>
             `).join('');
 
             // Add click handlers
             documentList.querySelectorAll('.document-item').forEach(item => {
                 item.addEventListener('click', (e) => {
-                    if (!e.target.classList.contains('delete-btn')) {
+                    if (!e.target.classList.contains('delete-btn') &&
+                        !e.target.classList.contains('preview-btn')) {
                         selectDocument(item.dataset.id);
                     }
                 });
@@ -791,6 +965,14 @@
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     deleteDocument(btn.dataset.id);
+                });
+            });
+
+            // Add preview handlers
+            documentList.querySelectorAll('.preview-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    openPreviewModal(btn.dataset.id, btn.dataset.filename);
                 });
             });
         }
@@ -1298,6 +1480,160 @@
             return `<span class="language-badge ${langClass}" title="${tooltip}">${label}</span>`;
         }
 
+        // Preview modal functions
+        let pdfJsLib = null;
+
+        function setupPreview() {
+            const previewModal = document.getElementById('preview-modal');
+            const closeBtn = document.getElementById('preview-close');
+
+            // Close on X button
+            closeBtn.addEventListener('click', closePreviewModal);
+
+            // Close on backdrop click
+            previewModal.addEventListener('click', (e) => {
+                if (e.target === previewModal) {
+                    closePreviewModal();
+                }
+            });
+
+            // Close on Escape key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && previewModal.classList.contains('active')) {
+                    closePreviewModal();
+                }
+            });
+        }
+
+        function openPreviewModal(docId, filename) {
+            const modal = document.getElementById('preview-modal');
+            const title = document.getElementById('preview-title');
+            const body = document.getElementById('preview-body');
+
+            // Set title
+            title.textContent = filename;
+
+            // Show loading state
+            body.innerHTML = `
+                <div class="preview-loading">
+                    <div class="spinner"></div>
+                    <span>Loading document...</span>
+                </div>
+            `;
+
+            // Show modal
+            modal.classList.add('active');
+
+            // Fetch and render document
+            renderDocumentPreview(docId, filename, body);
+        }
+
+        function closePreviewModal() {
+            const modal = document.getElementById('preview-modal');
+            modal.classList.remove('active');
+
+            // Clear content to free memory
+            const body = document.getElementById('preview-body');
+            body.innerHTML = '';
+        }
+
+        async function renderDocumentPreview(docId, filename, container) {
+            try {
+                const response = await fetch(`/documents/${docId}/file`);
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail?.code || error.detail || 'Failed to fetch document');
+                }
+
+                const blob = await response.blob();
+                const extension = filename.split('.').pop().toLowerCase();
+
+                switch (extension) {
+                    case 'pdf':
+                        await renderPdfPreview(blob, container);
+                        break;
+                    case 'docx':
+                        await renderDocxPreview(blob, container);
+                        break;
+                    case 'txt':
+                        await renderTxtPreview(blob, container);
+                        break;
+                    default:
+                        throw new Error(`Unsupported file type: ${extension}`);
+                }
+            } catch (error) {
+                container.innerHTML = `
+                    <div class="preview-error">
+                        <span class="preview-error-icon">&#9888;</span>
+                        <p>Failed to load document preview</p>
+                        <p style="font-size: 0.875rem; color: #64748b;">${escapeHtml(error.message)}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function renderPdfPreview(blob, container) {
+            // Load PDF.js if not already loaded
+            if (!pdfJsLib) {
+                pdfJsLib = window.pdfjsLib;
+                if (!pdfJsLib) {
+                    throw new Error('PDF.js library not loaded');
+                }
+                pdfJsLib.GlobalWorkerOptions.workerSrc = '/static/js/pdf.worker.min.js';
+            }
+
+            const arrayBuffer = await blob.arrayBuffer();
+            const pdf = await pdfJsLib.getDocument({ data: arrayBuffer }).promise;
+
+            container.innerHTML = '<div class="pdf-viewer" id="pdf-container"></div>';
+            const pdfContainer = document.getElementById('pdf-container');
+
+            // Render all pages
+            for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+                const page = await pdf.getPage(pageNum);
+                const scale = 1.5;
+                const viewport = page.getViewport({ scale });
+
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+
+                await page.render({
+                    canvasContext: context,
+                    viewport: viewport
+                }).promise;
+
+                pdfContainer.appendChild(canvas);
+            }
+        }
+
+        async function renderDocxPreview(blob, container) {
+            // docx-preview library
+            if (!window.docx) {
+                throw new Error('docx-preview library not loaded');
+            }
+
+            container.innerHTML = '<div class="docx-viewer" id="docx-container"></div>';
+            const docxContainer = document.getElementById('docx-container');
+
+            await window.docx.renderAsync(blob, docxContainer, null, {
+                className: 'docx-content',
+                inWrapper: true,
+                ignoreWidth: false,
+                ignoreHeight: false,
+                ignoreFonts: false,
+                breakPages: true,
+                useBase64URL: true
+            });
+        }
+
+        async function renderTxtPreview(blob, container) {
+            const text = await blob.text();
+            container.innerHTML = `<pre class="txt-viewer">${escapeHtml(text)}</pre>`;
+        }
+
         // Tab switching
         function setupTabs() {
             tabs.forEach(tab => {
@@ -1367,6 +1703,7 @@
             setupUploadHandlers();
             setupDragDrop();
             setupButtons();
+            setupPreview();
 
             await checkHealth();
             await loadDocuments();
