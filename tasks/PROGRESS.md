@@ -16,6 +16,8 @@ This folder contains detailed specifications for each Epic and User Story. Each 
 | 6    | Hardening             | ✅ Completed   | 5/5 US   |
 | 7    | French Support        | ✅ Completed   | 2/2 US   |
 | 8    | UX & Testing          | 🔶 In Progress | 1/2 US   |
+| 9    | Multilingual Fix      | 🔲 Not Started | 0/5 US   |
+| 10   | Streaming Responses   | 🔲 Not Started | 0/5 US   |
 
 **Legend:** 🔲 Not Started | 🔶 In Progress | ✅ Completed
 
@@ -29,6 +31,8 @@ This folder contains detailed specifications for each Epic and User Story. Each 
 - [Epic 6: Hardening](./epic-6-hardening.md)
 - [Epic 7: Multilingual Support](./epic-7-multilingual.md)
 - [Epic 8: UX & Testing](./epic-8-ux-testing.md)
+- [Epic 9: Multilingual Fix](./epic-9-multilingual-fix.md)
+- [Epic 10: Streaming Responses](./epic-10-streaming-responses.md)
 
 ## Completed User Stories
 
