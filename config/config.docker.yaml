@@ -15,9 +15,11 @@ llm:
   timeout_seconds: 60
 
 embeddings:
-  model: 'all-mpnet-base-v2'
+  model: 'intfloat/multilingual-e5-base'
   batch_size: 32
   device: 'cpu'  # Use CPU for embeddings (fast enough for small batches)
+  query_prefix: 'query: '
+  document_prefix: 'passage: '
 
 chunking:
   method: 'fixed'
@@ -31,7 +33,7 @@ qdrant:
 
 retrieval:
   top_k: 8
-  score_threshold: 0.4  # Lowered for better recall with all-mpnet-base-v2
+  score_threshold: 0.4  # Balanced for multilingual-e5-base cross-lingual retrieval
   rerank: false
 
 guardrails:
