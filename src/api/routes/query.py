@@ -139,4 +139,5 @@ async def query_document(
             for c in result.citation_chunks
         ],
         confidence=result.confidence.value,
+        language=result.language,
     )

@@ -181,6 +181,9 @@ class QueryResponse(BaseModel):
     confidence: Literal["high", "medium", "low"] = Field(
         ..., description="Confidence level based on retrieval quality"
     )
+    language: Literal["en", "fr"] = Field(
+        "en", description="Detected document language used for response"
+    )
 
     model_config = {
         "json_schema_extra": {
@@ -195,6 +198,7 @@ class QueryResponse(BaseModel):
                     }
                 ],
                 "confidence": "high",
+                "language": "en",
             }
         }
     }
