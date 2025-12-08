@@ -18,6 +18,7 @@ This folder contains detailed specifications for each Epic and User Story. Each 
 | 8    | UX & Testing          | 🔶 In Progress | 1/2 US   |
 | 9    | Multilingual Fix      | 🔲 Not Started | 0/5 US   |
 | 10   | Streaming Responses   | 🔲 Not Started | 0/5 US   |
+| 11   | Document Preview      | 🔲 Not Started | 0/3 US   |
 
 **Legend:** 🔲 Not Started | 🔶 In Progress | ✅ Completed
 
@@ -33,6 +34,7 @@ This folder contains detailed specifications for each Epic and User Story. Each 
 - [Epic 8: UX & Testing](./epic-8-ux-testing.md)
 - [Epic 9: Multilingual Fix](./epic-9-multilingual-fix.md)
 - [Epic 10: Streaming Responses](./epic-10-streaming-responses.md)
+- [Epic 11: Document Preview](./epic-11-document-preview.md)
 
 ## Completed User Stories
 
