@@ -69,7 +69,7 @@ Visit [http://localhost:8000](http://localhost:8000) to use the web interface.
 - **Backend:** Python 3.11, FastAPI
 - **Agent:** LangChain + LangGraph
 - **Vector DB:** Qdrant (HNSW, cosine similarity)
-- **Embeddings:** sentence-transformers `all-mpnet-base-v2`
+- **Embeddings:** sentence-transformers `intfloat/multilingual-e5-base` (multilingual)
 - **LLM:** Ollama `mistral:7b-instruct` (local, no external APIs)
 - **Guardrails:** guardrails-ai + custom validators
 - **Storage:** SQLite (document registry), local filesystem

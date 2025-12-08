@@ -110,15 +110,15 @@ class EmbeddingService:
     Attributes:
         model_name: Name of the sentence-transformers model
         device: Device to run model on ('cpu' or 'cuda')
-        dimension: Output embedding dimension (768 for all-mpnet-base-v2)
+        dimension: Output embedding dimension (768 for multilingual-e5-base)
     """
 
-    # Model output dimension for all-mpnet-base-v2
+    # Model output dimension for multilingual-e5-base (and all-mpnet-base-v2)
     DIMENSION = 768
 
     def __init__(
         self,
-        model_name: str = "all-mpnet-base-v2",
+        model_name: str = "intfloat/multilingual-e5-base",
         device: str = "cpu",
         cache_size: int = 1000,
         enable_cache: bool = True,
@@ -177,7 +177,7 @@ class EmbeddingService:
         """Get embedding dimension.
 
         Returns:
-            Embedding vector dimension (768 for all-mpnet-base-v2)
+            Embedding vector dimension (768 for multilingual-e5-base)
         """
         return self.DIMENSION
 

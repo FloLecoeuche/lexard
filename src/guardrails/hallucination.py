@@ -42,13 +42,20 @@ class GroundingResult:
 def _get_embedding_model() -> "SentenceTransformer":
     """Lazily load the embedding model.
 
+    Uses the same multilingual model as the RAG pipeline for consistency.
+
     Returns:
         Loaded SentenceTransformer model
     """
     from sentence_transformers import SentenceTransformer
+    from src.config import get_settings
 
-    logger.info("Loading embedding model for hallucination detection")
-    return SentenceTransformer("all-mpnet-base-v2")
+    settings = get_settings()
+    logger.info(
+        "Loading embedding model for hallucination detection: %s",
+        settings.embeddings.model,
+    )
+    return SentenceTransformer(settings.embeddings.model)
 
 
 class HallucinationDetector:

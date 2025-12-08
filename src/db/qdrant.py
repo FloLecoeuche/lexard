@@ -79,7 +79,7 @@ class QdrantService:
         """Create collection if it doesn't exist.
 
         Args:
-            vector_size: Dimension of vectors. Defaults to 768 (all-mpnet-base-v2).
+            vector_size: Dimension of vectors. Defaults to 768 (multilingual-e5-base).
 
         Raises:
             QdrantConnectionError: If unable to connect to Qdrant.
