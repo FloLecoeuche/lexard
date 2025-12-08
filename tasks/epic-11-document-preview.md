@@ -25,7 +25,7 @@ Original document files are stored as BLOBs in the SQLite database (`file_conten
 
 ## US 11.1: Document File Serving Endpoint
 
-**Status:** 🔶 In Progress
+**Status:** ✅ Completed
 
 ### Description
 
