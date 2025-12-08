@@ -107,6 +107,7 @@ class RiskDetectorTool:
 
     RISK_ANALYSIS_PROMPTS = {
         "en": """Analyze the following contract excerpt for potential risks.
+IMPORTANT: You MUST respond in English.
 
 EXCERPT (Page {page}):
 {content}
@@ -121,9 +122,9 @@ Identify any risks in these categories:
 For each risk found, provide:
 - Category: one of [legal_liability, financial_penalty, data_protection, termination, ambiguous_language, other]
 - Severity: low/medium/high
-- Description: Brief explanation of the risk
+- Description: Brief explanation of the risk (in English)
 - Clause: Quote the relevant text exactly
-- Recommendation: How to mitigate (optional)
+- Recommendation: How to mitigate (in English, optional)
 
 If no risks are found, respond with exactly: NO_RISKS_FOUND
 
@@ -138,6 +139,7 @@ If risks are found, respond with valid JSON only:
   }}
 ]}}""",
         "fr": """Analysez l'extrait de contrat suivant pour identifier les risques potentiels.
+IMPORTANT: Vous DEVEZ répondre en français.
 
 EXTRAIT (Page {page}):
 {content}
@@ -152,9 +154,9 @@ Identifiez les risques dans ces catégories:
 Pour chaque risque trouvé, fournissez:
 - Catégorie: une parmi [legal_liability, financial_penalty, data_protection, termination, ambiguous_language, other]
 - Gravité: low/medium/high
-- Description: Brève explication du risque
+- Description: Brève explication du risque (en français)
 - Clause: Citation exacte du texte concerné
-- Recommandation: Comment atténuer (optionnel)
+- Recommandation: Comment atténuer (en français, optionnel)
 
 Si aucun risque n'est trouvé, répondez exactement: NO_RISKS_FOUND
 
