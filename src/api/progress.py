@@ -2,6 +2,7 @@
 import asyncio
 import json
 import logging
+from copy import copy
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from enum import Enum
@@ -282,6 +283,7 @@ class OperationProgressTracker:
     def __init__(self):
         self._operations: dict[str, OperationProgress] = {}
         self._subscribers: dict[str, list[asyncio.Queue]] = {}
+        self._history: dict[str, list[OperationProgress]] = {}  # Event history for replay
         self._lock = asyncio.Lock()
 
     async def start(self, operation_type: str) -> str:
@@ -304,8 +306,31 @@ class OperationProgressTracker:
         async with self._lock:
             self._operations[operation_id] = progress
             self._subscribers[operation_id] = []
+            self._history[operation_id] = [progress]  # Initialize history with first event
         logger.info(f"Started operation: {operation_id} ({operation_type})")
         return operation_id
+
+    async def wait_for_subscriber(
+        self, operation_id: str, timeout: float = 0.5
+    ) -> bool:
+        """Wait for at least one subscriber to connect.
+
+        This allows the SSE client to establish connection before heavy processing begins.
+
+        Args:
+            operation_id: Operation identifier
+            timeout: Maximum time to wait in seconds (default: 0.5s)
+
+        Returns:
+            True if subscriber connected, False if timeout
+        """
+        start = asyncio.get_event_loop().time()
+        while asyncio.get_event_loop().time() - start < timeout:
+            async with self._lock:
+                if operation_id in self._subscribers and self._subscribers[operation_id]:
+                    return True
+            await asyncio.sleep(0.05)  # Check every 50ms
+        return False
 
     async def update(
         self,
@@ -333,10 +358,14 @@ class OperationProgressTracker:
             op.message = message
             op.timestamp = datetime.now()
 
-            # Notify all subscribers
+            # Create a copy for history (to preserve state at this point)
+            history_entry = copy(op)
+            self._history.setdefault(operation_id, []).append(history_entry)
+
+            # Notify all subscribers (use copy to prevent mutation issues)
             for queue in self._subscribers.get(operation_id, []):
                 try:
-                    await queue.put(op)
+                    await queue.put(copy(op))
                 except Exception as e:
                     logger.error(f"Failed to notify subscriber: {e}")
 
@@ -361,10 +390,14 @@ class OperationProgressTracker:
             op.timestamp = datetime.now()
             op.result = result
 
-            # Notify all subscribers
+            # Add to history
+            history_entry = copy(op)
+            self._history.setdefault(operation_id, []).append(history_entry)
+
+            # Notify all subscribers (use copy to prevent mutation issues)
             for queue in self._subscribers.get(operation_id, []):
                 try:
-                    await queue.put(op)
+                    await queue.put(copy(op))
                 except Exception as e:
                     logger.error(f"Failed to notify subscriber: {e}")
 
@@ -392,10 +425,14 @@ class OperationProgressTracker:
             op.error = error
             op.timestamp = datetime.now()
 
-            # Notify all subscribers
+            # Add to history
+            history_entry = copy(op)
+            self._history.setdefault(operation_id, []).append(history_entry)
+
+            # Notify all subscribers (use copy to prevent mutation issues)
             for queue in self._subscribers.get(operation_id, []):
                 try:
-                    await queue.put(op)
+                    await queue.put(copy(op))
                 except Exception as e:
                     logger.error(f"Failed to notify subscriber: {e}")
 
@@ -406,6 +443,9 @@ class OperationProgressTracker:
 
     async def subscribe(self, operation_id: str) -> asyncio.Queue:
         """Subscribe to progress updates for an operation.
+
+        Replays full history to the subscriber, enabling late-joining clients
+        to see all progress stages even if they connected after completion.
 
         Args:
             operation_id: Operation identifier
@@ -421,9 +461,10 @@ class OperationProgressTracker:
 
             self._subscribers[operation_id].append(queue)
 
-            # Send current state immediately
-            if operation_id in self._operations:
-                await queue.put(self._operations[operation_id])
+            # Replay full history to new subscriber (handles late-joining clients)
+            history = self._history.get(operation_id, [])
+            for event in history:
+                await queue.put(event)
 
         return queue
 
@@ -468,6 +509,7 @@ class OperationProgressTracker:
         async with self._lock:
             self._operations.pop(operation_id, None)
             self._subscribers.pop(operation_id, None)
+            self._history.pop(operation_id, None)
         logger.debug(f"Cleaned up operation: {operation_id}")
 
 

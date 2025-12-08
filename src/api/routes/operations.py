@@ -1,7 +1,10 @@
 """Operations progress tracking routes."""
 
+import asyncio
+import json
+
 from fastapi import APIRouter, HTTPException
-from fastapi.responses import StreamingResponse
+from sse_starlette.sse import EventSourceResponse
 
 from src.api.progress import (
     OperationProgress,
@@ -43,7 +46,7 @@ The stream closes automatically when the operation reaches `complete` or `failed
         404: {"description": "Operation not found"},
     },
 )
-async def get_operation_progress(operation_id: str) -> StreamingResponse:
+async def get_operation_progress(operation_id: str):
     """Stream progress updates for an operation via SSE."""
     tracker = get_operation_tracker()
 
@@ -52,12 +55,17 @@ async def get_operation_progress(operation_id: str) -> StreamingResponse:
     if operation is None:
         raise HTTPException(status_code=404, detail="Operation not found")
 
-    async def event_stream():
+    async def event_generator():
+        """Generate SSE events from progress updates."""
         queue = await tracker.subscribe(operation_id)
         try:
             while True:
                 progress: OperationProgress = await queue.get()
-                yield progress.to_sse()
+
+                yield {
+                    "event": "progress",
+                    "data": json.dumps(progress.to_dict()),
+                }
 
                 # Stop streaming on terminal states
                 if progress.stage in (OperationStage.COMPLETE, OperationStage.FAILED):
@@ -65,15 +73,7 @@ async def get_operation_progress(operation_id: str) -> StreamingResponse:
         finally:
             await tracker.unsubscribe(operation_id, queue)
 
-    return StreamingResponse(
-        event_stream(),
-        media_type="text/event-stream",
-        headers={
-            "Cache-Control": "no-cache",
-            "Connection": "keep-alive",
-            "X-Accel-Buffering": "no",
-        },
-    )
+    return EventSourceResponse(event_generator())
 
 
 @router.get(

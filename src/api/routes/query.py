@@ -3,7 +3,7 @@
 import asyncio
 import logging
 
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request
 
 from src.api.progress import get_operation_tracker
 from src.api.schemas import (
@@ -162,7 +162,23 @@ async def _execute_query_with_progress(
         question: User's question
         document_id: Document to query
     """
+    from src.api.progress import OperationStage
+
     tracker = get_operation_tracker()
+
+    # Send first progress event IMMEDIATELY (before any blocking work)
+    # This gives the SSE client time to connect while model loads
+    await tracker.update(
+        operation_id,
+        OperationStage.RETRIEVING,
+        0.05,
+        "Initializing...",
+    )
+
+    # Yield control to let HTTP response be sent before heavy work
+    await asyncio.sleep(0)
+
+    # Now load pipeline (this loads the embedding model - takes ~2-3 seconds)
     pipeline = get_rag_pipeline()
 
     try:
@@ -214,7 +230,6 @@ Get the final result from `/operations/{operation_id}/result` after completion.
 async def query_document_async(
     query: QueryRequest,
     request: Request,
-    background_tasks: BackgroundTasks,
 ) -> AsyncOperationResponse:
     """Query a document using RAG with async progress tracking."""
     trace_id = getattr(request.state, "trace_id", "")
@@ -260,12 +275,14 @@ async def query_document_async(
         },
     )
 
-    # Start background processing
-    background_tasks.add_task(
-        _execute_query_with_progress,
-        operation_id=operation_id,
-        question=query.question,
-        document_id=query.document_id,
+    # Start background processing immediately with asyncio.create_task
+    # (BackgroundTasks waits until after response is sent, which is too late)
+    asyncio.create_task(
+        _execute_query_with_progress(
+            operation_id=operation_id,
+            question=query.question,
+            document_id=query.document_id,
+        )
     )
 
     return AsyncOperationResponse(

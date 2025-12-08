@@ -293,9 +293,14 @@ Si des risques sont trouvés, répondez uniquement avec du JSON valide:
         Raises:
             ValueError: If no chunks found for document
         """
+        import asyncio
         from src.api.progress import OperationStage
 
         logger.info(f"Starting risk analysis with progress for document {document_id}")
+
+        # Wait for SSE client to connect before starting heavy work
+        if tracker and operation_id:
+            await tracker.wait_for_subscriber(operation_id, timeout=0.5)
 
         # Stage 1: Loading (0-15%)
         if tracker and operation_id:
@@ -305,6 +310,7 @@ Si des risques sont trouvés, répondez uniquement avec du JSON valide:
                 0.05,
                 "Loading document...",
             )
+            await asyncio.sleep(0)  # Yield to let SSE send the update
 
         # Get all chunks
         chunks = await self._get_all_chunks(document_id)
@@ -319,6 +325,7 @@ Si des risques sont trouvés, répondez uniquement avec du JSON valide:
                 0.15,
                 f"Loaded {len(chunks)} sections",
             )
+            await asyncio.sleep(0)
 
         logger.info(f"Retrieved {len(chunks)} chunks for document {document_id}")
 
@@ -343,6 +350,7 @@ Si des risques sont trouvés, répondez uniquement avec du JSON valide:
                 0.20,
                 "Analyzing clauses...",
             )
+            await asyncio.sleep(0)
 
         all_risks = await self._analyze_chunks_batch_with_progress(
             chunks, language, tracker, operation_id
@@ -358,6 +366,7 @@ Si des risques sont trouvés, répondez uniquement avec du JSON valide:
                 0.70,
                 "Evaluating risks...",
             )
+            await asyncio.sleep(0)
 
         # Deduplicate similar risks
         unique_risks = self._deduplicate_risks(all_risks)
@@ -374,6 +383,7 @@ Si des risques sont trouvés, répondez uniquement avec du JSON valide:
                 0.85,
                 "Risk evaluation complete",
             )
+            await asyncio.sleep(0)
 
         # Stage 4: Validation (85-100%)
         if tracker and operation_id:
@@ -383,6 +393,7 @@ Si des risques sont trouvés, répondez uniquement avec du JSON valide:
                 0.90,
                 "Validating response...",
             )
+            await asyncio.sleep(0)
 
         # Generate summary
         summary = self._generate_summary(unique_risks, language)
@@ -402,6 +413,7 @@ Si des risques sont trouvés, répondez uniquement avec du JSON valide:
                 0.95,
                 "Building result...",
             )
+            await asyncio.sleep(0)
 
         logger.info(
             f"Risk analysis with progress complete: {len(unique_risks)} risks, "
