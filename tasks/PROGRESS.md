@@ -17,7 +17,7 @@ This folder contains detailed specifications for each Epic and User Story. Each 
 | 7    | French Support        | ✅ Completed   | 2/2 US   |
 | 8    | UX & Testing          | ✅ Completed   | 2/2 US   |
 | 9    | Multilingual Fix      | ✅ Completed   | 5/5 US   |
-| 10   | Test Suite Review     | 🔲 Not Started | 0/4 US   |
+| 10   | Test Suite Review     | 🔶 In Progress | 0/4 US   |
 | 11   | Streaming Responses   | 🔲 Not Started | 0/5 US   |
 | 12   | Document Preview      | 🔲 Not Started | 0/3 US   |
 
