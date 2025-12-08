@@ -600,6 +600,38 @@
         .confidence-high { background: #dcfce7; color: #166534; }
         .confidence-medium { background: #fef3c7; color: #92400e; }
         .confidence-low { background: #fee2e2; color: #991b1b; }
+
+        /* Language badge */
+        .language-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.5rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: help;
+        }
+
+        .language-badge.lang-fr {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .language-badge.lang-en {
+            background: #f0fdf4;
+            color: #166534;
+        }
+
+        .result-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .result-header h3 {
+            margin-bottom: 0;
+        }
     </style>
 </head>
 <body>
@@ -998,7 +1030,10 @@
             const confidenceClass = data.confidence ? `confidence-${data.confidence}` : '';
 
             resultBox.innerHTML = `
-                <h3>Answer</h3>
+                <div class="result-header">
+                    <h3>Answer</h3>
+                    ${renderLanguageBadge(data.language)}
+                </div>
                 <div class="answer-text">${escapeHtml(data.answer)}</div>
                 ${data.confidence ? `<span class="confidence-badge ${confidenceClass}">Confidence: ${data.confidence}</span>` : ''}
                 ${citationsHtml}
@@ -1043,9 +1078,10 @@
 
             let keyPointsHtml = '';
             if (data.key_points && data.key_points.length > 0) {
+                const keyPointsLabel = data.language === 'fr' ? 'Points clés' : 'Key Points';
                 keyPointsHtml = `
                     <div class="key-points">
-                        <h4>Key Points</h4>
+                        <h4>${keyPointsLabel}</h4>
                         <ul>
                             ${data.key_points.map(p => `<li>${escapeHtml(p)}</li>`).join('')}
                         </ul>
@@ -1053,11 +1089,16 @@
                 `;
             }
 
+            const summaryLabel = data.language === 'fr' ? 'Résumé' : 'Summary';
+
             resultBox.innerHTML = `
-                <h3>Summary</h3>
+                <div class="result-header">
+                    <h3>${summaryLabel}</h3>
+                    ${renderLanguageBadge(data.language)}
+                </div>
                 <div class="answer-text">${escapeHtml(data.summary)}</div>
                 ${keyPointsHtml}
-                ${data.word_count ? `<div class="citation-meta">${data.word_count} words</div>` : ''}
+                ${data.word_count ? `<div class="citation-meta">${data.word_count} ${data.language === 'fr' ? 'mots' : 'words'}</div>` : ''}
             `;
         }
 
@@ -1095,26 +1136,35 @@
         function renderRisks(data) {
             const resultBox = document.getElementById('risks-result');
 
+            const isFrench = data.language === 'fr';
+            const noRisksMsg = isFrench ? 'Aucun risque identifié' : 'No risks identified';
+            const overallLabel = isFrench ? 'Niveau de risque global' : 'Overall Risk Level';
+            const recommendationLabel = isFrench ? 'Recommandation' : 'Recommendation';
+
             if (!data.risks || data.risks.length === 0) {
-                resultBox.innerHTML = '<div class="empty-state">No risks identified</div>';
+                resultBox.innerHTML = `<div class="empty-state">${noRisksMsg}</div>`;
                 return;
             }
 
             const overallClass = data.overall_risk_level || 'medium';
 
             resultBox.innerHTML = `
+                <div class="result-header">
+                    <h3>${isFrench ? 'Analyse des risques' : 'Risk Analysis'}</h3>
+                    ${renderLanguageBadge(data.language)}
+                </div>
                 <div class="overall-risk ${overallClass}">
-                    Overall Risk Level: ${(data.overall_risk_level || 'Unknown').toUpperCase()}
+                    ${overallLabel}: ${(data.overall_risk_level || 'Unknown').toUpperCase()}
                 </div>
                 ${data.risks.map(risk => `
                     <div class="risk-item">
                         <div class="risk-header">
-                            <span class="risk-category">${escapeHtml(risk.category || 'General')}</span>
+                            <span class="risk-category">${escapeHtml(risk.category || (isFrench ? 'Général' : 'General'))}</span>
                             <span class="severity-badge severity-${risk.severity || 'medium'}">${(risk.severity || 'medium').toUpperCase()}</span>
                         </div>
                         <div class="risk-description">${escapeHtml(risk.description)}</div>
                         ${risk.clause_excerpt ? `<div class="risk-excerpt">"${escapeHtml(risk.clause_excerpt)}"</div>` : ''}
-                        ${risk.recommendation ? `<div class="citation-meta">Recommendation: ${escapeHtml(risk.recommendation)}</div>` : ''}
+                        ${risk.recommendation ? `<div class="citation-meta">${recommendationLabel}: ${escapeHtml(risk.recommendation)}</div>` : ''}
                     </div>
                 `).join('')}
             `;
@@ -1180,8 +1230,14 @@
         function renderComparison(data) {
             const resultBox = document.getElementById('compare-result');
 
+            const isFrench = data.language === 'fr';
+            const noDiffsMsg = isFrench ? 'Aucune différence significative trouvée' : 'No significant differences found';
+            const overallSimLabel = isFrench ? 'Similarité globale' : 'Overall Similarity';
+            const simLabel = isFrench ? 'Similarité' : 'Similarity';
+            const comparisonTitle = isFrench ? 'Comparaison' : 'Comparison';
+
             if (!data.differences || data.differences.length === 0) {
-                resultBox.innerHTML = '<div class="empty-state">No significant differences found</div>';
+                resultBox.innerHTML = `<div class="empty-state">${noDiffsMsg}</div>`;
                 return;
             }
 
@@ -1190,8 +1246,12 @@
                 : 'N/A';
 
             resultBox.innerHTML = `
+                <div class="result-header">
+                    <h3>${comparisonTitle}</h3>
+                    ${renderLanguageBadge(data.language)}
+                </div>
                 <div class="similarity-score">
-                    Overall Similarity: ${similarity}%
+                    ${overallSimLabel}: ${similarity}%
                 </div>
                 ${data.differences.map(diff => `
                     <div class="diff-item change-${diff.change_type || 'modified'}">
@@ -1206,7 +1266,7 @@
                                 ${escapeHtml(diff.doc_b_excerpt || diff.doc_b_content || 'N/A')}
                             </div>
                         </div>
-                        ${diff.similarity !== undefined ? `<div class="citation-meta">Similarity: ${(diff.similarity * 100).toFixed(1)}%</div>` : ''}
+                        ${diff.similarity !== undefined ? `<div class="citation-meta">${simLabel}: ${(diff.similarity * 100).toFixed(1)}%</div>` : ''}
                     </div>
                 `).join('')}
             `;
@@ -1226,6 +1286,16 @@
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
+        }
+
+        function renderLanguageBadge(language) {
+            if (!language) return '';
+            const label = language === 'fr' ? 'FR' : 'EN';
+            const langClass = language === 'fr' ? 'lang-fr' : 'lang-en';
+            const tooltip = language === 'fr'
+                ? 'Réponse en français (détecté automatiquement)'
+                : 'Response in English (auto-detected)';
+            return `<span class="language-badge ${langClass}" title="${tooltip}">${label}</span>`;
         }
 
         // Tab switching
