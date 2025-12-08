@@ -90,7 +90,7 @@ This folder contains detailed specifications for each Epic and User Story. Each 
 | 11.3  | Integration Testing & Polish   | 2025-12-08 | b5156b7  |
 | 12.1  | Backend Progress Event Infrastructure | 2025-12-08 | 05ee3c8  |
 | 12.2  | Progress-Aware RAG Pipeline           | 2025-12-08 | 66a272b  |
-| 12.3  | Progress-Aware API Endpoints          | 2025-12-08 | PENDING  |
+| 12.3  | Progress-Aware API Endpoints          | 2025-12-08 | b8828a6  |
 
 <!-- Format: | US ID | Name | Completed Date | Commit Hash | -->
 
