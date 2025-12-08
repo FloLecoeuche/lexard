@@ -259,7 +259,7 @@ async def test_upload_and_query_english_pdf(api_client, test_data_dir):
 
 ## US 10.4: Specialized Test Suites Review
 
-**Status:** 🔶 In Progress
+**Status:** ✅ Completed
 
 ### Description
 
