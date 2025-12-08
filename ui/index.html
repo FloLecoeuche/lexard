@@ -536,10 +536,18 @@
         /* Loading */
         .loading {
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
             padding: 2rem;
             color: #64748b;
+            gap: 0.5rem;
+        }
+
+        .loading-hint {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            margin: 0;
         }
 
         .spinner {
@@ -549,7 +557,6 @@
             border-top-color: #2563eb;
             border-radius: 50%;
             animation: spin 1s linear infinite;
-            margin-right: 0.5rem;
         }
 
         @keyframes spin {
@@ -1186,7 +1193,8 @@
             const formData = new FormData();
             formData.append('file', file);
 
-            showUploadLoading();
+            // Show progress UI immediately with "Uploading" stage
+            showUploadProgressUI(file.name);
 
             try {
                 const response = await fetch('/upload', {
@@ -1214,6 +1222,27 @@
             }
         }
 
+        function showUploadProgressUI(filename) {
+            // Show progress UI immediately instead of simple spinner
+            uploadZone.innerHTML = `
+                <div class="upload-progress" id="progress-container">
+                    <div class="stage-header">
+                        <span class="stage-icon" id="stage-icon">📤</span>
+                        <span class="stage-label" id="stage-label">Uploading</span>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-fill" id="progress-bar" style="width: 0%"></div>
+                    </div>
+                    <div class="progress-details">
+                        <span class="progress-percent" id="progress-percent">0%</span>
+                        <span class="progress-message" id="progress-message">Sending ${escapeHtml(filename)}...</span>
+                    </div>
+                    <div class="progress-timestamp" id="progress-timestamp"></div>
+                    <div class="progress-error" id="progress-error" style="display: none;"></div>
+                </div>
+            `;
+        }
+
         async function trackUploadProgress(taskId, filename) {
             const STAGE_LABELS = {
                 uploading: 'Uploading',
@@ -1235,25 +1264,7 @@
                 failed: '❌'
             };
 
-            // Show progress UI
-            uploadZone.innerHTML = `
-                <div class="upload-progress" id="progress-container">
-                    <div class="stage-header">
-                        <span class="stage-icon" id="stage-icon">⏳</span>
-                        <span class="stage-label" id="stage-label">Initializing...</span>
-                    </div>
-                    <div class="progress-bar-container">
-                        <div class="progress-bar-fill" id="progress-bar" style="width: 0%"></div>
-                    </div>
-                    <div class="progress-details">
-                        <span class="progress-percent" id="progress-percent">0%</span>
-                        <span class="progress-message" id="progress-message">Starting...</span>
-                    </div>
-                    <div class="progress-timestamp" id="progress-timestamp"></div>
-                    <div class="progress-error" id="progress-error" style="display: none;"></div>
-                </div>
-            `;
-
+            // Reuse existing progress UI elements (already created by showUploadProgressUI)
             const stageIcon = document.getElementById('stage-icon');
             const stageLabel = document.getElementById('stage-label');
             const progressBar = document.getElementById('progress-bar');
@@ -1656,7 +1667,7 @@
 
         // UI helpers
         function showLoading(element) {
-            element.innerHTML = '<div class="loading"><div class="spinner"></div>Loading...</div>';
+            element.innerHTML = '<div class="loading"><div class="spinner"></div>Loading...<p class="loading-hint">Please do not refresh the page</p></div>';
         }
 
         function showError(element, message) {
