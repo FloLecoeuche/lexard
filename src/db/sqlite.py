@@ -34,6 +34,50 @@ CREATE INDEX IF NOT EXISTS idx_parent_document ON documents(parent_document_id);
 CREATE INDEX IF NOT EXISTS idx_status ON documents(status);
 """
 
+# Analytics schema for user behavior tracking
+ANALYTICS_SCHEMA_SQL = """
+-- Analytics events (raw log)
+CREATE TABLE IF NOT EXISTS analytics_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    event_name TEXT NOT NULL,
+    browser_id TEXT NOT NULL,
+    session_id TEXT NOT NULL,
+    properties TEXT DEFAULT '{}',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_events_browser ON analytics_events(browser_id);
+CREATE INDEX IF NOT EXISTS idx_events_session ON analytics_events(session_id);
+CREATE INDEX IF NOT EXISTS idx_events_name ON analytics_events(event_name);
+CREATE INDEX IF NOT EXISTS idx_events_created ON analytics_events(created_at);
+
+-- Sessions (aggregated)
+CREATE TABLE IF NOT EXISTS analytics_sessions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    session_id TEXT UNIQUE NOT NULL,
+    browser_id TEXT NOT NULL,
+    started_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    ended_at TIMESTAMP,
+    is_returning_user BOOLEAN NOT NULL DEFAULT 0,
+    event_count INTEGER DEFAULT 0,
+    query_count INTEGER DEFAULT 0,
+    docs_uploaded INTEGER DEFAULT 0
+);
+
+CREATE INDEX IF NOT EXISTS idx_sessions_browser ON analytics_sessions(browser_id);
+CREATE INDEX IF NOT EXISTS idx_sessions_started ON analytics_sessions(started_at);
+
+-- Browsers (for returning user detection)
+CREATE TABLE IF NOT EXISTS analytics_browsers (
+    browser_id TEXT PRIMARY KEY,
+    first_seen_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_seen_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    total_sessions INTEGER DEFAULT 1
+);
+
+CREATE INDEX IF NOT EXISTS idx_browsers_first_seen ON analytics_browsers(first_seen_at);
+"""
+
 # Migration SQL to add file_content column to existing databases
 MIGRATION_ADD_FILE_CONTENT = """
 ALTER TABLE documents ADD COLUMN file_content BLOB;
@@ -80,6 +124,16 @@ class DocumentRegistry:
         conn.commit()
         # Run migration for existing databases
         self._migrate_add_file_content(conn)
+        # Initialize analytics tables
+        self._init_analytics_schema(conn)
+
+    def _init_analytics_schema(self, conn: sqlite3.Connection) -> None:
+        """Initialize analytics tables (idempotent)."""
+        try:
+            conn.executescript(ANALYTICS_SCHEMA_SQL)
+            conn.commit()
+        except sqlite3.OperationalError:
+            pass  # Tables already exist or database is readonly
 
     def _migrate_add_file_content(self, conn: sqlite3.Connection) -> None:
         """Add file_content column if it doesn't exist (migration for existing DBs)."""

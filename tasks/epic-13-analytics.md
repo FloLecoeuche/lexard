@@ -44,7 +44,7 @@ Since there's no authentication:
 
 ## US 13.1: Analytics Database Schema
 
-**Status:** 🔲 Not Started
+**Status:** 🔶 In Progress
 
 ### Description
 
