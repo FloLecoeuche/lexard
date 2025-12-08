@@ -291,7 +291,7 @@ def store_event(event: AnalyticsEvent):
 
 ## US 13.3: Frontend Event Tracking
 
-**Status:** 🔲 Not Started
+**Status:** ✅ Completed
 
 ### Description
 
@@ -314,26 +314,26 @@ Events to track (quick wins first):
 
 ### Tasks
 
-- [ ] Create `Analytics` JavaScript object:
+- [x] Create `Analytics` JavaScript object:
   - `getBrowserId()` - Get/create persistent browser ID (localStorage)
   - `getSessionId()` - Get/create session ID (sessionStorage)
   - `track(eventName, properties)` - Send event to backend
   - `init()` - Initialize tracking, send `session_started`
-- [ ] Track session lifecycle:
+- [x] Track session lifecycle:
   - `session_started` on page load
   - `session_ended` on `beforeunload`
-- [ ] Track document operations:
-  - `document_uploaded` with `file_type`, `page_count`
-  - `document_upload_failed` with `error_type`
-- [ ] Track query operations:
+- [x] Track document operations:
+  - `document_uploaded` with `file_type`, `duration_ms`
+  - `document_upload_failed` with `error_type`, `file_type`, `duration_ms`
+- [x] Track query operations:
   - `query_submitted` with `question_length`
-  - `query_completed` with `duration_ms`, `confidence`, `citation_count`
+  - `query_completed` with `duration_ms`, `confidence`, `citation_count`, `language`
   - `query_failed` with `error_type`, `duration_ms`
-- [ ] Track feature usage:
-  - `summarize_requested`, `summarize_completed`
-  - `risks_requested`, `risks_completed`
-  - `compare_requested`, `compare_completed`
-- [ ] Integrate into existing UI functions
+- [x] Track feature usage:
+  - `summarize_requested`, `summarize_completed`, `summarize_failed`
+  - `risks_requested`, `risks_completed`, `risks_failed`
+  - `compare_requested`, `compare_completed`, `compare_failed`
+- [x] Integrate into existing UI functions
 
 ### Implementation Details
 
@@ -434,15 +434,15 @@ async function askQuestion() {
 
 ### Acceptance Criteria
 
-- [ ] `browser_id` persists in localStorage across sessions
-- [ ] `session_id` is unique per tab/session
-- [ ] `session_started` fires on page load
-- [ ] `session_ended` fires on page unload (best effort)
-- [ ] All document operations tracked
-- [ ] All query operations tracked with timing
-- [ ] All feature usage tracked
-- [ ] Tracking failures don't affect UI functionality
-- [ ] No PII in tracked data (no question text, no doc content)
+- [x] `browser_id` persists in localStorage across sessions
+- [x] `session_id` is unique per tab/session
+- [x] `session_started` fires on page load
+- [x] `session_ended` fires on page unload (best effort)
+- [x] All document operations tracked
+- [x] All query operations tracked with timing
+- [x] All feature usage tracked
+- [x] Tracking failures don't affect UI functionality
+- [x] No PII in tracked data (no question text, no doc content)
 
 ### Tests
 
