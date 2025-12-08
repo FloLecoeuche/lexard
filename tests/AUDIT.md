@@ -204,9 +204,49 @@ E2E tests: Require running services (Ollama, Qdrant, API)
 4. **Consider parameterizing verbose test classes** - Reduce maintenance
 5. **Review duplicate French language tests** - Consolidate where appropriate
 
+## US 10.2: Unit Test Fixes & Cleanup
+
+**Status:** ✅ Complete
+**Date:** 2025-12-08
+
+### Summary
+
+All unit tests verified and passing. No fixes were needed - the test suite was already in good shape.
+
+### Verification Results
+
+| Criteria                               | Result | Notes                                    |
+| -------------------------------------- | ------ | ---------------------------------------- |
+| All unit tests pass                    | ✅     | 428 passed, 1 skipped                    |
+| Unit tests run in <60 seconds          | ✅     | 11.96 seconds                            |
+| No test requires Ollama/Qdrant running | ✅     | 1 test properly skipped (requires Qdrant)|
+| Test names follow convention           | ✅     | `test_<function>_<scenario>` pattern     |
+| Each test has clear purpose            | ✅     | All tests have docstrings                |
+| Test isolation (no shared state)       | ✅     | Module-scoped fixtures are read-only     |
+
+### Redundant Test Analysis
+
+Duplicate tests were identified in US 10.1 but NOT removed because:
+1. Unit tests (`test_french_support.py::TestLanguageDetection`) are faster than integration equivalents
+2. Test removal requires explicit user approval (deferred to US 10.5)
+3. Different test layers (unit vs integration) serve different purposes
+
+### Key Findings
+
+1. **All 428 unit tests pass** - No failing tests to fix
+2. **Test isolation is good** - Module-scoped fixtures are read-only (embedding model)
+3. **External service dependency properly handled** - 1 test skipped (requires Qdrant)
+4. **Test naming is consistent** - All tests follow `test_<function>_<scenario>` pattern
+5. **Docstrings present** - All tests have clear purpose documentation
+
+### Recommendations for US 10.5
+
+These tests are candidates for removal/consolidation (requires user approval):
+- `test_french_support.py::TestLanguageDetection` (4 tests) - Covered by integration tests
+- Consider parameterizing `test_classifier.py` (43 tests → ~20 tests)
+
 ## Next Steps
 
-- US 10.2: Fix any failing unit tests (none found)
 - US 10.3: Ensure E2E tests run with services
 - US 10.4: Review specialized test suites
 - US 10.5: Present removal recommendations (with user approval)
