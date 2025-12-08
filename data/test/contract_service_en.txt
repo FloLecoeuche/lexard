@@ -1,0 +1,189 @@
+SERVICE AGREEMENT
+
+Between the undersigned parties:
+
+1. DataCloud Services Ltd, a private limited company registered in England and Wales with company number 45678912, having its registered office at 10 Innovation Boulevard, Bristol, BS1 4DJ, United Kingdom, represented by Mr Peter Davies in his capacity as Chief Executive Officer,
+   hereinafter referred to as "The Provider"
+
+2. Retail Plus Ltd, a private limited company registered in England and Wales with company number 78912345, having its registered office at 45 High Street, Birmingham, B2 4QA, United Kingdom, represented by Ms Sophie Bennett in her capacity as Managing Director,
+   hereinafter referred to as "The Client"
+
+hereinafter collectively referred to as "The Parties"
+
+RECITALS
+
+The Client wishes to benefit from the hosting and data management services offered by the Provider. The Provider has the expertise and resources necessary to provide these services. The Parties have decided to formalise their contractual relationship through this agreement.
+
+IT HAS BEEN AGREED AS FOLLOWS:
+
+ARTICLE 1 - SUBJECT OF THE AGREEMENT
+
+This agreement defines the conditions under which the Provider shall supply the Client with the following services:
+
+1.1 Data hosting on secure cloud infrastructure
+1.2 Automated daily backup
+1.3 Technical support 24 hours a day, 7 days a week
+1.4 System updates and maintenance
+1.5 Real-time monitoring and alerts
+
+ARTICLE 2 - DURATION OF THE AGREEMENT
+
+2.1 This agreement is entered into for an initial period of twenty-four (24) months from the date of signature.
+
+2.2 At the end of this initial period, the agreement shall automatically renew for successive periods of twelve (12) months, unless terminated by either Party giving three (3) months' notice before the expiry date.
+
+2.3 The effective date of this agreement is 1 February 2024.
+
+ARTICLE 3 - FINANCIAL TERMS
+
+3.1 Price of Services
+
+In consideration for the services provided, the Client shall pay the Provider a monthly fee of five thousand pounds excluding VAT (GBP 5,000 ex VAT), being six thousand pounds including VAT (GBP 6,000 inc VAT) at the current VAT rate.
+
+3.2 Payment Terms
+
+Invoices are issued monthly on the first day of each month. Payment must be made within thirty (30) days from the date of invoice, by bank transfer to the account specified on the invoice.
+
+Provider's bank details:
+- Sort Code: 20-00-00
+- Account Number: 12345678
+- IBAN: GB82 BARC 2000 0012 3456 78
+- BIC: BARCGB22
+
+3.3 Late Payment Penalties
+
+In the event of late payment, late payment interest shall automatically be applied at a rate of 8% above the Bank of England base rate. A fixed sum of forty pounds (GBP 40) for debt recovery costs shall also be payable.
+
+3.4 Price Revision
+
+Prices may be revised annually on 1 January each year, based on the Consumer Price Index (CPI). Any increase exceeding 5% shall entitle the Client to terminate the agreement without penalty.
+
+ARTICLE 4 - PROVIDER'S OBLIGATIONS
+
+The Provider undertakes to:
+
+4.1 Provide services in accordance with the technical specifications annexed to this agreement.
+
+4.2 Guarantee a service availability rate of 99.9% (SLA), measured monthly.
+
+4.3 Inform the Client of any scheduled service interruption with a minimum notice period of seventy-two (72) hours.
+
+4.4 Implement all security measures necessary to protect the Client's data.
+
+4.5 Comply with the provisions of the UK General Data Protection Regulation (UK GDPR) and the Data Protection Act 2018.
+
+4.6 Provide a monthly report on service performance and any incidents.
+
+ARTICLE 5 - CLIENT'S OBLIGATIONS
+
+The Client undertakes to:
+
+5.1 Provide the Provider with all information necessary for the proper performance of the services.
+
+5.2 Designate a single point of contact for contract management.
+
+5.3 Make payment of invoices within the agreed timeframes.
+
+5.4 Not use the services for unlawful purposes or purposes contrary to public policy.
+
+5.5 Inform the Provider of any change in requirements within a reasonable timeframe.
+
+ARTICLE 6 - INTELLECTUAL PROPERTY
+
+6.1 Each Party shall retain exclusive ownership of its pre-existing intellectual property rights.
+
+6.2 Any specific developments made by the Provider for the Client under this agreement shall remain the property of the Provider. The Client shall benefit from a non-exclusive and non-transferable licence to use such developments for the duration of the agreement.
+
+6.3 The Client's data shall remain its exclusive property.
+
+ARTICLE 7 - CONFIDENTIALITY
+
+7.1 Each Party undertakes to keep confidential all information exchanged under this agreement.
+
+7.2 This confidentiality obligation shall survive the termination of this agreement for a period of three (3) years.
+
+ARTICLE 8 - LIABILITY
+
+8.1 Limitation of Liability
+
+The Provider's liability under this agreement is limited to the total amount paid by the Client in the twelve (12) months preceding the event giving rise to the damage.
+
+8.2 Exclusion of Liability
+
+The Provider shall not be liable for indirect damages, such as loss of turnover, loss of customers, loss of data, or damage to reputation.
+
+8.3 Force Majeure
+
+Neither Party shall be liable for failure to perform its obligations in the event of force majeure, as defined by English law.
+
+ARTICLE 9 - TERMINATION
+
+9.1 Termination for Convenience
+
+Either Party may terminate this agreement at any time after the initial period, by giving three (3) months' notice by recorded delivery.
+
+9.2 Termination for Breach
+
+In the event of a serious breach by either Party of its contractual obligations, the other Party may terminate the agreement as of right, following a formal notice that has remained without effect for thirty (30) days.
+
+9.3 Consequences of Termination
+
+In the event of termination, the Provider undertakes to return all Client data in a standard format within thirty (30) days. Migration fees may be charged in accordance with the current price list.
+
+ARTICLE 10 - CONTRACTUAL PENALTIES
+
+10.1 In the event of non-compliance with the 99.9% availability SLA, the Client shall be entitled to a credit calculated as follows:
+- Availability between 99% and 99.9%: credit of 10% of the monthly fee
+- Availability between 95% and 99%: credit of 25% of the monthly fee
+- Availability below 95%: credit of 50% of the monthly fee
+
+10.2 These penalties constitute a cap and represent the sole compensation due to the Client in the event of service failure.
+
+ARTICLE 11 - INSURANCE
+
+The Provider declares that it has taken out professional indemnity insurance with Aviva Insurance, under policy number PI-2024-123456, covering any damages that may result from the performance of this agreement.
+
+ARTICLE 12 - DATA PROTECTION
+
+12.1 The Provider acts as a processor within the meaning of UK GDPR for the processing of the Client's personal data.
+
+12.2 The Provider undertakes to:
+- Process data only on documented instructions from the Client
+- Ensure the confidentiality of the data
+- Implement appropriate security measures
+- Assist the Client in complying with its UK GDPR obligations
+- Delete or return data upon termination of the agreement
+
+12.3 Data is hosted exclusively on servers located within the United Kingdom.
+
+ARTICLE 13 - GOVERNING LAW AND JURISDICTION
+
+13.1 This agreement shall be governed by and construed in accordance with the laws of England and Wales.
+
+13.2 In the event of a dispute relating to the interpretation or performance of this agreement, the Parties shall endeavour to find an amicable solution.
+
+13.3 Failing amicable agreement within thirty (30) days, any dispute shall be subject to the exclusive jurisdiction of the courts of England and Wales.
+
+ARTICLE 14 - MISCELLANEOUS PROVISIONS
+
+14.1 This agreement, including its annexes, constitutes the entire agreement between the Parties and supersedes any prior commitment.
+
+14.2 Any amendment to this agreement must be made in writing and signed by both Parties.
+
+14.3 The invalidity of any clause shall not affect the validity of the other clauses of the agreement.
+
+14.4 The failure by either Party to enforce any breach of this agreement shall not be construed as a waiver of the relevant clause.
+
+ANNEXES
+
+- Annex 1: Technical specifications of services
+- Annex 2: Technical support procedures
+- Annex 3: Business continuity plan
+
+Made in two original copies, in London, on 15 January 2024.
+
+For DataCloud Services Ltd                 For Retail Plus Ltd
+Mr Peter Davies                            Ms Sophie Bennett
+Chief Executive Officer                    Managing Director
+
+[Signature]                                [Signature]

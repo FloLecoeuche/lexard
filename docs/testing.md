@@ -77,12 +77,12 @@ E2E tests require the following services to be running:
 
 ### Test Fixtures
 
-Test fixtures are located in `tests/fixtures/`:
+Test fixtures are located in `data/test/`:
 
-- `sample_contract_en.pdf` - English contract (PDF)
-- `sample_contract_en.docx` - English contract (DOCX)
-- `sample_contract_fr.pdf` - French contract (PDF)
-- `sample_contract_fr.docx` - French contract (DOCX)
+- `contract_nda_en.pdf` / `contract_nda_en.docx` - English NDA contract
+- `contract_service_en.pdf` / `contract_service_en.docx` - English service contract
+- `contrat_nda_fr.pdf` / `contrat_nda_fr.docx` - French NDA contract
+- `contrat_service_fr.pdf` / `contrat_service_fr.docx` - French service contract
 
 ## Running Tests Locally
 
@@ -192,11 +192,11 @@ The CI workflow (`.github/workflows/e2e-tests.yml`):
 ### Fixtures (`tests/e2e/conftest.py`)
 
 - `api_client` - Async HTTP client for API calls
-- `test_data_dir` - Path to test fixtures directory
-- `sample_contract_en_pdf` - Uploaded English PDF (returns doc_id)
-- `sample_contract_en_docx` - Uploaded English DOCX (returns doc_id)
-- `sample_contract_fr_pdf` - Uploaded French PDF (returns doc_id)
-- `sample_contract_fr_docx` - Uploaded French DOCX (returns doc_id)
+- `test_data_dir` - Path to test data directory (`data/test/`)
+- `sample_contract_en_pdf` - Uploaded English NDA PDF (returns doc_id)
+- `sample_contract_en_docx` - Uploaded English NDA DOCX (returns doc_id)
+- `sample_contract_fr_pdf` - Uploaded French NDA PDF (returns doc_id)
+- `sample_contract_fr_docx` - Uploaded French NDA DOCX (returns doc_id)
 
 ### Helper Functions (`tests/e2e/utils.py`)
 
@@ -290,8 +290,8 @@ docker exec -it lexard-ollama-1 ollama pull mistral:7b-instruct
 **Solution:**
 ```bash
 # Verify fixtures exist
-ls -lh tests/fixtures/sample_contract_*.pdf
-ls -lh tests/fixtures/sample_contract_*.docx
+ls -lh data/test/contract_*.pdf
+ls -lh data/test/contrat_*.pdf
 
 # Re-add fixtures if missing
 ```
@@ -340,8 +340,8 @@ Tests exceeding these times should be investigated for:
 ### Updating Test Fixtures
 
 When updating test fixtures:
-1. Update files in `tests/fixtures/`
-2. Ensure new files maintain same naming convention
+1. Update files in `data/test/`
+2. Ensure new files maintain naming convention (English: `contract_*_en.*`, French: `contrat_*_fr.*`)
 3. Verify all tests still pass
 4. Update this documentation if structure changes
 

@@ -1,0 +1,97 @@
+CONFIDENTIALITY AGREEMENT (NDA)
+
+Between the undersigned parties:
+
+1. ACME Solutions Ltd, a private limited company registered in England and Wales with company number 12345678, having its registered office at 15 King Street, London, EC2V 8EA, United Kingdom, represented by Mr John Smith in his capacity as Managing Director,
+   hereinafter referred to as "The Disclosing Party"
+
+2. Tech Innovation Ltd, a private limited company registered in England and Wales with company number 87654321, having its registered office at 25 Innovation Drive, Manchester, M1 2AB, United Kingdom, represented by Ms Sarah Williams in her capacity as Director,
+   hereinafter referred to as "The Receiving Party"
+
+hereinafter collectively referred to as "The Parties"
+
+RECITALS
+
+The Parties intend to enter into a business relationship concerning a software development project (hereinafter the "Project"). In this context, the Disclosing Party will communicate confidential information to the Receiving Party.
+
+IT HAS BEEN AGREED AS FOLLOWS:
+
+ARTICLE 1 - PURPOSE
+
+The purpose of this agreement is to define the conditions under which the Receiving Party undertakes to preserve the confidentiality of information communicated to it by the Disclosing Party in connection with the Project.
+
+ARTICLE 2 - DEFINITION OF CONFIDENTIAL INFORMATION
+
+"Confidential Information" means all information, data, and documents of any nature (technical, commercial, financial, strategic) communicated by the Disclosing Party to the Receiving Party, whether in writing, orally, or by any other means, including but not limited to:
+
+a) Trade secrets, processes, methods, formulas, algorithms, and software;
+b) Business plans, commercial strategies, and financial data;
+c) Customer and supplier lists;
+d) Product or service development projects;
+e) Any other information expressly designated as confidential.
+
+ARTICLE 3 - CONFIDENTIALITY OBLIGATIONS
+
+3.1 The Receiving Party undertakes to:
+- Keep the Confidential Information strictly confidential;
+- Not disclose the Confidential Information to third parties without the prior written consent of the Disclosing Party;
+- Use the Confidential Information solely for the purposes of the Project;
+- Limit access to the Confidential Information to employees who need to know;
+- Inform its employees of the confidential nature of the information and bind them to the same obligations.
+
+3.2 The Receiving Party shall take all necessary measures to ensure the protection of the Confidential Information, and at minimum the same protective measures as those it applies to its own confidential information.
+
+ARTICLE 4 - EXCEPTIONS
+
+The confidentiality obligations shall not apply to information:
+a) That was already known to the Receiving Party prior to its disclosure;
+b) That is or becomes publicly available without fault of the Receiving Party;
+c) That is legitimately received from a third party without restriction of confidentiality;
+d) That is independently developed by the Receiving Party;
+e) The disclosure of which is required by law or a judicial authority.
+
+ARTICLE 5 - DURATION OF CONFIDENTIALITY
+
+The confidentiality obligations provided for in this agreement shall remain in force for a period of five (5) years from the date of signature of this agreement, regardless of the duration of discussions between the Parties concerning the Project.
+
+ARTICLE 6 - OWNERSHIP OF INFORMATION
+
+The Confidential Information shall remain the exclusive property of the Disclosing Party. No licence or intellectual property right is granted to the Receiving Party over the Confidential Information.
+
+ARTICLE 7 - RETURN OF DOCUMENTS
+
+Upon first request by the Disclosing Party or at the end of discussions relating to the Project, the Receiving Party undertakes to return or destroy, at the discretion of the Disclosing Party, all documents, copies, and media containing Confidential Information, within fifteen (15) working days.
+
+ARTICLE 8 - TERMINATION
+
+8.1 This agreement may be terminated by either Party upon thirty (30) days' prior written notice sent by recorded delivery.
+
+8.2 Termination of the agreement shall not release the Parties from their confidentiality obligations which shall remain in force in accordance with Article 5.
+
+ARTICLE 9 - LIABILITY AND PENALTIES
+
+In the event of a breach of the confidentiality obligations, the Receiving Party shall be liable to compensate the Disclosing Party for all damages suffered. The Disclosing Party may also seek any interim or emergency measures before the competent courts.
+
+A fixed penalty of ten thousand pounds (GBP 10,000) shall be payable by the Receiving Party for each breach identified, without prejudice to any additional damages.
+
+ARTICLE 10 - GENERAL PROVISIONS
+
+10.1 This agreement shall be governed by and construed in accordance with the laws of England and Wales.
+
+10.2 Any dispute relating to the interpretation or performance of this agreement shall be subject to the exclusive jurisdiction of the courts of England and Wales.
+
+10.3 This agreement represents the entire understanding between the Parties regarding the confidentiality of information exchanged and supersedes any prior agreement on the same subject matter.
+
+10.4 Any amendment to this agreement must be made in writing and signed by both Parties.
+
+ARTICLE 11 - EFFECTIVE DATE
+
+This agreement shall come into force upon signature by both Parties, being 15 January 2024.
+
+Made in two original copies, in London, on 15 January 2024.
+
+For ACME Solutions Ltd                     For Tech Innovation Ltd
+Mr John Smith                              Ms Sarah Williams
+Managing Director                          Director
+
+[Signature]                                [Signature]
