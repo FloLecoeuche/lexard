@@ -97,6 +97,13 @@ class ServerConfig(BaseModel):
     workers: int = Field(default=4, ge=1)
 
 
+class AdminConfig(BaseModel):
+    """Admin dashboard configuration."""
+
+    analytics_password: str = "change-me-in-production"
+    dashboard_path: str = "metrics-a7x9k2"
+
+
 class Settings(BaseModel):
     """Root settings container for all configuration."""
 
@@ -110,6 +117,7 @@ class Settings(BaseModel):
     guardrails: GuardrailsConfig = Field(default_factory=GuardrailsConfig)
     storage: StorageConfig = Field(default_factory=StorageConfig)
     server: ServerConfig = Field(default_factory=ServerConfig)
+    admin: AdminConfig = Field(default_factory=AdminConfig)
 
 
 class ConfigurationError(Exception):

@@ -458,7 +458,7 @@ async function askQuestion() {
 
 ## US 13.4: Admin Analytics Dashboard
 
-**Status:** 🔲 Not Started
+**Status:** 🔶 In Progress
 
 ### Description
 
