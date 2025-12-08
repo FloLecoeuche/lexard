@@ -1,4 +1,4 @@
-# Epic 12: Document Preview Modal
+# Epic 11: Document Preview Modal
 
 ## Overview
 
@@ -14,7 +14,7 @@ Add a quick document preview feature to the Web UI, allowing users to view origi
 
 ---
 
-## US 12.1: Document File Serving Endpoint
+## US 11.1: Document File Serving Endpoint
 
 **Status:** 🔲 Not Started
 
@@ -141,7 +141,7 @@ async def get_document_file(
 
 ---
 
-## US 12.2: Preview Modal UI Component
+## US 11.2: Preview Modal UI Component
 
 **Status:** 🔲 Not Started
 
@@ -642,7 +642,7 @@ Add script tags to index.html:
 
 ---
 
-## US 12.3: File Storage on Upload
+## US 11.3: File Storage on Upload
 
 **Status:** 🔲 Not Started
 
@@ -819,7 +819,7 @@ async def delete_document(
 
 ---
 
-## Definition of Done (Epic 12)
+## Definition of Done (Epic 11)
 
 - [ ] All User Stories completed (3/3)
 - [ ] Document file serving endpoint functional
