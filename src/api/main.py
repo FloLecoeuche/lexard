@@ -12,6 +12,7 @@ from src.api.middleware import ErrorHandlerMiddleware, RequestIDMiddleware
 from src.api.routes import api_router
 from src.api.routes.static import router as static_router
 from src.api.schemas import GuardrailsMetricsResponse, HealthResponse
+from src.config import get_settings
 from src.guardrails import GuardrailsPipeline
 from src.mcp import mcp_router
 
@@ -88,9 +89,10 @@ app.include_router(static_router)
 async def check_qdrant() -> Literal["connected", "disconnected"]:
     """Check if Qdrant is accessible."""
     try:
+        settings = get_settings()
+        qdrant_url = f"http://{settings.qdrant.host}:{settings.qdrant.port}/"
         async with httpx.AsyncClient(timeout=5.0) as client:
-            # Qdrant uses root endpoint for health check
-            response = await client.get("http://localhost:6333/")
+            response = await client.get(qdrant_url)
             if response.status_code == 200:
                 return "connected"
     except Exception:
@@ -101,8 +103,10 @@ async def check_qdrant() -> Literal["connected", "disconnected"]:
 async def check_ollama() -> Literal["connected", "disconnected"]:
     """Check if Ollama is accessible."""
     try:
+        settings = get_settings()
+        ollama_url = f"{settings.llm.base_url}/api/tags"
         async with httpx.AsyncClient(timeout=5.0) as client:
-            response = await client.get("http://localhost:11434/api/tags")
+            response = await client.get(ollama_url)
             if response.status_code == 200:
                 return "connected"
     except Exception:

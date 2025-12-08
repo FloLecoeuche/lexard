@@ -78,10 +78,23 @@ FORMAT:
 - Point 2
 ..."""
 
+    INTERMEDIATE_AGGREGATION_PROMPT = """Combine these summaries into a single consolidated summary.
+Keep all important details, obligations, and key facts.
+
+SUMMARIES:
+{summaries}
+
+Write a comprehensive summary (3-5 sentences):"""
+
     # Batch size for chunk processing to avoid overwhelming LLM
     CHUNK_BATCH_SIZE = 5
     # Maximum chunks to process (for very long documents)
     MAX_CHUNKS = 50
+    # Conservative context budget for aggregation (tokens)
+    # Leaves room for prompt template + response
+    # Assuming ~4 tokens per word, 50 words per chunk summary = ~200 tokens/summary
+    MAX_AGGREGATION_TOKENS = 6000
+    TOKENS_PER_SUMMARY = 200  # Conservative estimate
 
     def __init__(
         self,
@@ -251,28 +264,120 @@ FORMAT:
     async def _aggregate_summaries(self, summaries: list[dict]) -> dict:
         """Aggregate chunk summaries into final summary.
 
+        Uses hierarchical aggregation for large documents to stay within
+        context limits. Groups summaries into batches, creates intermediate
+        summaries, then produces the final summary.
+
         Args:
             summaries: List of chunk summary dictionaries
 
         Returns:
             Dictionary with executive_summary and key_points
         """
-        # Build summaries text sorted by page/chunk
-        sorted_summaries = sorted(
-            summaries, key=lambda s: (s.get("page", 0), s.get("chunk_index", 0))
-        )
+        # Filter and sort valid summaries
+        valid_summaries = [
+            s for s in summaries
+            if s["summary"] not in ("[Summary unavailable]", "[Empty chunk]")
+        ]
 
-        summaries_text = "\n\n".join(
-            f"Page {s['page']}, Section {s['chunk_index']}: {s['summary']}"
-            for s in sorted_summaries
-            if s["summary"] != "[Summary unavailable]"
-        )
-
-        if not summaries_text.strip():
+        if not valid_summaries:
             return {
                 "executive_summary": "Unable to generate summary - no valid chunk summaries available.",
                 "key_points": [],
             }
+
+        sorted_summaries = sorted(
+            valid_summaries, key=lambda s: (s.get("page", 0), s.get("chunk_index", 0))
+        )
+
+        # Calculate how many summaries fit in context
+        max_summaries_per_batch = self.MAX_AGGREGATION_TOKENS // self.TOKENS_PER_SUMMARY
+
+        logger.info(
+            f"Aggregating {len(sorted_summaries)} summaries "
+            f"(max {max_summaries_per_batch} per batch)"
+        )
+
+        # If summaries fit in one batch, do direct aggregation
+        if len(sorted_summaries) <= max_summaries_per_batch:
+            return await self._final_aggregation(sorted_summaries)
+
+        # Hierarchical aggregation for large documents
+        logger.info(
+            f"Document too large for single aggregation, using hierarchical approach"
+        )
+        return await self._hierarchical_aggregation(sorted_summaries, max_summaries_per_batch)
+
+    async def _hierarchical_aggregation(
+        self, summaries: list[dict], batch_size: int
+    ) -> dict:
+        """Perform hierarchical aggregation for large documents.
+
+        Groups summaries into batches, creates intermediate summaries,
+        then combines those for the final summary.
+
+        Args:
+            summaries: Sorted list of chunk summary dictionaries
+            batch_size: Maximum summaries per batch
+
+        Returns:
+            Dictionary with executive_summary and key_points
+        """
+        current_summaries = summaries
+        level = 0
+
+        # Keep reducing until we fit in context
+        while len(current_summaries) > batch_size:
+            level += 1
+            logger.info(
+                f"Hierarchical aggregation level {level}: "
+                f"{len(current_summaries)} -> ~{len(current_summaries) // batch_size + 1} summaries"
+            )
+
+            intermediate_summaries = []
+
+            for i in range(0, len(current_summaries), batch_size):
+                batch = current_summaries[i:i + batch_size]
+
+                # Create intermediate summary for this batch
+                batch_text = "\n\n".join(
+                    f"- {s.get('summary', s) if isinstance(s, dict) else s}"
+                    for s in batch
+                )
+
+                prompt = self.INTERMEDIATE_AGGREGATION_PROMPT.format(summaries=batch_text)
+
+                def _generate(p=prompt):
+                    return self.llm.generate(p)
+
+                loop = asyncio.get_event_loop()
+                response = await loop.run_in_executor(None, _generate)
+
+                # Store as simple string for next level
+                intermediate_summaries.append({
+                    "page": batch[0].get("page", 0) if isinstance(batch[0], dict) else 0,
+                    "chunk_index": i // batch_size,
+                    "summary": response.content.strip(),
+                })
+
+            current_summaries = intermediate_summaries
+
+        # Final aggregation with reduced summaries
+        return await self._final_aggregation(current_summaries)
+
+    async def _final_aggregation(self, summaries: list[dict]) -> dict:
+        """Perform final aggregation to create executive summary.
+
+        Args:
+            summaries: List of summary dictionaries that fit in context
+
+        Returns:
+            Dictionary with executive_summary and key_points
+        """
+        summaries_text = "\n\n".join(
+            f"Section {s.get('chunk_index', i)}: {s['summary']}"
+            for i, s in enumerate(summaries)
+        )
 
         prompt = self.AGGREGATION_PROMPT.format(summaries=summaries_text)
 

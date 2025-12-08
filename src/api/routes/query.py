@@ -25,7 +25,7 @@ def get_rag_pipeline():
     from src.db.qdrant import QdrantService
     from src.rag.context import ContextBuilder
     from src.rag.embeddings import EmbeddingService
-    from src.rag.llm import OllamaClient
+    from src.rag.llm import create_llm_client
     from src.rag.pipeline import RAGPipeline
     from src.rag.retriever import Retriever
 
@@ -42,7 +42,7 @@ def get_rag_pipeline():
         qdrant_service=qdrant_service
     )
     context_builder = ContextBuilder()
-    llm_client = OllamaClient(config=settings.llm)
+    llm_client = create_llm_client(config=settings.llm)
 
     return RAGPipeline(
         retriever=retriever,

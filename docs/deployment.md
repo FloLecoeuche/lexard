@@ -23,7 +23,9 @@ Simplest production deployment for small to medium workloads.
 - Linux server with Docker & Docker Compose
 - 8GB RAM minimum (16GB recommended)
 - 50GB disk space
-- NVIDIA GPU (optional, for CUDA acceleration)
+- GPU (optional):
+  - **NVIDIA**: CUDA toolkit and nvidia-docker
+  - **AMD RDNA3/RDNA4**: Vulkan SDK (see [AMD GPU Setup](#amd-gpu-deployment))
 
 ### Setup
 
@@ -273,6 +275,134 @@ docker exec -it lexard-ollama ollama pull mistral:7b-instruct
 
 # Verify health
 curl http://localhost:8000/health
+```
+
+---
+
+## AMD GPU Deployment
+
+AMD RDNA3/RDNA4 GPUs have issues with ROCm's HIP backend (100% idle GPU usage bug). The recommended approach is to use llama.cpp with the Vulkan backend.
+
+### Prerequisites
+
+```bash
+# Install Vulkan development libraries
+sudo apt-get install -y libvulkan-dev glslc
+
+# Verify Vulkan is working
+vulkaninfo --summary
+```
+
+### Build llama.cpp with Vulkan
+
+```bash
+# Clone llama.cpp
+cd /opt
+git clone --depth 1 https://github.com/ggerganov/llama.cpp.git
+cd llama.cpp
+
+# Build with Vulkan support
+cmake -B build -DGGML_VULKAN=ON -DLLAMA_CURL=OFF
+cmake --build build --config Release -j$(nproc)
+
+# Download a model
+curl -L -o /opt/models/mistral-7b-instruct-v0.2.Q4_K_M.gguf \
+  "https://huggingface.co/TheBloke/Mistral-7B-Instruct-v0.2-GGUF/resolve/main/mistral-7b-instruct-v0.2.Q4_K_M.gguf"
+```
+
+### Create systemd service for llama-server
+
+Create `/etc/systemd/system/llama-server.service`:
+
+```ini
+[Unit]
+Description=llama.cpp Server with Vulkan
+After=network.target
+
+[Service]
+Type=simple
+User=lexard
+Environment="GGML_VK_DEVICE=0"
+ExecStart=/opt/llama.cpp/build/bin/llama-server \
+  -m /opt/models/mistral-7b-instruct-v0.2.Q4_K_M.gguf \
+  --host 0.0.0.0 --port 8080 -ngl 99 -c 8192
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Enable and start:
+
+```bash
+systemctl daemon-reload
+systemctl enable llama-server
+systemctl start llama-server
+
+# Verify
+curl http://localhost:8080/health
+```
+
+### Docker Compose for AMD GPU
+
+Use `docker-compose.yml` which connects to llama-server on the host:
+
+```yaml
+services:
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: lexard-qdrant
+    ports:
+      - '6333:6333'
+    volumes:
+      - qdrant_data:/qdrant/storage
+    restart: unless-stopped
+
+  api:
+    build: .
+    container_name: lexard-api
+    ports:
+      - '8000:8000'
+    volumes:
+      - ./config:/app/config:ro
+      - ./data:/app/data
+    environment:
+      - CONFIG_PATH=/app/config/config.docker.yaml
+    extra_hosts:
+      - "host.docker.internal:host-gateway"  # Access host llama-server
+    depends_on:
+      - qdrant
+    restart: unless-stopped
+
+volumes:
+  qdrant_data:
+```
+
+Configure `config/config.docker.yaml`:
+
+```yaml
+llm:
+  provider: 'openai'  # OpenAI-compatible API
+  model: 'mistral'
+  base_url: 'http://host.docker.internal:8080'  # llama-server on host
+  timeout_seconds: 60
+
+embeddings:
+  device: 'cpu'  # CPU for embeddings (avoids HIP issues)
+```
+
+### Verify GPU Usage
+
+Check that the GPU idles correctly (should be ~5%, not 100%):
+
+```bash
+# For AMD GPUs
+amd-smi monitor -p -u
+
+# Expected idle output:
+# GPU  POWER  GFX%
+#   0   15 W    5 %
 ```
 
 ---
@@ -745,7 +875,9 @@ systemctl restart qdrant lexard-api
 
 - Add more CPU cores → increase workers
 - Add more RAM → increase batch sizes
-- Add GPU → enable CUDA for embeddings
+- Add GPU:
+  - NVIDIA → enable CUDA for embeddings and LLM
+  - AMD RDNA3/RDNA4 → use llama-server with Vulkan (see [AMD GPU Deployment](#amd-gpu-deployment))
 
 ### Horizontal Scaling
 

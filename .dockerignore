@@ -1,0 +1,40 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+.venv
+venv
+*.egg-info
+.eggs
+dist
+build
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# Test
+.pytest_cache
+.coverage
+htmlcov
+tests/
+
+# Data (mounted as volume)
+data/
+
+# Docs
+docs/
+*.md
+!README.md
+
+# Tasks
+tasks/
+
+# Local config (use config.docker.yaml)
+config/config.yaml

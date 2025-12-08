@@ -32,12 +32,12 @@ def get_qdrant_service():
 
 
 def get_llm_client():
-    """Get Ollama LLM client instance (lazy import to avoid circular imports)."""
+    """Get LLM client instance (lazy import to avoid circular imports)."""
     from src.config import get_settings
-    from src.rag.llm import OllamaClient
+    from src.rag.llm import create_llm_client
 
     settings = get_settings()
-    return OllamaClient(config=settings.llm)
+    return create_llm_client(config=settings.llm)
 
 
 def _verify_document_exists(registry, document_id: str, trace_id: str) -> None:
