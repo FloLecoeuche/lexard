@@ -296,7 +296,7 @@ def get_progress_tracker() -> ProgressTracker:
 
 ## US 12.2: Progress-Aware RAG Pipeline
 
-**Status:** 🔲 Not Started
+**Status:** 🔶 In Progress
 
 ### Description
 
