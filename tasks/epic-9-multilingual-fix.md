@@ -480,7 +480,7 @@ def query(
 
 ## US 9.3: Language-Aware Agent Tools
 
-**Status:** 🔲 Not Started
+**Status:** ✅ Completed
 
 ### Description
 
