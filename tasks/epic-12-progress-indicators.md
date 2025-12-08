@@ -489,7 +489,7 @@ class RAGPipeline:
 
 ## US 12.3: Progress-Aware API Endpoints
 
-**Status:** 🔲 Not Started
+**Status:** ✅ Completed
 
 ### Description
 

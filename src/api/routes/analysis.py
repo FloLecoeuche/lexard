@@ -1,8 +1,12 @@
 """Analysis routes for Lexard API (summarize, compare, risks)."""
 
-from fastapi import APIRouter, HTTPException, Request
+import logging
 
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Request
+
+from src.api.progress import get_operation_tracker
 from src.api.schemas import (
+    AsyncOperationResponse,
     CompareRequest,
     CompareResponse,
     DifferenceItem,
@@ -13,6 +17,8 @@ from src.api.schemas import (
     SummarizeRequest,
     SummarizeResponse,
 )
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["analysis"])
 
@@ -146,6 +152,102 @@ async def summarize_document(
     )
 
 
+async def _execute_summarize_with_progress(
+    operation_id: str,
+    document_id: str,
+    style: str,
+) -> None:
+    """Background task to execute summarization with progress tracking.
+
+    Args:
+        operation_id: Operation ID for progress tracking
+        document_id: Document to summarize
+        style: Summary style
+    """
+    from src.agent.tools.summarizer import SummarizerTool
+
+    tracker = get_operation_tracker()
+    qdrant = get_qdrant_service()
+    llm = get_llm_client()
+
+    summarizer = SummarizerTool(llm_client=llm, qdrant_service=qdrant)
+
+    try:
+        result = await summarizer.summarize_with_progress(
+            document_id=document_id,
+            style=style,
+            tracker=tracker,
+            operation_id=operation_id,
+        )
+        # Convert to dict for storage
+        result_dict = {
+            "summary": result.executive_summary,
+            "key_points": result.key_points,
+            "word_count": result.word_count,
+            "language": result.language,
+        }
+        await tracker.complete(operation_id, result_dict)
+    except Exception as e:
+        logger.error(f"Summarization failed for operation {operation_id}: {e}")
+        await tracker.fail(operation_id, str(e))
+
+
+@router.post(
+    "/summarize/async",
+    response_model=AsyncOperationResponse,
+    responses={
+        404: {"model": ErrorResponse, "description": "Document not found"},
+    },
+    summary="Summarize a document (async with progress)",
+    description="""
+Start an async summarization operation with progress tracking.
+
+Returns an operation_id immediately. Subscribe to `/operations/{operation_id}/progress`
+for real-time progress updates via Server-Sent Events.
+
+Get the final result from `/operations/{operation_id}/result` after completion.
+""",
+)
+async def summarize_document_async(
+    req: SummarizeRequest,
+    request: Request,
+    background_tasks: BackgroundTasks,
+) -> AsyncOperationResponse:
+    """Summarize a document with async progress tracking."""
+    trace_id = getattr(request.state, "trace_id", "")
+
+    # Verify document exists (fast check before starting operation)
+    registry = get_document_registry()
+    _verify_document_exists(registry, req.document_id, trace_id)
+
+    # Start operation and get ID
+    tracker = get_operation_tracker()
+    operation_id = await tracker.start("summarize")
+
+    logger.info(
+        f"Starting async summarize operation {operation_id}",
+        extra={
+            "operation_id": operation_id,
+            "document_id": req.document_id,
+            "trace_id": trace_id,
+        },
+    )
+
+    # Start background processing
+    background_tasks.add_task(
+        _execute_summarize_with_progress,
+        operation_id=operation_id,
+        document_id=req.document_id,
+        style=req.style,
+    )
+
+    return AsyncOperationResponse(
+        operation_id=operation_id,
+        status="processing",
+        message="Summarization started. Subscribe to /operations/{operation_id}/progress for updates.",
+    )
+
+
 @router.post(
     "/risks",
     response_model=RiskResponse,
@@ -226,6 +328,107 @@ async def analyze_risks(
         ],
         overall_risk_level=result.overall_risk_level.value,
         language=result.language,
+    )
+
+
+async def _execute_risks_with_progress(
+    operation_id: str,
+    document_id: str,
+) -> None:
+    """Background task to execute risk analysis with progress tracking.
+
+    Args:
+        operation_id: Operation ID for progress tracking
+        document_id: Document to analyze
+    """
+    from src.agent.tools.risk_detector import RiskDetectorTool
+
+    tracker = get_operation_tracker()
+    qdrant = get_qdrant_service()
+    llm = get_llm_client()
+
+    risk_detector = RiskDetectorTool(llm_client=llm, qdrant_service=qdrant)
+
+    try:
+        result = await risk_detector.analyze_with_progress(
+            document_id=document_id,
+            tracker=tracker,
+            operation_id=operation_id,
+        )
+        # Convert to dict for storage
+        result_dict = {
+            "risks": [
+                {
+                    "category": r.category.value,
+                    "severity": r.severity.value,
+                    "description": r.description,
+                    "clause_excerpt": r.clause_excerpt,
+                    "page": r.page,
+                    "recommendation": r.recommendation,
+                }
+                for r in result.risks
+            ],
+            "overall_risk_level": result.overall_risk_level.value,
+            "language": result.language,
+        }
+        await tracker.complete(operation_id, result_dict)
+    except Exception as e:
+        logger.error(f"Risk analysis failed for operation {operation_id}: {e}")
+        await tracker.fail(operation_id, str(e))
+
+
+@router.post(
+    "/risks/async",
+    response_model=AsyncOperationResponse,
+    responses={
+        404: {"model": ErrorResponse, "description": "Document not found"},
+    },
+    summary="Analyze document risks (async with progress)",
+    description="""
+Start an async risk analysis operation with progress tracking.
+
+Returns an operation_id immediately. Subscribe to `/operations/{operation_id}/progress`
+for real-time progress updates via Server-Sent Events.
+
+Get the final result from `/operations/{operation_id}/result` after completion.
+""",
+)
+async def analyze_risks_async(
+    req: RiskRequest,
+    request: Request,
+    background_tasks: BackgroundTasks,
+) -> AsyncOperationResponse:
+    """Analyze document for risks with async progress tracking."""
+    trace_id = getattr(request.state, "trace_id", "")
+
+    # Verify document exists (fast check before starting operation)
+    registry = get_document_registry()
+    _verify_document_exists(registry, req.document_id, trace_id)
+
+    # Start operation and get ID
+    tracker = get_operation_tracker()
+    operation_id = await tracker.start("risks")
+
+    logger.info(
+        f"Starting async risks operation {operation_id}",
+        extra={
+            "operation_id": operation_id,
+            "document_id": req.document_id,
+            "trace_id": trace_id,
+        },
+    )
+
+    # Start background processing
+    background_tasks.add_task(
+        _execute_risks_with_progress,
+        operation_id=operation_id,
+        document_id=req.document_id,
+    )
+
+    return AsyncOperationResponse(
+        operation_id=operation_id,
+        status="processing",
+        message="Risk analysis started. Subscribe to /operations/{operation_id}/progress for updates.",
     )
 
 
