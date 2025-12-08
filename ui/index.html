@@ -128,48 +128,187 @@
         .document-item {
             padding: 0.75rem;
             background: #f8fafc;
-            border-radius: 6px;
+            border-radius: 8px;
             cursor: pointer;
             transition: all 0.2s;
             display: flex;
-            justify-content: space-between;
+            gap: 0.75rem;
             align-items: center;
+            border: 1px solid transparent;
         }
 
         .document-item:hover {
-            background: #e2e8f0;
+            background: #f1f5f9;
+            border-color: #e2e8f0;
         }
 
         .document-item.selected {
-            background: #dbeafe;
-            border: 1px solid #2563eb;
+            background: #eff6ff;
+            border-color: #2563eb;
         }
 
-        .document-item .title {
+        /* File type icon - A4 document shape */
+        .doc-icon {
+            flex-shrink: 0;
+        }
+
+        .file-type-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 2.25rem;
+            height: 2.75rem;
+            border-radius: 4px;
+            font-size: 0.5625rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+        }
+
+        /* Document info section */
+        .doc-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .doc-info .title {
             font-size: 0.875rem;
             font-weight: 500;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            flex: 1;
+            color: #1e293b;
+            margin-bottom: 0.25rem;
         }
 
-        .document-item .meta {
+        .doc-info .meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        /* Page count */
+        .page-count {
             font-size: 0.75rem;
             color: #64748b;
         }
 
-        .delete-btn {
-            background: none;
-            border: none;
-            color: #ef4444;
-            cursor: pointer;
-            padding: 0.25rem;
-            opacity: 0.6;
+        /* Language badge in document item */
+        .doc-lang-badge {
+            font-size: 0.625rem;
+            font-weight: 600;
+            padding: 0.125rem 0.375rem;
+            border-radius: 4px;
         }
 
-        .delete-btn:hover {
+        .doc-lang-badge.en {
+            background: #ecfdf5;
+            color: #059669;
+        }
+
+        .doc-lang-badge.fr {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        /* Actions menu */
+        .doc-actions {
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .actions-toggle {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            /* 44x44px minimum touch target (Apple HIG) */
+            min-width: 2.75rem;
+            min-height: 2.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            line-height: 1;
+            border-radius: 6px;
+            transition: all 0.15s;
+            margin: -0.5rem;
+        }
+
+        .actions-toggle:hover {
+            background: #e2e8f0;
+            color: #64748b;
+        }
+
+        .actions-toggle:active {
+            background: #cbd5e1;
+        }
+
+        .actions-menu {
+            position: absolute;
+            right: 0;
+            top: 100%;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            min-width: 140px;
+            z-index: 100;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-8px);
+            transition: all 0.15s;
+        }
+
+        .actions-menu.open {
             opacity: 1;
+            visibility: visible;
+            transform: translateY(4px);
+        }
+
+        .actions-menu button {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            width: 100%;
+            padding: 0.625rem 0.875rem;
+            background: none;
+            border: none;
+            text-align: left;
+            cursor: pointer;
+            font-size: 0.875rem;
+            color: #374151;
+            transition: background 0.15s;
+        }
+
+        .actions-menu button:first-child {
+            border-radius: 8px 8px 0 0;
+        }
+
+        .actions-menu button:last-child {
+            border-radius: 0 0 8px 8px;
+        }
+
+        .actions-menu button:hover {
+            background: #f8fafc;
+        }
+
+        .actions-menu button.danger {
+            color: #dc2626;
+        }
+
+        .actions-menu button.danger:hover {
+            background: #fef2f2;
+        }
+
+        .actions-menu .menu-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            width: 1.25rem;
+            height: 1.25rem;
+            line-height: 1;
         }
 
         /* Main Panel */
@@ -633,27 +772,6 @@
             margin-bottom: 0;
         }
 
-        /* Preview button on document item */
-        .preview-btn {
-            background: none;
-            border: none;
-            color: #64748b;
-            cursor: pointer;
-            padding: 0.25rem;
-            opacity: 0;
-            transition: opacity 0.2s;
-            font-size: 1rem;
-        }
-
-        .document-item:hover .preview-btn {
-            opacity: 0.6;
-        }
-
-        .preview-btn:hover {
-            opacity: 1 !important;
-            color: #2563eb;
-        }
-
         /* Modal overlay */
         .preview-modal {
             position: fixed;
@@ -938,44 +1056,126 @@
                 return;
             }
 
-            documentList.innerHTML = documents.map(doc => `
+            documentList.innerHTML = documents.map(doc => {
+                const ext = getFileExtension(doc.filename);
+                const icon = getFileIcon(ext);
+                const langBadge = doc.language ? getDocLangBadge(doc.language) : '';
+
+                return `
                 <li class="document-item ${doc.id === selectedDocumentId ? 'selected' : ''}" data-id="${doc.id}">
-                    <div>
+                    <span class="doc-icon">${icon}</span>
+                    <div class="doc-info">
                         <div class="title">${escapeHtml(doc.title || doc.filename)}</div>
-                        <div class="meta">${doc.page_count || 0} pages</div>
+                        <div class="meta">
+                            ${langBadge}
+                            <span class="page-count">${doc.page_count || 0} pages</span>
+                        </div>
                     </div>
-                    <div style="display: flex; gap: 0.25rem;">
-                        <button class="preview-btn" data-id="${doc.id}" data-filename="${escapeHtml(doc.title || doc.filename)}" title="Preview">&#128065;</button>
-                        <button class="delete-btn" data-id="${doc.id}" title="Delete">&#x2715;</button>
+                    <div class="doc-actions">
+                        <button class="actions-toggle" data-id="${doc.id}" title="Actions">&#8942;</button>
+                        <div class="actions-menu" data-menu-id="${doc.id}">
+                            <button class="preview-action" data-id="${doc.id}" data-filename="${escapeHtml(doc.filename)}">
+                                <span class="menu-icon">&#128065;</span> Preview
+                            </button>
+                            <button class="delete-action danger" data-id="${doc.id}">
+                                <span class="menu-icon">&#128465;</span> Delete
+                            </button>
+                        </div>
                     </div>
                 </li>
-            `).join('');
+            `}).join('');
 
-            // Add click handlers
+            // Add click handlers for document selection
             documentList.querySelectorAll('.document-item').forEach(item => {
                 item.addEventListener('click', (e) => {
-                    if (!e.target.classList.contains('delete-btn') &&
-                        !e.target.classList.contains('preview-btn')) {
-                        selectDocument(item.dataset.id);
-                    }
+                    // Ignore clicks on actions area
+                    if (e.target.closest('.doc-actions')) return;
+                    selectDocument(item.dataset.id);
                 });
             });
 
-            documentList.querySelectorAll('.delete-btn').forEach(btn => {
+            // Add click handlers for actions toggle
+            documentList.querySelectorAll('.actions-toggle').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    deleteDocument(btn.dataset.id);
+                    const docId = btn.dataset.id;
+                    toggleActionsMenu(docId);
                 });
             });
 
             // Add preview handlers
-            documentList.querySelectorAll('.preview-btn').forEach(btn => {
+            documentList.querySelectorAll('.preview-action').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
+                    closeAllMenus();
                     openPreviewModal(btn.dataset.id, btn.dataset.filename);
                 });
             });
+
+            // Add delete handlers
+            documentList.querySelectorAll('.delete-action').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    closeAllMenus();
+                    deleteDocument(btn.dataset.id);
+                });
+            });
         }
+
+        // Helper functions for document display
+        function getFileExtension(filename) {
+            return filename.split('.').pop().toLowerCase();
+        }
+
+        function getFileIcon(ext) {
+            // White text on solid colored background for readability
+            const configs = {
+                'pdf': { bg: '#dc2626' },
+                'docx': { bg: '#2563eb' },
+                'txt': { bg: '#6b7280' }
+            };
+            const config = configs[ext] || configs['pdf'];
+            return `<span class="file-type-icon" style="background:${config.bg};color:white">${ext.toUpperCase()}</span>`;
+        }
+
+        function getDocLangBadge(language) {
+            if (!language) return '';
+            const lang = language.toLowerCase();
+            if (lang === 'fr') {
+                return '<span class="doc-lang-badge fr">FR</span>';
+            } else if (lang === 'en') {
+                return '<span class="doc-lang-badge en">EN</span>';
+            }
+            return '';
+        }
+
+        function toggleActionsMenu(docId) {
+            // Close all other menus first
+            document.querySelectorAll('.actions-menu.open').forEach(menu => {
+                if (menu.dataset.menuId !== docId) {
+                    menu.classList.remove('open');
+                }
+            });
+
+            // Toggle the clicked menu
+            const menu = document.querySelector(`.actions-menu[data-menu-id="${docId}"]`);
+            if (menu) {
+                menu.classList.toggle('open');
+            }
+        }
+
+        function closeAllMenus() {
+            document.querySelectorAll('.actions-menu.open').forEach(menu => {
+                menu.classList.remove('open');
+            });
+        }
+
+        // Close menus when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.doc-actions')) {
+                closeAllMenus();
+            }
+        });
 
         function selectDocument(id) {
             selectedDocumentId = id;
