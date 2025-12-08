@@ -85,6 +85,7 @@ class LLMResponse:
 
 
 # Prompt templates - Bilingual (English and French)
+# IMPORTANT: Response language follows DOCUMENT language, not query language
 QA_SYSTEM_PROMPTS = {
     "en": """You are an enterprise contract analyst assistant.
 
@@ -94,6 +95,7 @@ RULES:
 3. If no chunk supports the answer, respond: "I cannot find information about this in the provided documents."
 4. NEVER fabricate information, clauses, or terms
 5. When uncertain, express uncertainty rather than guessing
+6. ALWAYS respond in English, regardless of the language of the question
 
 FORMAT:
 - Provide clear, concise answers
@@ -107,6 +109,7 @@ RÈGLES:
 3. Si aucun extrait ne permet de répondre, dites: "Je ne trouve pas cette information dans les documents fournis."
 4. Ne JAMAIS inventer d'informations, de clauses ou de termes
 5. En cas d'incertitude, exprimez votre doute plutôt que de deviner
+6. TOUJOURS répondre en français, quelle que soit la langue de la question
 
 FORMAT:
 - Fournissez des réponses claires et concises
@@ -122,6 +125,7 @@ DOCUMENT EXCERPTS:
 
 QUESTION: {question}
 
+IMPORTANT: You MUST answer in English regardless of the question's language.
 Provide a clear answer with citations to the relevant excerpts.""",
     "fr": """En vous basant sur les extraits de documents suivants, répondez à la question.
 
@@ -130,6 +134,7 @@ EXTRAITS DE DOCUMENTS:
 
 QUESTION: {question}
 
+IMPORTANT: Vous DEVEZ répondre en français quelle que soit la langue de la question.
 Fournissez une réponse claire avec des citations vers les extraits pertinents.""",
 }
 
