@@ -1,0 +1,49 @@
+# Lexard Configuration for Docker deployment with ROCm
+# This config uses Docker service names for networking
+
+app:
+  name: 'Lexard'
+  environment: 'production'
+  log_level: 'info'
+
+llm:
+  provider: 'openai'  # 'ollama' or 'openai' (OpenAI-compatible API like llama.cpp)
+  model: 'mistral'
+  base_url: 'http://host.docker.internal:8080'  # llama-server running on host with Vulkan
+  temperature: 0.1
+  max_tokens: 2048
+  timeout_seconds: 60
+
+embeddings:
+  model: 'all-mpnet-base-v2'
+  batch_size: 32
+  device: 'cpu'  # Use CPU for embeddings (fast enough for small batches)
+
+chunking:
+  method: 'fixed'
+  size: 512
+  overlap: 50
+
+qdrant:
+  host: 'qdrant'  # Docker service name
+  port: 6333
+  collection: 'documents'
+
+retrieval:
+  top_k: 8
+  score_threshold: 0.4  # Lowered for better recall with all-mpnet-base-v2
+  rerank: false
+
+guardrails:
+  hallucination_threshold: 0.8
+  enable_pii_filter: true
+  max_retries: 2
+
+storage:
+  upload_dir: '/app/data/uploads'
+  max_file_size_mb: 50
+
+server:
+  host: '0.0.0.0'
+  port: 8000
+  workers: 4

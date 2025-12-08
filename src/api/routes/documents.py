@@ -1,12 +1,17 @@
 """Document management routes for Lexard API."""
 
+import asyncio
 import hashlib
+import json
+import logging
 import tempfile
 from pathlib import Path
 
-from fastapi import APIRouter, File, HTTPException, Request, UploadFile
+from fastapi import APIRouter, BackgroundTasks, File, HTTPException, Request, UploadFile
+from sse_starlette.sse import EventSourceResponse
 
 from src.api.exceptions import DocumentParseError
+from src.api.progress import ProcessingStage, progress_tracker
 from src.api.schemas import (
     DeleteResponse,
     DocumentDetailResponse,
@@ -15,6 +20,8 @@ from src.api.schemas import (
     DocumentUploadResponse,
     ErrorResponse,
 )
+
+logger = logging.getLogger(__name__)
 
 # Router for /documents/* endpoints
 router = APIRouter(prefix="/documents", tags=["documents"])
@@ -88,26 +95,165 @@ def _validate_file(file: UploadFile) -> None:
         )
 
 
-@upload_router.post(
-    "/upload",
-    response_model=DocumentUploadResponse,
-    responses={
-        413: {"model": ErrorResponse, "description": "File too large"},
-        415: {"model": ErrorResponse, "description": "Unsupported file format"},
-        422: {"model": ErrorResponse, "description": "Failed to parse document"},
-    },
-    summary="Upload a document",
-    description="Upload a PDF, DOCX, or TXT document for analysis. The document is processed, chunked, and indexed.",
-)
-async def upload_document(
-    request: Request,
-    file: UploadFile = File(..., description="Document file (PDF, DOCX, or TXT)"),
-) -> DocumentUploadResponse:
-    """Upload and process a new document."""
+async def _process_document_with_progress(
+    content: bytes,
+    filename: str,
+    file_hash: str,
+    task_id: str,
+) -> None:
+    """Process document and emit progress updates.
+
+    Args:
+        content: File content
+        filename: Original filename
+        file_hash: SHA256 hash of file
+        task_id: Progress task ID
+    """
     from src.config import get_settings
     from src.rag.chunking import Chunker
     from src.rag.extractors.factory import get_extractor
 
+    try:
+        # Stage 1: Parsing (0-20%)
+        await progress_tracker.update(
+            task_id,
+            ProcessingStage.PARSING,
+            0.0,
+            f"Parsing {filename}...",
+        )
+
+        # Get file extension and save to temp file
+        suffix = Path(filename).suffix.lower()
+        with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp_file:
+            tmp_file.write(content)
+            tmp_path = Path(tmp_file.name)
+
+        # Extract text from document
+        try:
+            extractor = get_extractor(tmp_path)
+            extraction_result = extractor.extract(tmp_path)
+        finally:
+            tmp_path.unlink(missing_ok=True)
+
+        await progress_tracker.update(
+            task_id,
+            ProcessingStage.PARSING,
+            0.2,
+            f"Extracted {len(extraction_result.full_text)} characters from {extraction_result.total_pages} pages",
+        )
+
+        # Get title from filename
+        title = Path(filename).stem
+
+        # Initialize services
+        registry = get_document_registry()
+        qdrant = get_qdrant_service()
+        embedding_service = get_embedding_service()
+        settings = get_settings()
+
+        # Create document record
+        doc = registry.create(
+            title=title,
+            filename=filename,
+            file_hash=file_hash,
+        )
+
+        # Stage 2: Chunking (20-40%)
+        await progress_tracker.update(
+            task_id,
+            ProcessingStage.CHUNKING,
+            0.2,
+            "Splitting into chunks...",
+        )
+
+        chunker = Chunker(
+            chunk_size=settings.chunking.size,
+            overlap=settings.chunking.overlap,
+        )
+        chunks = chunker.chunk(extraction_result.pages)
+
+        await progress_tracker.update(
+            task_id,
+            ProcessingStage.CHUNKING,
+            0.4,
+            f"Created {len(chunks)} chunks",
+        )
+
+        # Stage 3: Embedding (40-80%)
+        await progress_tracker.update(
+            task_id,
+            ProcessingStage.EMBEDDING,
+            0.4,
+            f"Generating embeddings for {len(chunks)} chunks...",
+        )
+
+        # Generate embeddings (CPU-bound, may take time)
+        embeddings = embedding_service.embed_chunks(chunks)
+
+        await progress_tracker.update(
+            task_id,
+            ProcessingStage.EMBEDDING,
+            0.8,
+            f"Generated {len(embeddings)} embeddings",
+        )
+
+        # Stage 4: Indexing (80-100%)
+        await progress_tracker.update(
+            task_id,
+            ProcessingStage.INDEXING,
+            0.8,
+            "Indexing in vector database...",
+        )
+
+        # Ensure collection exists
+        qdrant.ensure_collection()
+
+        # Store in Qdrant
+        qdrant.upsert_chunks(
+            chunks=chunks,
+            embeddings=embeddings,
+            document_id=doc.id,
+            source_title=title,
+        )
+
+        # Update document status
+        registry.update_status(
+            doc.id,
+            status="processed",
+            page_count=extraction_result.total_pages,
+            chunk_count=len(chunks),
+        )
+
+        # Mark complete
+        await progress_tracker.mark_complete(
+            task_id,
+            "Document uploaded successfully!",
+            document_id=doc.id,
+        )
+
+        # Schedule cleanup
+        asyncio.create_task(progress_tracker.cleanup(task_id))
+
+    except Exception as e:
+        logger.error(f"Upload failed for task {task_id}: {e}")
+        await progress_tracker.mark_failed(task_id, str(e))
+
+
+@upload_router.post(
+    "/upload",
+    responses={
+        413: {"model": ErrorResponse, "description": "File too large"},
+        415: {"model": ErrorResponse, "description": "Unsupported file format"},
+    },
+    summary="Upload a document with progress tracking",
+    description="Upload a PDF, DOCX, or TXT document for analysis. Returns task_id for progress tracking.",
+)
+async def upload_document(
+    request: Request,
+    background_tasks: BackgroundTasks,
+    file: UploadFile = File(..., description="Document file (PDF, DOCX, or TXT)"),
+) -> dict:
+    """Upload and process a new document with progress tracking."""
     trace_id = getattr(request.state, "trace_id", "")
 
     # Validate file format
@@ -132,86 +278,84 @@ async def upload_document(
     # Compute file hash
     file_hash = _compute_file_hash(content)
 
-    # Get file extension
-    suffix = Path(file.filename).suffix.lower()  # type: ignore[union-attr]
+    # Create progress task
+    task_id = progress_tracker.create_task(f"Uploading {file.filename}...")
 
-    # Save to temp file for extraction
-    with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp_file:
-        tmp_file.write(content)
-        tmp_path = Path(tmp_file.name)
-
-    # Extract text from document
-    try:
-        extractor = get_extractor(tmp_path)
-        extraction_result = extractor.extract(tmp_path)
-    except Exception as e:
-        tmp_path.unlink(missing_ok=True)
-        raise DocumentParseError(f"Failed to extract text from document: {e}")
-    finally:
-        tmp_path.unlink(missing_ok=True)
-
-    # Get title from filename
-    title = Path(file.filename).stem  # type: ignore[union-attr]
-
-    # Initialize services
-    registry = get_document_registry()
-    qdrant = get_qdrant_service()
-    embedding_service = get_embedding_service()
-    settings = get_settings()
-
-    # Create document record
-    doc = registry.create(
-        title=title,
-        filename=file.filename,  # type: ignore[arg-type]
-        file_hash=file_hash,
+    # Start background processing
+    background_tasks.add_task(
+        _process_document_with_progress,
+        content,
+        file.filename,  # type: ignore[arg-type]
+        file_hash,
+        task_id,
     )
 
-    try:
-        # Chunk the text using Chunker class
-        chunker = Chunker(
-            chunk_size=settings.chunking.size,
-            overlap=settings.chunking.overlap,
+    return {
+        "task_id": task_id,
+        "filename": file.filename,
+        "progress_url": f"/upload/progress/{task_id}",
+        "status_url": f"/upload/status/{task_id}",
+    }
+
+
+@upload_router.get(
+    "/upload/progress/{task_id}",
+    summary="Stream upload progress via SSE",
+    description="Stream real-time progress updates for a document upload via Server-Sent Events.",
+)
+async def stream_upload_progress(task_id: str):
+    """Stream real-time progress updates via Server-Sent Events.
+
+    Args:
+        task_id: Progress task identifier
+
+    Returns:
+        SSE stream of progress updates
+    """
+
+    async def event_generator():
+        """Generate SSE events from progress updates."""
+        async for update in progress_tracker.subscribe(task_id):
+            yield {
+                "event": "progress",
+                "data": json.dumps(update.to_dict()),
+            }
+
+    return EventSourceResponse(event_generator())
+
+
+@upload_router.get(
+    "/upload/status/{task_id}",
+    responses={404: {"model": ErrorResponse, "description": "Task not found"}},
+    summary="Get upload status",
+    description="Get current upload status (polling alternative to SSE).",
+)
+async def get_upload_status(task_id: str, request: Request) -> dict:
+    """Get current upload status (polling alternative to SSE).
+
+    Args:
+        task_id: Progress task identifier
+
+    Returns:
+        Current progress status
+
+    Raises:
+        HTTPException: If task not found
+    """
+    trace_id = getattr(request.state, "trace_id", "")
+    status = progress_tracker.get_status(task_id)
+    if not status:
+        raise HTTPException(
+            status_code=404,
+            detail={
+                "error": {
+                    "code": "TASK_NOT_FOUND",
+                    "message": f"Task {task_id} not found",
+                    "trace_id": trace_id,
+                }
+            },
         )
-        chunks = chunker.chunk(extraction_result.pages)
-
-        # Generate embeddings
-        embeddings = embedding_service.embed_chunks(chunks)
-
-        # Ensure collection exists
-        qdrant.ensure_collection()
-
-        # Store in Qdrant
-        qdrant.upsert_chunks(
-            chunks=chunks,
-            embeddings=embeddings,
-            document_id=doc.id,
-            source_title=title,
-        )
-
-        # Update document status
-        registry.update_status(
-            doc.id,
-            status="processed",
-            page_count=extraction_result.total_pages,
-            chunk_count=len(chunks),
-        )
-
-        # Refresh document from registry
-        doc = registry.get(doc.id)  # type: ignore[assignment]
-
-    except Exception as e:
-        # Mark as failed on error
-        registry.update_status(doc.id, status="failed")
-        raise DocumentParseError(f"Failed to process document: {e}")
-
-    return DocumentUploadResponse(
-        document_id=doc.id,
-        title=doc.title,
-        page_count=doc.page_count,
-        chunk_count=doc.chunk_count,
-        version=doc.version,
-        uploaded_at=doc.uploaded_at,
-    )
+    return status.to_dict()
 
 
 @router.get(
