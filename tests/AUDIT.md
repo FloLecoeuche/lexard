@@ -60,17 +60,57 @@ Total tests collected: **541 tests** across unit, integration, and E2E test suit
 | e2e/test_upload_progress.py | 5     | Requires services | API                 |
 | e2e/test_upload_query.py    | 7     | Requires services | Ollama, Qdrant, API |
 
-### Specialized Test Suites (Non-pytest)
+### Specialized Test Suites
 
-These test suites use custom runners and are not pytest-compatible:
+| Suite       | Location           | Files                                         | Purpose          | Pytest Compatible |
+| ----------- | ------------------ | --------------------------------------------- | ---------------- | ----------------- |
+| Red Team    | tests/red_team/    | injection.py, hallucination.py, edge_cases.py | Security testing | ✅ Yes (83 tests) |
+| Evaluation  | tests/evaluation/  | metrics.py, runner.py, dataset.py, report.py  | Quality metrics  | No (CLI runner)   |
+| Performance | tests/performance/ | benchmarks.py, report.py                      | Speed benchmarks | No (CLI runner)   |
 
-| Suite       | Location           | Files                                         | Purpose          |
-| ----------- | ------------------ | --------------------------------------------- | ---------------- |
-| Red Team    | tests/red_team/    | injection.py, hallucination.py, edge_cases.py | Security testing |
-| Evaluation  | tests/evaluation/  | metrics.py, runner.py, dataset.py, report.py  | Quality metrics  |
-| Performance | tests/performance/ | benchmarks.py, report.py                      | Speed benchmarks |
+**Note:** Red team tests ARE pytest-compatible but not auto-discovered because files don't start with `test_`.
+Run explicitly: `pytest tests/red_team/injection.py tests/red_team/hallucination.py tests/red_team/edge_cases.py -v`
 
-**Note:** These suites collected 0 tests via pytest because they don't use pytest test functions - they use custom runner classes.
+#### How to Run Specialized Suites
+
+**Red Team Tests (Pytest):**
+```bash
+# Run all red team pytest tests (83 tests, no services required)
+pytest tests/red_team/injection.py tests/red_team/hallucination.py tests/red_team/edge_cases.py -v
+
+# Alternative: Use the CLI runner for injection-only tests
+python -m tests.red_team --injection-only
+
+# Full API tests (requires running services + document)
+python -m tests.red_team --document-id <DOC_ID> --dataset data/eval/red_team.yaml
+```
+
+**Evaluation Harness (CLI):**
+```bash
+# List available datasets
+python -m tests.evaluation --list-datasets
+
+# Dry run (show test cases without executing)
+python -m tests.evaluation --dry-run --dataset contract_qa
+
+# Full evaluation (requires running API + document)
+python -m tests.evaluation --dataset contract_qa --document-id <DOC_ID>
+
+# French evaluation
+python -m tests.evaluation --dataset french_qa --document-id <DOC_ID>
+```
+
+**Performance Benchmarks (CLI):**
+```bash
+# Embeddings-only benchmark (no API required)
+python -m tests.performance --embeddings-only --iterations 10
+
+# Full benchmarks (requires running API + document)
+python -m tests.performance --document-id <DOC_ID> --iterations 10
+
+# With file upload benchmark
+python -m tests.performance --document-id <DOC_ID> --file path/to/doc.pdf
+```
 
 ## Duplicate/Redundant Tests Analysis
 
@@ -245,8 +285,67 @@ These tests are candidates for removal/consolidation (requires user approval):
 - `test_french_support.py::TestLanguageDetection` (4 tests) - Covered by integration tests
 - Consider parameterizing `test_classifier.py` (43 tests → ~20 tests)
 
+## US 10.4: Specialized Test Suites Review
+
+**Status:** ✅ Complete
+**Date:** 2025-12-08
+
+### Summary
+
+All three specialized test suites (Red Team, Evaluation, Performance) reviewed and verified functional.
+
+### Red Team Tests
+
+| Test Category        | Tests | Status | Notes                          |
+| -------------------- | ----- | ------ | ------------------------------ |
+| Injection Detection  | 41    | ✅ PASS | Detects prompt injection       |
+| Hallucination Tests  | 17    | ✅ PASS | Validates grounding/citations  |
+| Edge Cases           | 25    | ✅ PASS | Security edge cases (XSS, SQL) |
+| **Total**            | 83    | ✅ PASS | All pytest tests passing       |
+
+**Key Finding:** Red team tests ARE pytest-compatible (83 tests) and can be run with:
+```bash
+pytest tests/red_team/injection.py tests/red_team/hallucination.py tests/red_team/edge_cases.py -v
+```
+
+### Evaluation Harness
+
+| Feature           | Status | Notes                              |
+| ----------------- | ------ | ---------------------------------- |
+| Module imports    | ✅     | All imports successful             |
+| CLI help          | ✅     | `--help` works correctly           |
+| Dataset listing   | ✅     | 3 datasets: contract_qa, red_team, french_qa |
+| Dry run mode      | ✅     | Shows 25 test cases                |
+| API check         | ✅     | Properly checks API availability   |
+
+**Run instruction:** `python -m tests.evaluation --help`
+
+### Performance Benchmarks
+
+| Feature             | Status | Notes                           |
+| ------------------- | ------ | ------------------------------- |
+| Module imports      | ✅     | All imports successful          |
+| CLI help            | ✅     | `--help` works correctly        |
+| Embeddings benchmark| ✅     | Works without API               |
+| Target validation   | ✅     | Compares against PRD targets    |
+
+**Run instruction:** `python -m tests.performance --embeddings-only`
+
+**Note:** First run may show slower times due to model cold start (loading sentence-transformers).
+Run with `--iterations 10` or more for accurate P95 measurements.
+
+### Documentation Updated
+
+Run instructions added to:
+1. `tests/AUDIT.md` (this file) - How to run each suite
+2. Each suite's `__main__.py` already has comprehensive help via `--help`
+
+### Recommendations
+
+1. **Red team tests should be included in CI** - They are pytest-compatible and fast
+2. **Evaluation/Performance are optional** - Require services, better for manual QA
+3. **Consider adding warmup iteration** for performance benchmarks to avoid cold start skewing
+
 ## Next Steps
 
-- US 10.3: Ensure E2E tests run with services
-- US 10.4: Review specialized test suites
 - US 10.5: Present removal recommendations (with user approval)
