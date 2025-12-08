@@ -401,6 +401,31 @@ class SuccessResponse(BaseModel):
 # =============================================================================
 
 
+# =============================================================================
+# Async Operation Schemas
+# =============================================================================
+
+
+class AsyncOperationResponse(BaseModel):
+    """Response for async operations with progress tracking."""
+
+    operation_id: str = Field(..., description="Operation ID for progress tracking")
+    status: Literal["processing", "complete", "failed"] = Field(
+        "processing", description="Current operation status"
+    )
+    message: str = Field("", description="Human-readable status message")
+
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "operation_id": "550e8400-e29b-41d4-a716-446655440000",
+                "status": "processing",
+                "message": "Query started. Subscribe to /operations/{operation_id}/progress for updates.",
+            }
+        }
+    }
+
+
 class GuardrailsMetricsResponse(BaseModel):
     """Response for guardrails metrics endpoint."""
 
