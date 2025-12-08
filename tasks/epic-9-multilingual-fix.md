@@ -642,7 +642,7 @@ async def summarize_document(req: SummarizeRequest, request: Request) -> Summari
 
 ## US 9.4: Web UI Language Display
 
-**Status:** 🔶 In Progress
+**Status:** ✅ Completed
 
 ### Description
 

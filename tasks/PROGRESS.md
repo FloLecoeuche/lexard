@@ -16,7 +16,7 @@ This folder contains detailed specifications for each Epic and User Story. Each 
 | 6    | Hardening             | ✅ Completed   | 5/5 US   |
 | 7    | French Support        | ✅ Completed   | 2/2 US   |
 | 8    | UX & Testing          | ✅ Completed   | 2/2 US   |
-| 9    | Multilingual Fix      | 🔶 In Progress | 3/5 US   |
+| 9    | Multilingual Fix      | 🔶 In Progress | 4/5 US   |
 | 10   | Test Suite Review     | 🔲 Not Started | 0/4 US   |
 | 11   | Streaming Responses   | 🔲 Not Started | 0/5 US   |
 | 12   | Document Preview      | 🔲 Not Started | 0/3 US   |
@@ -76,6 +76,7 @@ This folder contains detailed specifications for each Epic and User Story. Each 
 | 9.1   | Multilingual Embeddings Config | 2025-12-08 | 7b069cd  |
 | 9.2   | Language-Aware RAG Pipeline | 2025-12-08 | b3d6de2  |
 | 9.3   | Language-Aware Agent Tools | 2025-12-08 | b765969  |
+| 9.4   | Web UI Language Display    | 2025-12-08 | 9291e2e  |
 
 <!-- Format: | US ID | Name | Completed Date | Commit Hash | -->
 
