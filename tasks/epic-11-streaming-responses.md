@@ -1,4 +1,4 @@
-# Epic 10: Streaming LLM Responses
+# Epic 11: Streaming LLM Responses
 
 ## Overview
 
@@ -58,7 +58,7 @@ User asks question → Text starts appearing immediately → Words stream in rea
 
 ---
 
-## US 10.1: Streaming LLM Client
+## US 11.1: Streaming LLM Client
 
 **Status:** 🔲 Not Started
 
@@ -287,7 +287,7 @@ class OpenAICompatibleClient:
 
 ---
 
-## US 10.2: Streaming RAG Pipeline
+## US 11.2: Streaming RAG Pipeline
 
 **Status:** 🔲 Not Started
 
@@ -469,7 +469,7 @@ class RAGPipeline:
 
 ---
 
-## US 10.3: Streaming API Endpoints
+## US 11.3: Streaming API Endpoints
 
 **Status:** 🔲 Not Started
 
@@ -665,7 +665,7 @@ async def summarize_document_stream(
 
 ---
 
-## US 10.4: Web UI Streaming Integration
+## US 11.4: Web UI Streaming Integration
 
 **Status:** 🔲 Not Started
 
@@ -919,7 +919,7 @@ function handleStreamEvent(event, answerDiv, citationsDiv, citationsContent) {
 
 ---
 
-## US 10.5: Streaming Agent Tools
+## US 11.5: Streaming Agent Tools
 
 **Status:** 🔲 Not Started
 
@@ -1072,7 +1072,7 @@ class SummarizerTool:
 
 ---
 
-## Definition of Done (Epic 10)
+## Definition of Done (Epic 11)
 
 - [ ] All 5 User Stories completed
 - [ ] LLM clients support streaming generation
@@ -1097,19 +1097,19 @@ class SummarizerTool:
 ## Dependencies
 
 ```
-US 10.1 (LLM Streaming)
+US 11.1 (LLM Streaming)
     ↓
-US 10.2 (RAG Pipeline Streaming)
+US 11.2 (RAG Pipeline Streaming)
     ↓
-US 10.3 (API Endpoints) ←→ US 10.5 (Agent Tools)
+US 11.3 (API Endpoints) ←→ US 11.5 (Agent Tools)
     ↓
-US 10.4 (Web UI)
+US 11.4 (Web UI)
 ```
 
-US 10.1 must be completed first (foundation).
-US 10.2 depends on 10.1.
-US 10.3 and 10.5 can be done in parallel after 10.2.
-US 10.4 requires 10.3 (needs endpoints to consume).
+US 11.1 must be completed first (foundation).
+US 11.2 depends on 11.1.
+US 11.3 and 11.5 can be done in parallel after 11.2.
+US 11.4 requires 11.3 (needs endpoints to consume).
 
 ## Rollback Plan
 
