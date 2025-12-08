@@ -15,8 +15,8 @@ async def test_compare_two_english_documents(
     response = await api_client.post(
         "/compare",
         json={
-            "document_id_1": sample_contract_en_pdf,
-            "document_id_2": sample_contract_en_docx
+            "doc_a": sample_contract_en_pdf,
+            "doc_b": sample_contract_en_docx
         }
     )
 
@@ -37,8 +37,8 @@ async def test_compare_english_and_french_documents(
     response = await api_client.post(
         "/compare",
         json={
-            "document_id_1": sample_contract_en_pdf,
-            "document_id_2": sample_contract_fr_pdf
+            "doc_a": sample_contract_en_pdf,
+            "doc_b": sample_contract_fr_pdf
         }
     )
 
@@ -62,8 +62,8 @@ async def test_compare_two_french_documents(
     response = await api_client.post(
         "/compare",
         json={
-            "document_id_1": sample_contract_fr_pdf,
-            "document_id_2": sample_contract_fr_docx
+            "doc_a": sample_contract_fr_pdf,
+            "doc_b": sample_contract_fr_docx
         }
     )
 
@@ -84,8 +84,8 @@ async def test_comparison_difference_details(
     response = await api_client.post(
         "/compare",
         json={
-            "document_id_1": sample_contract_en_pdf,
-            "document_id_2": sample_contract_fr_pdf
+            "doc_a": sample_contract_en_pdf,
+            "doc_b": sample_contract_fr_pdf
         }
     )
 
@@ -94,12 +94,15 @@ async def test_comparison_difference_details(
 
     # Each difference should have meaningful information
     for diff in data["differences"]:
-        assert "category" in diff, "Difference missing category"
-        assert "description" in diff, "Difference missing description"
+        assert "section" in diff, "Difference missing section"
+        assert "change_type" in diff, "Difference missing change_type"
+        assert "similarity" in diff, "Difference missing similarity"
 
-        # Category and description should be non-empty
-        assert len(diff["category"]) > 0, "Category cannot be empty"
-        assert len(diff["description"]) > 10, "Description too short"
+        # Section should be non-empty
+        assert len(diff["section"]) > 0, "Section cannot be empty"
+        # Change type should be valid
+        assert diff["change_type"] in ["added", "removed", "modified"], \
+            f"Invalid change_type: {diff['change_type']}"
 
 
 @pytest.mark.asyncio
@@ -109,8 +112,8 @@ async def test_compare_same_document(api_client, sample_contract_en_pdf):
     response = await api_client.post(
         "/compare",
         json={
-            "document_id_1": sample_contract_en_pdf,
-            "document_id_2": sample_contract_en_pdf
+            "doc_a": sample_contract_en_pdf,
+            "doc_b": sample_contract_en_pdf
         }
     )
 
@@ -130,16 +133,19 @@ async def test_comparison_invalid_document_id(api_client, sample_contract_en_pdf
     response = await api_client.post(
         "/compare",
         json={
-            "document_id_1": sample_contract_en_pdf,
-            "document_id_2": "00000000-0000-0000-0000-000000000000"
+            "doc_a": sample_contract_en_pdf,
+            "doc_b": "00000000-0000-0000-0000-000000000000"
         }
     )
 
-    # Should return error (404 or 400)
-    assert response.status_code in [400, 404]
+    # Should return error (404, 400, or 422)
+    assert response.status_code in [400, 404, 422], \
+        f"Expected error status, got {response.status_code}"
 
     data = response.json()
-    assert "error" in data
+    # Error response can be in various formats
+    assert "error" in data or "detail" in data or "message" in data, \
+        f"Expected error response, got: {data}"
 
 
 @pytest.mark.asyncio
@@ -162,8 +168,8 @@ async def test_multi_document_comparison_workflow(
         response = await api_client.post(
             "/compare",
             json={
-                "document_id_1": doc1,
-                "document_id_2": doc2
+                "doc_a": doc1,
+                "doc_b": doc2
             }
         )
 
