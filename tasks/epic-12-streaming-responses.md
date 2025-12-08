@@ -1,4 +1,4 @@
-# Epic 11: Streaming LLM Responses
+# Epic 12: Streaming LLM Responses
 
 ## Overview
 
@@ -73,7 +73,7 @@ All streaming operations must support proper cancellation via `AbortController` 
 
 ---
 
-## US 11.1: Streaming LLM Client
+## US 12.1: Streaming LLM Client
 
 **Status:** 🔲 Not Started
 
@@ -309,7 +309,7 @@ class OpenAICompatibleClient:
 
 ---
 
-## US 11.2: Streaming RAG Pipeline
+## US 12.2: Streaming RAG Pipeline
 
 **Status:** 🔲 Not Started
 
@@ -498,7 +498,7 @@ class RAGPipeline:
 
 ---
 
-## US 11.3: Streaming API Endpoints & Agent Tools
+## US 12.3: Streaming API Endpoints & Agent Tools
 
 **Status:** 🔲 Not Started
 
@@ -850,7 +850,7 @@ class SummarizerTool:
 
 ---
 
-## US 11.4: Web UI Streaming Integration
+## US 12.4: Web UI Streaming Integration
 
 **Status:** 🔲 Not Started
 
@@ -1171,7 +1171,7 @@ function handleStreamEvent(event, answerDiv, citationsDiv, citationsContent) {
 
 ---
 
-## Definition of Done (Epic 11)
+## Definition of Done (Epic 12)
 
 - [ ] All 4 User Stories completed
 - [ ] LLM clients support streaming generation
@@ -1195,19 +1195,19 @@ function handleStreamEvent(event, answerDiv, citationsDiv, citationsContent) {
 ## Dependencies
 
 ```
-US 11.1 (LLM Streaming)
+US 12.1 (LLM Streaming)
     ↓
-US 11.2 (RAG Pipeline Streaming)
+US 12.2 (RAG Pipeline Streaming)
     ↓
-US 11.3 (API Endpoints & Agent Tools)
+US 12.3 (API Endpoints & Agent Tools)
     ↓
-US 11.4 (Web UI)
+US 12.4 (Web UI)
 ```
 
-US 11.1 must be completed first (foundation).
-US 11.2 depends on 11.1.
-US 11.3 combines endpoints and agent tools (previously 11.3 + 11.5) since they are tightly coupled.
-US 11.4 requires 11.3 (needs endpoints to consume).
+US 12.1 must be completed first (foundation).
+US 12.2 depends on 12.1.
+US 12.3 combines endpoints and agent tools (previously 12.3 + 12.5) since they are tightly coupled.
+US 12.4 requires 12.3 (needs endpoints to consume).
 
 ## Rollback Plan
 
