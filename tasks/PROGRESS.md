@@ -79,7 +79,7 @@ This folder contains detailed specifications for each Epic and User Story. Each 
 | 9.4   | Web UI Language Display    | 2025-12-08 | 9291e2e  |
 | 9.5   | Integration Testing & Docs | 2025-12-08 | 52c637b  |
 | 10.1  | Test Audit & Inventory     | 2025-12-08 | 2aa30ad  |
-| 10.2  | Unit Test Fixes & Cleanup  | 2025-12-08 | TBD      |
+| 10.2  | Unit Test Fixes & Cleanup  | 2025-12-08 | acc989e  |
 
 <!-- Format: | US ID | Name | Completed Date | Commit Hash | -->
 
