@@ -234,3 +234,224 @@ class TestDocumentRegistryFileSystem:
 
         assert retrieved is not None
         assert retrieved.title == "Test Doc"
+
+
+class TestAnalyticsSchema:
+    """Tests for analytics database schema."""
+
+    @pytest.fixture
+    def registry(self):
+        """Create an in-memory registry for testing."""
+        return DocumentRegistry(":memory:")
+
+    def test_analytics_events_table_created(self, registry):
+        """analytics_events table should be created on initialization."""
+        conn = registry._get_connection()
+        cursor = conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='analytics_events'"
+        )
+        result = cursor.fetchone()
+        assert result is not None
+        assert result[0] == "analytics_events"
+
+    def test_analytics_sessions_table_created(self, registry):
+        """analytics_sessions table should be created on initialization."""
+        conn = registry._get_connection()
+        cursor = conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='analytics_sessions'"
+        )
+        result = cursor.fetchone()
+        assert result is not None
+        assert result[0] == "analytics_sessions"
+
+    def test_analytics_browsers_table_created(self, registry):
+        """analytics_browsers table should be created on initialization."""
+        conn = registry._get_connection()
+        cursor = conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='analytics_browsers'"
+        )
+        result = cursor.fetchone()
+        assert result is not None
+        assert result[0] == "analytics_browsers"
+
+    def test_analytics_events_table_columns(self, registry):
+        """analytics_events table should have correct columns."""
+        conn = registry._get_connection()
+        cursor = conn.execute("PRAGMA table_info(analytics_events)")
+        columns = {row[1]: row[2] for row in cursor.fetchall()}
+
+        assert "id" in columns
+        assert "event_name" in columns
+        assert "browser_id" in columns
+        assert "session_id" in columns
+        assert "properties" in columns
+        assert "created_at" in columns
+
+    def test_analytics_sessions_table_columns(self, registry):
+        """analytics_sessions table should have correct columns."""
+        conn = registry._get_connection()
+        cursor = conn.execute("PRAGMA table_info(analytics_sessions)")
+        columns = {row[1]: row[2] for row in cursor.fetchall()}
+
+        assert "id" in columns
+        assert "session_id" in columns
+        assert "browser_id" in columns
+        assert "started_at" in columns
+        assert "ended_at" in columns
+        assert "is_returning_user" in columns
+        assert "event_count" in columns
+        assert "query_count" in columns
+        assert "docs_uploaded" in columns
+
+    def test_analytics_browsers_table_columns(self, registry):
+        """analytics_browsers table should have correct columns."""
+        conn = registry._get_connection()
+        cursor = conn.execute("PRAGMA table_info(analytics_browsers)")
+        columns = {row[1]: row[2] for row in cursor.fetchall()}
+
+        assert "browser_id" in columns
+        assert "first_seen_at" in columns
+        assert "last_seen_at" in columns
+        assert "total_sessions" in columns
+
+    def test_analytics_events_indexes_created(self, registry):
+        """analytics_events indexes should be created."""
+        conn = registry._get_connection()
+        cursor = conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='index' AND name LIKE 'idx_events_%'"
+        )
+        indexes = {row[0] for row in cursor.fetchall()}
+
+        assert "idx_events_browser" in indexes
+        assert "idx_events_session" in indexes
+        assert "idx_events_name" in indexes
+        assert "idx_events_created" in indexes
+
+    def test_analytics_sessions_indexes_created(self, registry):
+        """analytics_sessions indexes should be created."""
+        conn = registry._get_connection()
+        cursor = conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='index' AND name LIKE 'idx_sessions_%'"
+        )
+        indexes = {row[0] for row in cursor.fetchall()}
+
+        assert "idx_sessions_browser" in indexes
+        assert "idx_sessions_started" in indexes
+
+    def test_analytics_browsers_indexes_created(self, registry):
+        """analytics_browsers indexes should be created."""
+        conn = registry._get_connection()
+        cursor = conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='index' AND name LIKE 'idx_browsers_%'"
+        )
+        indexes = {row[0] for row in cursor.fetchall()}
+
+        assert "idx_browsers_first_seen" in indexes
+
+    def test_analytics_schema_idempotent(self, registry):
+        """Running schema initialization multiple times should not fail."""
+        conn = registry._get_connection()
+
+        # Call init again - should not raise
+        registry._init_analytics_schema(conn)
+        registry._init_analytics_schema(conn)
+
+        # Tables should still exist
+        cursor = conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'analytics_%'"
+        )
+        tables = {row[0] for row in cursor.fetchall()}
+        assert len(tables) == 3
+
+    def test_documents_table_unaffected(self, registry):
+        """analytics schema should not affect existing documents table."""
+        # Create a document
+        doc = registry.create("Test Doc", "test.pdf", "hash123")
+        assert doc is not None
+        assert doc.title == "Test Doc"
+
+        # Verify document retrieval still works
+        retrieved = registry.get(doc.id)
+        assert retrieved is not None
+        assert retrieved.id == doc.id
+
+    def test_can_insert_analytics_event(self, registry):
+        """Should be able to insert into analytics_events table."""
+        conn = registry._get_connection()
+        conn.execute(
+            """INSERT INTO analytics_events
+               (event_name, browser_id, session_id, properties)
+               VALUES (?, ?, ?, ?)""",
+            ("test_event", "browser123", "session456", '{"key": "value"}'),
+        )
+        conn.commit()
+
+        cursor = conn.execute("SELECT COUNT(*) FROM analytics_events")
+        count = cursor.fetchone()[0]
+        assert count == 1
+
+    def test_can_insert_analytics_session(self, registry):
+        """Should be able to insert into analytics_sessions table."""
+        conn = registry._get_connection()
+        conn.execute(
+            """INSERT INTO analytics_sessions
+               (session_id, browser_id, is_returning_user)
+               VALUES (?, ?, ?)""",
+            ("session123", "browser456", False),
+        )
+        conn.commit()
+
+        cursor = conn.execute("SELECT COUNT(*) FROM analytics_sessions")
+        count = cursor.fetchone()[0]
+        assert count == 1
+
+    def test_can_insert_analytics_browser(self, registry):
+        """Should be able to insert into analytics_browsers table."""
+        conn = registry._get_connection()
+        conn.execute(
+            """INSERT INTO analytics_browsers (browser_id) VALUES (?)""",
+            ("browser789",),
+        )
+        conn.commit()
+
+        cursor = conn.execute("SELECT COUNT(*) FROM analytics_browsers")
+        count = cursor.fetchone()[0]
+        assert count == 1
+
+    def test_session_id_unique_constraint(self, registry):
+        """analytics_sessions.session_id should be unique."""
+        import sqlite3
+
+        conn = registry._get_connection()
+        conn.execute(
+            """INSERT INTO analytics_sessions (session_id, browser_id, is_returning_user)
+               VALUES (?, ?, ?)""",
+            ("unique_session", "browser1", False),
+        )
+        conn.commit()
+
+        # Attempting to insert duplicate session_id should fail
+        with pytest.raises(sqlite3.IntegrityError):
+            conn.execute(
+                """INSERT INTO analytics_sessions (session_id, browser_id, is_returning_user)
+                   VALUES (?, ?, ?)""",
+                ("unique_session", "browser2", True),
+            )
+
+    def test_browser_id_primary_key(self, registry):
+        """analytics_browsers.browser_id should be primary key."""
+        import sqlite3
+
+        conn = registry._get_connection()
+        conn.execute(
+            "INSERT INTO analytics_browsers (browser_id) VALUES (?)",
+            ("pk_browser",),
+        )
+        conn.commit()
+
+        # Attempting to insert duplicate browser_id should fail
+        with pytest.raises(sqlite3.IntegrityError):
+            conn.execute(
+                "INSERT INTO analytics_browsers (browser_id) VALUES (?)",
+                ("pk_browser",),
+            )
