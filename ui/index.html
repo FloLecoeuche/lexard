@@ -786,6 +786,12 @@
                 }
 
                 const data = await response.json();
+
+                // Validate response has required fields
+                if (!data.task_id) {
+                    throw new Error('Upload response missing task_id. Response: ' + JSON.stringify(data));
+                }
+
                 // Now track progress via SSE
                 await trackUploadProgress(data.task_id, data.filename);
             } catch (error) {

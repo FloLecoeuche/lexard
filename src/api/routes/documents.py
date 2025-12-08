@@ -139,7 +139,7 @@ async def _process_document_with_progress(
             task_id,
             ProcessingStage.PARSING,
             0.2,
-            f"Extracted {len(extraction_result.text)} characters from {extraction_result.total_pages} pages",
+            f"Extracted {len(extraction_result.full_text)} characters from {extraction_result.total_pages} pages",
         )
 
         # Get title from filename

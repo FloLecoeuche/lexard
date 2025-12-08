@@ -1,0 +1,114 @@
+name: End-to-End Tests
+
+on:
+  push:
+    branches: [develop, main]
+  pull_request:
+    branches: [develop, main]
+
+jobs:
+  e2e-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    services:
+      qdrant:
+        image: qdrant/qdrant:latest
+        ports:
+          - 6333:6333
+        options: >-
+          --health-cmd "curl -f http://localhost:6333/health || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Cache Python dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Start Ollama service
+        run: |
+          docker run -d \
+            --name ollama \
+            -p 11434:11434 \
+            ollama/ollama:latest
+
+      - name: Wait for services to be ready
+        run: |
+          echo "Waiting for Qdrant..."
+          timeout 30 bash -c 'until curl -f http://localhost:6333/health; do sleep 2; done'
+
+          echo "Waiting for Ollama..."
+          timeout 30 bash -c 'until curl -f http://localhost:11434/api/tags; do sleep 2; done'
+
+      - name: Pull Ollama model
+        run: |
+          docker exec ollama ollama pull mistral:7b-instruct
+        timeout-minutes: 10
+
+      - name: Verify model is loaded
+        run: |
+          docker exec ollama ollama list
+
+      - name: Run E2E tests
+        run: |
+          pytest tests/e2e/ -v -m e2e --maxfail=5 --tb=short --junit-xml=test-results/e2e-results.xml
+        env:
+          LEXARD_QDRANT__HOST: localhost
+          LEXARD_QDRANT__PORT: 6333
+          LEXARD_LLM__BASE_URL: http://localhost:11434
+          LEXARD_LLM__MODEL: mistral:7b-instruct
+          LEXARD_LLM__TIMEOUT_SECONDS: 180
+          LEXARD_EMBEDDINGS__MODEL_NAME: intfloat/multilingual-e5-base
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-test-results
+          path: test-results/
+
+      - name: Generate test report
+        if: always()
+        run: |
+          pip install pytest-html
+          pytest tests/e2e/ -m e2e --html=test-results/report.html --self-contained-html || true
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-test-report
+          path: test-results/report.html
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker stop ollama || true
+          docker rm ollama || true
+
+      - name: Test Summary
+        if: always()
+        run: |
+          echo "## E2E Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Test execution completed. Check artifacts for detailed results." >> $GITHUB_STEP_SUMMARY

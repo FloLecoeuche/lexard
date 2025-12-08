@@ -52,18 +52,20 @@ app:
 
 ### llm
 
-LLM (Language Model) configuration for Ollama.
+LLM (Language Model) configuration. Supports two providers:
+- **Ollama**: Docker-based, simple setup (default)
+- **OpenAI-compatible**: llama.cpp, vLLM, or any OpenAI-compatible API
 
 | Setting          | Type   | Default                | Description                          |
 |------------------|--------|------------------------|--------------------------------------|
-| `provider`       | string | `"ollama"`             | LLM provider (currently only `ollama`) |
-| `model`          | string | `"mistral:7b-instruct"`| Ollama model name                    |
-| `base_url`       | string | `"http://localhost:11434"` | Ollama API base URL              |
-| `temperature`    | float  | `0.1`                  | Generation temperature (0.0-1.0)     |
+| `provider`       | string | `"ollama"`             | LLM provider (`ollama` \| `openai`)  |
+| `model`          | string | `"mistral:7b-instruct"`| Model name                           |
+| `base_url`       | string | `"http://localhost:11434"` | API base URL                     |
+| `temperature`    | float  | `0.1`                  | Generation temperature (0.0-2.0)     |
 | `max_tokens`     | int    | `2048`                 | Maximum tokens in response           |
 | `timeout_seconds`| int    | `30`                   | Request timeout in seconds           |
 
-**Example:**
+#### Provider: Ollama (Default)
 
 ```yaml
 llm:
@@ -88,6 +90,37 @@ To pull additional models:
 ```bash
 docker exec -it lexard-ollama ollama pull llama3:8b
 ```
+
+#### Provider: OpenAI-compatible (llama.cpp, vLLM)
+
+Use this for llama.cpp with Vulkan (recommended for AMD RDNA3/RDNA4 GPUs):
+
+```yaml
+llm:
+  provider: 'openai'
+  model: 'mistral'
+  base_url: 'http://localhost:8080'
+  temperature: 0.1
+  max_tokens: 2048
+  timeout_seconds: 60
+```
+
+The `openai` provider uses the `/v1/chat/completions` endpoint, compatible with:
+- llama.cpp's `llama-server`
+- vLLM
+- Any OpenAI-compatible API
+
+**For Docker deployments with host llama-server:**
+
+```yaml
+llm:
+  provider: 'openai'
+  model: 'mistral'
+  base_url: 'http://host.docker.internal:8080'  # Access host from container
+  timeout_seconds: 60
+```
+
+See [Quickstart - AMD GPU Setup](quickstart.md#amd-gpu-setup-vulkan) for building llama.cpp with Vulkan
 
 ---
 
@@ -297,7 +330,9 @@ server:
 
 ---
 
-## Complete Example
+## Complete Examples
+
+### With Ollama (Default)
 
 Full `config/config.yaml`:
 
@@ -319,6 +354,59 @@ embeddings:
   model: 'all-mpnet-base-v2'
   batch_size: 32
   device: 'cpu'
+
+chunking:
+  method: 'fixed'
+  size: 512
+  overlap: 50
+
+qdrant:
+  host: 'localhost'
+  port: 6333
+  collection: 'documents'
+
+retrieval:
+  top_k: 8
+  score_threshold: 0.7
+  rerank: false
+
+guardrails:
+  hallucination_threshold: 0.8
+  enable_pii_filter: true
+  max_retries: 2
+
+storage:
+  upload_dir: './data/uploads'
+  max_file_size_mb: 50
+
+server:
+  host: '0.0.0.0'
+  port: 8000
+  workers: 4
+```
+
+### With llama.cpp (AMD GPU with Vulkan)
+
+For AMD RDNA3/RDNA4 GPUs using llama-server:
+
+```yaml
+app:
+  name: 'Lexard'
+  environment: 'development'
+  log_level: 'info'
+
+llm:
+  provider: 'openai'  # OpenAI-compatible API
+  model: 'mistral'
+  base_url: 'http://localhost:8080'  # llama-server
+  temperature: 0.1
+  max_tokens: 2048
+  timeout_seconds: 60
+
+embeddings:
+  model: 'all-mpnet-base-v2'
+  batch_size: 32
+  device: 'cpu'  # CPU for embeddings (fast enough)
 
 chunking:
   method: 'fixed'

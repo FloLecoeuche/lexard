@@ -346,12 +346,20 @@ If risks are found, respond with valid JSON only:
                     except ValueError:
                         severity = RiskSeverity.LOW
 
+                    # Ensure clause_excerpt is never None (required field)
+                    clause = r.get("clause") or r.get("clause_excerpt") or ""
+                    description = r.get("description") or ""
+
+                    # Skip if no meaningful content
+                    if not description and not clause:
+                        continue
+
                     risks.append(
                         Risk(
                             category=category,
                             severity=severity,
-                            description=r.get("description", ""),
-                            clause_excerpt=r.get("clause", ""),
+                            description=description,
+                            clause_excerpt=clause if clause else "[No specific clause cited]",
                             page=page,
                             recommendation=r.get("recommendation"),
                         )

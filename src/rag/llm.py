@@ -1,8 +1,10 @@
-"""Ollama LLM client for local inference.
+"""LLM clients for local inference.
 
-Provides a client for interacting with Ollama's API for LLM generation
-with proper error handling, timeouts, and response parsing.
+Provides clients for interacting with:
+- Ollama's API for LLM generation
+- OpenAI-compatible APIs (llama.cpp, vLLM, etc.)
 
+With proper error handling, timeouts, and response parsing.
 Also provides language detection utilities for multilingual support.
 """
 
@@ -257,6 +259,177 @@ class OllamaClient:
         except Exception as e:
             logger.warning(f"Ollama health check failed: {e}")
         return False
+
+
+class OpenAICompatibleClient:
+    """Client for OpenAI-compatible LLM APIs (llama.cpp, vLLM, etc.).
+
+    Features connection pooling for improved performance with repeated requests.
+
+    Args:
+        config: LLM configuration from settings
+    """
+
+    def __init__(self, config: LLMConfig):
+        self.base_url = config.base_url.rstrip("/")
+        self.model = config.model
+        self.temperature = config.temperature
+        self.max_tokens = config.max_tokens
+        self.timeout = config.timeout_seconds
+
+        # Connection pooling for improved performance
+        self._client: httpx.Client | None = None
+
+    @property
+    def client(self) -> httpx.Client:
+        """Get or create pooled HTTP client.
+
+        Returns:
+            Shared httpx.Client with connection pooling
+        """
+        if self._client is None or self._client.is_closed:
+            self._client = httpx.Client(
+                base_url=self.base_url,
+                timeout=self.timeout,
+                limits=httpx.Limits(
+                    max_connections=10,
+                    max_keepalive_connections=5,
+                    keepalive_expiry=30.0,
+                ),
+            )
+            logger.debug("Created pooled HTTP client for OpenAI-compatible API")
+        return self._client
+
+    def close(self) -> None:
+        """Close the HTTP client and release connections."""
+        if self._client is not None and not self._client.is_closed:
+            self._client.close()
+            self._client = None
+            logger.debug("Closed OpenAI-compatible HTTP client")
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
+
+    def generate(self, prompt: str, system_prompt: str | None = None) -> LLMResponse:
+        """Generate response from OpenAI-compatible API.
+
+        Args:
+            prompt: User prompt with context
+            system_prompt: Optional system instructions
+
+        Returns:
+            LLMResponse with generated text
+
+        Raises:
+            LLMTimeoutError: If request times out
+            LLMConnectionError: If service is unavailable
+            LLMGenerationError: If generation fails
+        """
+        messages = []
+        if system_prompt:
+            messages.append({"role": "system", "content": system_prompt})
+        messages.append({"role": "user", "content": prompt})
+
+        logger.debug(
+            "Generating LLM response via OpenAI-compatible API",
+            extra={
+                "model": self.model,
+                "prompt_length": len(prompt),
+                "has_system_prompt": system_prompt is not None,
+            },
+        )
+
+        try:
+            response = self.client.post(
+                "/v1/chat/completions",
+                json={
+                    "model": self.model,
+                    "messages": messages,
+                    "temperature": self.temperature,
+                    "max_tokens": self.max_tokens,
+                },
+            )
+            response.raise_for_status()
+            data = response.json()
+
+            choices = data.get("choices", [])
+            if not choices:
+                raise LLMGenerationError("No choices in response from LLM")
+
+            content = choices[0].get("message", {}).get("content", "")
+            if not content:
+                raise LLMGenerationError("Empty response from LLM")
+
+            usage = data.get("usage", {})
+            llm_response = LLMResponse(
+                content=content,
+                model=data.get("model", self.model),
+                total_tokens=usage.get("total_tokens"),
+                finish_reason=choices[0].get("finish_reason", "stop"),
+            )
+
+            logger.debug(
+                "LLM generation complete",
+                extra={
+                    "model": llm_response.model,
+                    "tokens": llm_response.total_tokens,
+                    "response_length": len(llm_response.content),
+                },
+            )
+
+            return llm_response
+
+        except httpx.TimeoutException as e:
+            logger.error(f"LLM request timed out after {self.timeout}s")
+            raise LLMTimeoutError(
+                f"LLM request timed out after {self.timeout}s"
+            ) from e
+        except httpx.ConnectError as e:
+            logger.error(f"Failed to connect to LLM at {self.base_url}")
+            raise LLMConnectionError(
+                f"Failed to connect to LLM at {self.base_url}"
+            ) from e
+        except httpx.HTTPStatusError as e:
+            logger.error(f"LLM returned error status: {e.response.status_code}")
+            raise LLMGenerationError(
+                f"LLM returned error: {e.response.status_code}"
+            ) from e
+
+    def health_check(self) -> bool:
+        """Check if the OpenAI-compatible API is accessible.
+
+        Returns:
+            True if service is healthy, False otherwise
+        """
+        try:
+            with httpx.Client(base_url=self.base_url, timeout=5) as client:
+                response = client.get("/health")
+                is_healthy = response.status_code == 200
+                logger.debug(f"OpenAI-compatible API health check: healthy={is_healthy}")
+                return is_healthy
+        except Exception as e:
+            logger.warning(f"OpenAI-compatible API health check failed: {e}")
+        return False
+
+
+def create_llm_client(config: LLMConfig) -> OllamaClient | OpenAICompatibleClient:
+    """Factory function to create the appropriate LLM client.
+
+    Args:
+        config: LLM configuration from settings
+
+    Returns:
+        OllamaClient for 'ollama' provider, OpenAICompatibleClient for 'openai' provider
+    """
+    if config.provider == "openai":
+        logger.info(f"Creating OpenAI-compatible client for {config.base_url}")
+        return OpenAICompatibleClient(config)
+    else:
+        logger.info(f"Creating Ollama client for {config.base_url}")
+        return OllamaClient(config)
 
 
 def build_qa_prompt(question: str, context: str) -> str:

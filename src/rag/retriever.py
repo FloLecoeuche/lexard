@@ -239,14 +239,14 @@ class Retriever:
             self.score_threshold,
         )
 
-        results = self.qdrant_service.client.search(
+        results = self.qdrant_service.client.query_points(
             collection_name=self.qdrant_service.collection_name,
-            query_vector=query_vector.tolist(),
+            query=query_vector.tolist(),
             limit=self.top_k,
             query_filter=filter_conditions,
             with_payload=True,
             score_threshold=self.score_threshold,
-        )
+        ).points
 
         # 4. Convert to RetrievedChunk objects
         chunks = []

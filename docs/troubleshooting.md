@@ -85,7 +85,7 @@ Error starting userland proxy: listen tcp 0.0.0.0:8000: bind: address already in
 
 ## Runtime Issues
 
-### Ollama Service Unavailable
+### LLM Service Unavailable
 
 **Error:**
 ```json
@@ -97,7 +97,7 @@ Error starting userland proxy: listen tcp 0.0.0.0:8000: bind: address already in
 }
 ```
 
-**Solutions:**
+**Solutions for Ollama:**
 
 1. Check Ollama is running:
    ```bash
@@ -122,6 +122,31 @@ Error starting userland proxy: listen tcp 0.0.0.0:8000: bind: address already in
 5. Pull model if missing:
    ```bash
    docker exec -it lexard-ollama ollama pull mistral:7b-instruct
+   ```
+
+**Solutions for llama-server (Vulkan):**
+
+1. Check llama-server is running:
+   ```bash
+   pgrep -f llama-server
+   ```
+
+2. Check llama-server health:
+   ```bash
+   curl http://localhost:8080/health
+   ```
+
+3. Start llama-server if not running:
+   ```bash
+   cd /tmp/llama.cpp
+   GGML_VK_DEVICE=0 ./build/bin/llama-server \
+     -m /tmp/mistral-7b-instruct-v0.2.Q4_K_M.gguf \
+     --host 0.0.0.0 --port 8080 -ngl 99 -c 8192
+   ```
+
+4. Check GPU is detected:
+   ```bash
+   vulkaninfo --summary | grep deviceName
    ```
 
 ---
