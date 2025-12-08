@@ -91,6 +91,14 @@ Create `tasks/epic-{N}-{slug}.md` following this EXACT structure:
 - [ ] {Testable criterion 2}
 - [ ] {Testable criterion 3}
 
+### Tests
+
+- **Modified:** `tests/test_<module>.py` - Update/fix tests for changed code
+- **New:** `tests/test_<feature>.py` - Add tests for new functionality (if applicable)
+- **Run:** `pytest tests/test_<module>.py -v` to verify
+
+> Note: Only add new tests for new public functions/endpoints. Keep it minimal: 1 happy path + 1-2 edge cases.
+
 ### Files to Create/Modify
 
 1. `path/to/file.py` - Description
@@ -142,6 +150,7 @@ Each US MUST include:
 - **Context:** Why it's needed, technical background
 - **Tasks:** Checkboxes with concrete deliverables
 - **Acceptance Criteria:** Testable, verifiable conditions
+- **Tests:** Which tests to modify/add and command to run
 - **Files to Create/Modify:** Explicit file list
 
 ### Complexity Guidelines

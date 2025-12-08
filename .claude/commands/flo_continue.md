@@ -17,22 +17,28 @@ Read `tasks/PROGRESS.md`, the current epic file, and check git branch to underst
 Complete the current US:
 
 1. Identify current US from git branch name (e.g., `feature/us-1.1-*`)
-2. Read acceptance criteria from the epic file
+2. Read acceptance criteria AND Tests section from the epic file
 3. **Pre-check: Verify all tasks are implemented**
    - Check each task in the US against actual files/code
    - If tasks remain incomplete: list them and STOP
    - Say: "Cannot complete - these tasks remain: [list]"
-4. For EACH acceptance criterion, verify with actual test:
+4. **Test validation (REQUIRED before marking complete):**
+   - Run the test command specified in the US "Tests" section
+   - If no Tests section exists, run: `pytest tests/test_<modified_module>.py -v`
+   - Also run quick regression check: `pytest tests/ -x --ignore=tests/e2e --ignore=tests/red_team --ignore=tests/evaluation --ignore=tests/performance -q` (stops at first failure)
+   - If tests fail: list failures and STOP
+   - Say: "Cannot complete - tests failing: [list]"
+5. For EACH acceptance criterion, verify with actual test:
    - Run the relevant command/check
    - Document pass/fail result
-5. Show verification summary table
-6. If ALL pass:
+6. Show verification summary table (include test results)
+7. If ALL pass (tasks + tests + acceptance criteria):
    - Update epic file: mark US as ✅ Completed
    - Update `tasks/PROGRESS.md` with completion info (date, commit hash placeholder)
    - Commit these changes
    - Merge to develop
    - Delete feature branch
-7. If any fail:
+8. If any fail:
    - List failing criteria with details
    - Suggest specific fixes
    - Do NOT mark as complete
