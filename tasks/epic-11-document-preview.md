@@ -666,7 +666,7 @@ Add script tags to index.html:
 
 ## US 11.3: Integration Testing & Polish
 
-**Status:** 🔲 Not Started
+**Status:** 🔶 In Progress
 
 ### Description
 
