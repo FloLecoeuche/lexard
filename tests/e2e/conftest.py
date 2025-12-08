@@ -94,7 +94,7 @@ def settings():
 @pytest.fixture(scope="session")
 def test_data_dir():
     """Get test data directory."""
-    return Path(__file__).parent.parent / "fixtures"
+    return Path(__file__).parent.parent.parent / "data" / "test"
 
 
 @pytest.fixture(scope="session")
@@ -194,26 +194,26 @@ async def upload_document(
 @pytest.fixture
 async def sample_contract_en_pdf(api_client, test_data_dir):
     """Upload sample English contract (PDF) and return document ID."""
-    file_path = test_data_dir / "sample_contract_en.pdf"
+    file_path = test_data_dir / "contract_nda_en.pdf"
     return await upload_document(api_client, file_path)
 
 
 @pytest.fixture
 async def sample_contract_en_docx(api_client, test_data_dir):
     """Upload sample English contract (DOCX) and return document ID."""
-    file_path = test_data_dir / "sample_contract_en.docx"
+    file_path = test_data_dir / "contract_nda_en.docx"
     return await upload_document(api_client, file_path)
 
 
 @pytest.fixture
 async def sample_contract_fr_pdf(api_client, test_data_dir):
     """Upload sample French contract (PDF) and return document ID."""
-    file_path = test_data_dir / "sample_contract_fr.pdf"
+    file_path = test_data_dir / "contrat_nda_fr.pdf"
     return await upload_document(api_client, file_path)
 
 
 @pytest.fixture
 async def sample_contract_fr_docx(api_client, test_data_dir):
     """Upload sample French contract (DOCX) and return document ID."""
-    file_path = test_data_dir / "sample_contract_fr.docx"
+    file_path = test_data_dir / "contrat_nda_fr.docx"
     return await upload_document(api_client, file_path)

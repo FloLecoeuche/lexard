@@ -7,7 +7,7 @@ import pytest
 @pytest.mark.e2e
 async def test_upload_returns_task_id(api_client, test_data_dir):
     """Test that upload immediately returns task_id and progress URLs."""
-    file_path = test_data_dir / "sample_contract_en.pdf"
+    file_path = test_data_dir / "contract_nda_en.pdf"
 
     with open(file_path, "rb") as f:
         response = await api_client.post(
@@ -33,7 +33,7 @@ async def test_upload_returns_task_id(api_client, test_data_dir):
 @pytest.mark.e2e
 async def test_upload_progress_tracking(api_client, test_data_dir):
     """Test that upload progress is tracked through all stages."""
-    file_path = test_data_dir / "sample_contract_en.pdf"
+    file_path = test_data_dir / "contract_nda_en.pdf"
 
     # Start upload
     with open(file_path, "rb") as f:
@@ -93,7 +93,7 @@ async def test_upload_progress_tracking(api_client, test_data_dir):
 @pytest.mark.e2e
 async def test_upload_progress_stages(api_client, test_data_dir):
     """Test that all expected stages are reported during upload."""
-    file_path = test_data_dir / "sample_contract_en.pdf"
+    file_path = test_data_dir / "contract_nda_en.pdf"
 
     with open(file_path, "rb") as f:
         response = await api_client.post(
@@ -156,8 +156,8 @@ async def test_upload_status_nonexistent_task(api_client):
 async def test_multiple_concurrent_uploads(api_client, test_data_dir):
     """Test tracking multiple uploads simultaneously."""
     file_paths = [
-        test_data_dir / "sample_contract_en.pdf",
-        test_data_dir / "sample_contract_fr.pdf",
+        test_data_dir / "contract_nda_en.pdf",
+        test_data_dir / "contrat_nda_fr.pdf",
     ]
 
     # Start multiple uploads
@@ -199,7 +199,7 @@ async def test_multiple_concurrent_uploads(api_client, test_data_dir):
 @pytest.mark.e2e
 async def test_progress_completion_includes_document_id(api_client, test_data_dir):
     """Test that completion message includes document ID."""
-    file_path = test_data_dir / "sample_contract_en.pdf"
+    file_path = test_data_dir / "contract_nda_en.pdf"
 
     with open(file_path, "rb") as f:
         response = await api_client.post(
