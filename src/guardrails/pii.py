@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 # Default PII patterns with named groups for identification
 DEFAULT_PII_PATTERNS: dict[str, str] = {
-    "iban": r"\b[A-Z]{2}\d{2}[A-Z0-9]{4,30}\b",
+    "iban": r"\b[A-Z]{2}\d{2}[\sA-Z0-9]{4,40}\b",  # IBAN with optional spaces
     "ssn": r"\b\d{3}-\d{2}-\d{4}\b",
     "phone": r"\b(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b",
     "email": r"\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b",
@@ -28,7 +28,7 @@ DEFAULT_PII_PATTERNS: dict[str, str] = {
 # French-specific PII patterns
 FRENCH_PII_PATTERNS: dict[str, str] = {
     "fr_ssn": r"\b[12]\s?\d{2}\s?\d{2}\s?\d{2}\s?\d{3}\s?\d{3}\s?\d{2}\b",  # French SSN (Numéro de sécurité sociale)
-    "fr_phone": r"(\+33|0)[1-9](\s?\d{2}){4}",  # French phone numbers
+    "fr_phone": r"(\+33\s?|0)[1-9](\s?\d{2}){4}",  # French phone numbers (with optional space after +33)
 }
 
 # Combined patterns (English + French)

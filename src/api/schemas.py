@@ -181,6 +181,9 @@ class QueryResponse(BaseModel):
     confidence: Literal["high", "medium", "low"] = Field(
         ..., description="Confidence level based on retrieval quality"
     )
+    language: Literal["en", "fr"] = Field(
+        "en", description="Detected document language used for response"
+    )
 
     model_config = {
         "json_schema_extra": {
@@ -195,6 +198,7 @@ class QueryResponse(BaseModel):
                     }
                 ],
                 "confidence": "high",
+                "language": "en",
             }
         }
     }
@@ -229,6 +233,9 @@ class SummarizeResponse(BaseModel):
     summary: str = Field(..., description="Generated summary text")
     key_points: List[str] = Field(..., description="Key points extracted")
     word_count: int = Field(..., description="Word count of the summary")
+    language: Literal["en", "fr"] = Field(
+        "en", description="Detected document language used for response"
+    )
 
     model_config = {
         "json_schema_extra": {
@@ -240,6 +247,7 @@ class SummarizeResponse(BaseModel):
                     "30-day termination notice required",
                 ],
                 "word_count": 150,
+                "language": "en",
             }
         }
     }
@@ -289,6 +297,9 @@ class RiskResponse(BaseModel):
     overall_risk_level: Literal["low", "medium", "high"] = Field(
         ..., description="Aggregated risk level"
     )
+    language: Literal["en", "fr"] = Field(
+        "en", description="Detected document language used for analysis"
+    )
 
     model_config = {
         "json_schema_extra": {
@@ -304,6 +315,7 @@ class RiskResponse(BaseModel):
                     }
                 ],
                 "overall_risk_level": "high",
+                "language": "en",
             }
         }
     }
@@ -349,6 +361,9 @@ class CompareResponse(BaseModel):
     overall_similarity: float = Field(
         ..., description="Overall document similarity score"
     )
+    language: Literal["en", "fr"] = Field(
+        "en", description="Detected document language used for comparison"
+    )
 
     model_config = {
         "json_schema_extra": {
@@ -363,6 +378,7 @@ class CompareResponse(BaseModel):
                     }
                 ],
                 "overall_similarity": 0.85,
+                "language": "en",
             }
         }
     }

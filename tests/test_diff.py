@@ -529,3 +529,112 @@ class TestIntegration:
         # Should detect at least modified and either added or removed
         # (exact behavior depends on similarity thresholds)
         assert len(change_types) >= 1
+
+
+class TestLanguageSupport:
+    """Test multilingual support for document comparison."""
+
+    @pytest.fixture
+    def french_chunks_a(self):
+        """Create French language chunks for document A."""
+        np.random.seed(100)
+        vector = np.random.randn(768)
+        vector = vector / np.linalg.norm(vector)
+        return [
+            create_mock_chunk(
+                "Ceci est le premier paragraphe du contrat en français.",
+                1, 0, "a-fr", vector.tolist()
+            ),
+        ]
+
+    @pytest.fixture
+    def french_chunks_b(self):
+        """Create French language chunks for document B."""
+        np.random.seed(100)
+        vector = np.random.randn(768)
+        vector = vector / np.linalg.norm(vector)
+        return [
+            create_mock_chunk(
+                "Ceci est le premier paragraphe modifié du contrat en français.",
+                1, 0, "b-fr", vector.tolist()
+            ),
+        ]
+
+    def test_result_includes_language_field(self):
+        """Test ComparisonResult includes language field."""
+        result = ComparisonResult(
+            differences=[],
+            overall_similarity=0.95,
+            doc_a_id="a",
+            doc_b_id="b",
+            summary="Similar",
+            language="fr",
+        )
+        assert result.language == "fr"
+
+    def test_result_default_language_is_english(self):
+        """Test ComparisonResult defaults to English."""
+        result = ComparisonResult(
+            differences=[],
+            overall_similarity=0.95,
+            doc_a_id="a",
+            doc_b_id="b",
+            summary="Similar",
+        )
+        assert result.language == "en"
+
+    @pytest.mark.asyncio
+    async def test_compare_with_explicit_language(self, diff_tool):
+        """Test comparison with explicit language parameter."""
+        np.random.seed(42)
+        vector = np.random.randn(768)
+        vector = vector / np.linalg.norm(vector)
+        chunks = [create_mock_chunk("Content", 1, 0, "doc", vector.tolist())]
+        diff_tool.qdrant_service.client.scroll.return_value = (chunks, None)
+
+        result = await diff_tool.compare("doc-a", "doc-b", language="fr")
+
+        assert result.language == "fr"
+
+    @pytest.mark.asyncio
+    async def test_auto_detect_french_language(self, diff_tool, french_chunks_a, french_chunks_b):
+        """Test language auto-detection from French chunks."""
+        diff_tool.qdrant_service.client.scroll.side_effect = [
+            (french_chunks_a, None),
+            (french_chunks_b, None),
+        ]
+
+        result = await diff_tool.compare("doc-a-fr", "doc-b-fr")
+
+        assert result.language == "fr"
+
+    def test_french_summary_no_differences(self, diff_tool):
+        """Test French summary when no differences."""
+        summary = diff_tool._generate_summary([], 0.95, language="fr")
+        assert "95%" in summary
+        assert "similaires" in summary.lower()
+
+    def test_french_summary_with_differences(self, diff_tool):
+        """Test French summary with differences."""
+        differences = [
+            Difference("P1", "a", "b", ChangeType.ADDED, 0.1),
+            Difference("P2", "a", "b", ChangeType.REMOVED, 0.2),
+            Difference("P3", "a", "b", ChangeType.MODIFIED, 0.6),
+        ]
+        summary = diff_tool._generate_summary(differences, 0.75, language="fr")
+
+        assert "75%" in summary
+        assert "3 différences" in summary
+        assert "1 ajouté" in summary
+        assert "1 supprimé" in summary
+        assert "1 modifié" in summary
+
+    def test_detect_language_from_chunks(self, diff_tool, french_chunks_a):
+        """Test language detection from chunks."""
+        language = diff_tool._detect_language_from_chunks(french_chunks_a)
+        assert language == "fr"
+
+    def test_detect_language_empty_chunks(self, diff_tool):
+        """Test language detection defaults to English for empty chunks."""
+        language = diff_tool._detect_language_from_chunks([])
+        assert language == "en"

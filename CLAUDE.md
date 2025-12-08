@@ -9,7 +9,7 @@ Lexard is a sovereign, self-hosted B2B RAG solution for contract analysis. It in
 - **Backend:** Python 3.11, FastAPI
 - **Agent:** LangChain + LangGraph
 - **Vector DB:** Qdrant (HNSW, cosine, 768-dim)
-- **Embeddings:** sentence-transformers `all-mpnet-base-v2`
+- **Embeddings:** sentence-transformers `intfloat/multilingual-e5-base` (supports 100+ languages including French)
 - **LLM:** Ollama `mistral:7b-instruct` (sovereign, no external APIs)
 - **Guardrails:** guardrails-ai + regex filters
 - **Storage:** SQLite (document registry), local filesystem

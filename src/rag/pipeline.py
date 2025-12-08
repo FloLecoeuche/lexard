@@ -10,7 +10,13 @@ from enum import Enum
 
 from src.config import Settings, get_settings
 from src.rag.context import BuiltContext, ContextBuilder
-from src.rag.llm import OllamaClient, QA_SYSTEM_PROMPT, build_qa_prompt
+from src.rag.llm import (
+    OllamaClient,
+    QA_SYSTEM_PROMPT,
+    build_qa_prompt,
+    detect_language_from_chunks,
+    get_qa_system_prompt,
+)
 from src.rag.retriever import Retriever, RetrievedChunk
 
 logger = logging.getLogger(__name__)
@@ -50,12 +56,14 @@ class RAGResponse:
         citation_chunks: List of cited source chunks
         confidence: Confidence level based on retrieval scores
         has_relevant_content: Whether relevant content was found
+        language: Detected/used language code ('en' or 'fr')
     """
 
     answer: str
     citation_chunks: list[CitationChunk]
     confidence: Confidence
     has_relevant_content: bool
+    language: str = "en"
 
 
 class RAGPipeline:
@@ -101,6 +109,7 @@ class RAGPipeline:
         self,
         question: str,
         document_id: str | None = None,
+        language: str | None = None,
     ) -> RAGResponse:
         """Execute RAG query and return grounded answer.
 
@@ -110,6 +119,12 @@ class RAGPipeline:
         Args:
             question: User's question
             document_id: Optional document filter
+            language: Language for response. If None, auto-detected from document chunks.
+
+        Note:
+            Language is detected from the DOCUMENT content (retrieved chunks),
+            not from the query. This ensures French documents always get French
+            responses, even when queried in English.
 
         Returns:
             RAGResponse with answer and citations
@@ -133,18 +148,28 @@ class RAGPipeline:
                 citation_chunks=[],
                 confidence=Confidence.LOW,
                 has_relevant_content=False,
+                language="en",  # Default for no-content response
             )
 
-        # 3. Build context
+        # 3. Detect language from DOCUMENT CHUNKS (not query)
+        if language is None:
+            language = detect_language_from_chunks(chunks)
+
+        logger.info(
+            "Detected document language",
+            extra={"language": language, "chunk_count": len(chunks)},
+        )
+
+        # 4. Build context
         context = self.context_builder.build(chunks)
 
-        # 4. Generate LLM response
-        answer = self._generate_answer(question, context)
+        # 5. Generate LLM response with language-aware prompts
+        answer = self._generate_answer(question, context, language=language)
 
-        # 5. Calculate confidence from retrieval scores
+        # 6. Calculate confidence from retrieval scores
         confidence = self._calculate_confidence(chunks)
 
-        # 6. Build citation chunks
+        # 7. Build citation chunks
         citation_chunks = self._build_citation_chunks(chunks, context)
 
         logger.info(
@@ -153,6 +178,7 @@ class RAGPipeline:
                 "chunk_count": len(citation_chunks),
                 "confidence": confidence.value,
                 "answer_length": len(answer),
+                "language": language,
             },
         )
 
@@ -161,31 +187,37 @@ class RAGPipeline:
             citation_chunks=citation_chunks,
             confidence=confidence,
             has_relevant_content=True,
+            language=language,
         )
 
-    def _generate_answer(self, question: str, context: BuiltContext) -> str:
-        """Generate answer using LLM.
+    def _generate_answer(
+        self, question: str, context: BuiltContext, language: str = "en"
+    ) -> str:
+        """Generate answer using LLM with language-aware prompts.
 
         Args:
             question: User's question
             context: Built context with chunks
+            language: Language code ('en' or 'fr') for prompt selection
 
         Returns:
-            Generated answer text
+            Generated answer text in the specified language
         """
-        prompt = build_qa_prompt(question, context.context_text)
+        prompt = build_qa_prompt(question, context.context_text, language=language)
+        system_prompt = get_qa_system_prompt(language=language)
 
         logger.debug(
             "Generating answer",
             extra={
                 "prompt_length": len(prompt),
                 "context_tokens": context.total_tokens,
+                "language": language,
             },
         )
 
         response = self.llm_client.generate(
             prompt=prompt,
-            system_prompt=QA_SYSTEM_PROMPT,
+            system_prompt=system_prompt,
         )
 
         return response.content

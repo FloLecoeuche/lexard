@@ -11,6 +11,7 @@ Lexard uses YAML configuration with environment variable overrides.
 ## Environment Variables
 
 All settings can be overridden with environment variables using:
+
 - Prefix: `LEXARD_`
 - Nesting: Double underscores `__`
 
@@ -33,10 +34,10 @@ export LEXARD_APP__LOG_LEVEL=debug
 
 Application-level settings.
 
-| Setting       | Type   | Default         | Description                              |
-|---------------|--------|-----------------|------------------------------------------|
-| `name`        | string | `"Lexard"`      | Application name                         |
-| `environment` | string | `"development"` | Environment mode (`development` \| `production`) |
+| Setting       | Type   | Default         | Description                                           |
+| ------------- | ------ | --------------- | ----------------------------------------------------- |
+| `name`        | string | `"Lexard"`      | Application name                                      |
+| `environment` | string | `"development"` | Environment mode (`development` \| `production`)      |
 | `log_level`   | string | `"info"`        | Log level (`debug` \| `info` \| `warning` \| `error`) |
 
 **Example:**
@@ -53,17 +54,18 @@ app:
 ### llm
 
 LLM (Language Model) configuration. Supports two providers:
+
 - **Ollama**: Docker-based, simple setup (default)
 - **OpenAI-compatible**: llama.cpp, vLLM, or any OpenAI-compatible API
 
-| Setting          | Type   | Default                | Description                          |
-|------------------|--------|------------------------|--------------------------------------|
-| `provider`       | string | `"ollama"`             | LLM provider (`ollama` \| `openai`)  |
-| `model`          | string | `"mistral:7b-instruct"`| Model name                           |
-| `base_url`       | string | `"http://localhost:11434"` | API base URL                     |
-| `temperature`    | float  | `0.1`                  | Generation temperature (0.0-2.0)     |
-| `max_tokens`     | int    | `2048`                 | Maximum tokens in response           |
-| `timeout_seconds`| int    | `30`                   | Request timeout in seconds           |
+| Setting           | Type   | Default                    | Description                         |
+| ----------------- | ------ | -------------------------- | ----------------------------------- |
+| `provider`        | string | `"ollama"`                 | LLM provider (`ollama` \| `openai`) |
+| `model`           | string | `"mistral:7b-instruct"`    | Model name                          |
+| `base_url`        | string | `"http://localhost:11434"` | API base URL                        |
+| `temperature`     | float  | `0.1`                      | Generation temperature (0.0-2.0)    |
+| `max_tokens`      | int    | `2048`                     | Maximum tokens in response          |
+| `timeout_seconds` | int    | `30`                       | Request timeout in seconds          |
 
 #### Provider: Ollama (Default)
 
@@ -106,6 +108,7 @@ llm:
 ```
 
 The `openai` provider uses the `/v1/chat/completions` endpoint, compatible with:
+
 - llama.cpp's `llama-server`
 - vLLM
 - Any OpenAI-compatible API
@@ -116,7 +119,7 @@ The `openai` provider uses the `/v1/chat/completions` endpoint, compatible with:
 llm:
   provider: 'openai'
   model: 'mistral'
-  base_url: 'http://host.docker.internal:8080'  # Access host from container
+  base_url: 'http://host.docker.internal:8080' # Access host from container
   timeout_seconds: 60
 ```
 
@@ -128,24 +131,29 @@ See [Quickstart - AMD GPU Setup](quickstart.md#amd-gpu-setup-vulkan) for buildin
 
 Embedding model configuration.
 
-| Setting      | Type   | Default              | Description                          |
-|--------------|--------|----------------------|--------------------------------------|
-| `model`      | string | `"all-mpnet-base-v2"`| Sentence-transformers model name     |
-| `batch_size` | int    | `32`                 | Batch size for embedding generation  |
-| `device`     | string | `"cpu"`              | Device to use (`cpu` \| `cuda`)      |
+| Setting           | Type   | Default                           | Description                         |
+| ----------------- | ------ | --------------------------------- | ----------------------------------- |
+| `model`           | string | `"intfloat/multilingual-e5-base"` | Sentence-transformers model name    |
+| `batch_size`      | int    | `32`                              | Batch size for embedding generation |
+| `device`          | string | `"cpu"`                           | Device to use (`cpu` \| `cuda`)     |
+| `query_prefix`    | string | `"query: "`                       | Prefix for queries (E5 models)      |
+| `document_prefix` | string | `"passage: "`                     | Prefix for documents (E5 models)    |
 
 **Example:**
 
 ```yaml
 embeddings:
-  model: 'all-mpnet-base-v2'
+  model: 'intfloat/multilingual-e5-base'
   batch_size: 32
   device: 'cpu'
+  query_prefix: 'query: '
+  document_prefix: 'passage: '
 ```
 
 **Model Notes:**
 
-- `all-mpnet-base-v2`: 768 dimensions, best quality/performance balance
+- `intfloat/multilingual-e5-base`: 768 dimensions, multilingual (100+ languages), best for French/English
+- E5 models require `query: ` and `passage: ` prefixes for optimal performance
 - For GPU: Set `device: 'cuda'` if NVIDIA GPU available
 - Larger batch sizes improve throughput but use more memory
 
@@ -155,11 +163,11 @@ embeddings:
 
 Text chunking configuration.
 
-| Setting  | Type   | Default  | Description                          |
-|----------|--------|----------|--------------------------------------|
-| `method` | string | `"fixed"`| Chunking method (currently only `fixed`) |
-| `size`   | int    | `512`    | Chunk size in tokens                 |
-| `overlap`| int    | `50`     | Overlap between chunks in tokens     |
+| Setting   | Type   | Default   | Description                              |
+| --------- | ------ | --------- | ---------------------------------------- |
+| `method`  | string | `"fixed"` | Chunking method (currently only `fixed`) |
+| `size`    | int    | `512`     | Chunk size in tokens                     |
+| `overlap` | int    | `50`      | Overlap between chunks in tokens         |
 
 **Example:**
 
@@ -182,11 +190,11 @@ chunking:
 
 Qdrant vector database configuration.
 
-| Setting      | Type   | Default        | Description                          |
-|--------------|--------|----------------|--------------------------------------|
-| `host`       | string | `"localhost"`  | Qdrant server hostname               |
-| `port`       | int    | `6333`         | Qdrant HTTP API port                 |
-| `collection` | string | `"documents"`  | Collection name for storing vectors  |
+| Setting      | Type   | Default       | Description                         |
+| ------------ | ------ | ------------- | ----------------------------------- |
+| `host`       | string | `"localhost"` | Qdrant server hostname              |
+| `port`       | int    | `6333`        | Qdrant HTTP API port                |
+| `collection` | string | `"documents"` | Collection name for storing vectors |
 
 **Example:**
 
@@ -214,11 +222,11 @@ qdrant:
 
 RAG retrieval configuration.
 
-| Setting           | Type    | Default | Description                          |
-|-------------------|---------|---------|--------------------------------------|
-| `top_k`           | int     | `8`     | Number of chunks to retrieve         |
-| `score_threshold` | float   | `0.7`   | Minimum similarity score (0.0-1.0)   |
-| `rerank`          | boolean | `false` | Enable re-ranking (not implemented)  |
+| Setting           | Type    | Default | Description                         |
+| ----------------- | ------- | ------- | ----------------------------------- |
+| `top_k`           | int     | `8`     | Number of chunks to retrieve        |
+| `score_threshold` | float   | `0.7`   | Minimum similarity score (0.0-1.0)  |
+| `rerank`          | boolean | `false` | Enable re-ranking (not implemented) |
 
 **Example:**
 
@@ -245,11 +253,11 @@ retrieval:
 
 Guardrails pipeline configuration.
 
-| Setting                     | Type    | Default | Description                          |
-|-----------------------------|---------|---------|--------------------------------------|
-| `hallucination_threshold`   | float   | `0.8`   | Minimum grounding score (0.0-1.0)    |
-| `enable_pii_filter`         | boolean | `true`  | Enable PII redaction                 |
-| `max_retries`               | int     | `2`     | Max retries on validation failure    |
+| Setting                   | Type    | Default | Description                       |
+| ------------------------- | ------- | ------- | --------------------------------- |
+| `hallucination_threshold` | float   | `0.8`   | Minimum grounding score (0.0-1.0) |
+| `enable_pii_filter`       | boolean | `true`  | Enable PII redaction              |
+| `max_retries`             | int     | `2`     | Max retries on validation failure |
 
 **Example:**
 
@@ -269,6 +277,7 @@ guardrails:
 **PII Patterns Detected:**
 
 When `enable_pii_filter: true`, the following patterns are redacted:
+
 - IBAN numbers
 - SSN (Social Security Numbers)
 - Phone numbers
@@ -282,10 +291,10 @@ When `enable_pii_filter: true`, the following patterns are redacted:
 
 File storage configuration.
 
-| Setting             | Type   | Default            | Description                          |
-|---------------------|--------|--------------------|--------------------------------------|
-| `upload_dir`        | string | `"./data/uploads"` | Directory for uploaded files         |
-| `max_file_size_mb`  | int    | `50`               | Maximum file size in megabytes       |
+| Setting            | Type   | Default            | Description                    |
+| ------------------ | ------ | ------------------ | ------------------------------ |
+| `upload_dir`       | string | `"./data/uploads"` | Directory for uploaded files   |
+| `max_file_size_mb` | int    | `50`               | Maximum file size in megabytes |
 
 **Example:**
 
@@ -307,11 +316,11 @@ storage:
 
 FastAPI server configuration.
 
-| Setting   | Type   | Default     | Description                          |
-|-----------|--------|-------------|--------------------------------------|
-| `host`    | string | `"0.0.0.0"` | Server bind address                  |
-| `port`    | int    | `8000`      | Server port                          |
-| `workers` | int    | `4`         | Number of worker processes           |
+| Setting   | Type   | Default     | Description                |
+| --------- | ------ | ----------- | -------------------------- |
+| `host`    | string | `"0.0.0.0"` | Server bind address        |
+| `port`    | int    | `8000`      | Server port                |
+| `workers` | int    | `4`         | Number of worker processes |
 
 **Example:**
 
@@ -351,9 +360,11 @@ llm:
   timeout_seconds: 30
 
 embeddings:
-  model: 'all-mpnet-base-v2'
+  model: 'intfloat/multilingual-e5-base'
   batch_size: 32
   device: 'cpu'
+  query_prefix: 'query: '
+  document_prefix: 'passage: '
 
 chunking:
   method: 'fixed'
@@ -396,17 +407,19 @@ app:
   log_level: 'info'
 
 llm:
-  provider: 'openai'  # OpenAI-compatible API
+  provider: 'openai' # OpenAI-compatible API
   model: 'mistral'
-  base_url: 'http://localhost:8080'  # llama-server
+  base_url: 'http://localhost:8080' # llama-server
   temperature: 0.1
   max_tokens: 2048
   timeout_seconds: 60
 
 embeddings:
-  model: 'all-mpnet-base-v2'
+  model: 'intfloat/multilingual-e5-base'
   batch_size: 32
-  device: 'cpu'  # CPU for embeddings (fast enough)
+  device: 'cpu' # CPU for embeddings (fast enough)
+  query_prefix: 'query: '
+  document_prefix: 'passage: '
 
 chunking:
   method: 'fixed'

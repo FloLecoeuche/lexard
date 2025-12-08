@@ -191,7 +191,10 @@ docker-compose up -d
 # Activate virtual environment
 source .venv/bin/activate
 
-# Run migration
+# Preview what would be migrated (dry run)
+python scripts/migrate_embeddings.py --dry-run
+
+# Run actual migration
 python scripts/migrate_embeddings.py
 ```
 

@@ -130,12 +130,12 @@ INJECTION_PATTERNS: list[tuple[str, InjectionSeverity, str]] = [
 FRENCH_INJECTION_PATTERNS: list[tuple[str, InjectionSeverity, str]] = [
     # Critical: Direct instruction overrides (French)
     (
-        r"ignore[zr]?\s+(toutes?\s+les?\s+)?(instructions?|règles|consignes)\s+(précédentes?|antérieures?)",
+        r"ignor(e[zr]?|ez|er)\s+(toutes?\s+)?(les?\s+)?(instructions?|règles?|consignes)(\s+(précédentes?|antérieures?))?",
         InjectionSeverity.CRITICAL,
         "French: Attempts to override system instructions",
     ),
     (
-        r"oublie[zr]?\s+(tout|toutes?\s+les?\s+)?(instructions?|règles|consignes)",
+        r"oublie[zr]?\s+(tout|toutes?\s+les?\s+)?(instructions?|règles?|consignes)?",
         InjectionSeverity.CRITICAL,
         "French: Attempts to forget instructions",
     ),
@@ -146,7 +146,7 @@ FRENCH_INJECTION_PATTERNS: list[tuple[str, InjectionSeverity, str]] = [
     ),
     # High: System prompt extraction (French)
     (
-        r"(montre|révèle|affiche|dis|répète)\s+.{0,20}(prompt|instructions|consignes)\s+(système|initiales?)",
+        r"(montre|révèle|affiche|dis|répète)[-\s].{0,20}(prompt|instructions|consignes)\s+(système|initiales?)",
         InjectionSeverity.HIGH,
         "French: Attempts to extract system prompt",
     ),

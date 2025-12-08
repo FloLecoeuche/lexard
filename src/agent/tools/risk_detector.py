@@ -6,6 +6,9 @@ Identifies potential risks in contracts including:
 - Data protection/GDPR issues
 - Unfavorable termination conditions
 - Ambiguous language
+
+Supports multilingual documents (English and French) with language
+auto-detection from document content.
 """
 
 from __future__ import annotations
@@ -15,9 +18,11 @@ import json
 import logging
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 from qdrant_client.http import models
+
+from src.rag.llm import detect_language
 
 if TYPE_CHECKING:
     from src.db.qdrant import QdrantService
@@ -75,12 +80,14 @@ class RiskAnalysisResult:
         overall_risk_level: Aggregated risk severity
         summary: Human-readable summary
         document_id: Analyzed document ID
+        language: Detected/used language for the analysis ('en' or 'fr')
     """
 
     risks: list[Risk] = field(default_factory=list)
     overall_risk_level: RiskSeverity = RiskSeverity.LOW
     summary: str = ""
     document_id: str = ""
+    language: Literal["en", "fr"] = "en"
 
 
 class RiskDetectorTool:
@@ -89,12 +96,17 @@ class RiskDetectorTool:
     Analyzes document chunks to detect potential legal, financial,
     and operational risks in contracts.
 
+    Supports multilingual documents with automatic language detection from
+    document content. French documents receive French risk analysis, English
+    documents receive English risk analysis.
+
     Args:
         llm_client: Ollama client for LLM generation
         qdrant_service: Qdrant service for retrieving document chunks
     """
 
-    RISK_ANALYSIS_PROMPT = """Analyze the following contract excerpt for potential risks.
+    RISK_ANALYSIS_PROMPTS = {
+        "en": """Analyze the following contract excerpt for potential risks.
 
 EXCERPT (Page {page}):
 {content}
@@ -124,7 +136,39 @@ If risks are found, respond with valid JSON only:
     "clause": "quoted text...",
     "recommendation": "..."
   }}
-]}}"""
+]}}""",
+        "fr": """Analysez l'extrait de contrat suivant pour identifier les risques potentiels.
+
+EXTRAIT (Page {page}):
+{content}
+
+Identifiez les risques dans ces catégories:
+1. Risques de responsabilité juridique (indemnisation, garanties, plafonds de responsabilité)
+2. Risques de pénalités financières (pénalités de retard, dommages-intérêts, amendes)
+3. Problèmes de protection des données/RGPD (traitement des données, vie privée)
+4. Conditions de résiliation défavorables (préavis, résiliation pour convenance)
+5. Langage ambigu pouvant être exploité (termes vagues, obligations non définies)
+
+Pour chaque risque trouvé, fournissez:
+- Catégorie: une parmi [legal_liability, financial_penalty, data_protection, termination, ambiguous_language, other]
+- Gravité: low/medium/high
+- Description: Brève explication du risque
+- Clause: Citation exacte du texte concerné
+- Recommandation: Comment atténuer (optionnel)
+
+Si aucun risque n'est trouvé, répondez exactement: NO_RISKS_FOUND
+
+Si des risques sont trouvés, répondez uniquement avec du JSON valide:
+{{"risks": [
+  {{
+    "category": "nom_categorie",
+    "severity": "low|medium|high",
+    "description": "...",
+    "clause": "texte cité...",
+    "recommendation": "..."
+  }}
+]}}""",
+    }
 
     # Batch size for chunk processing
     CHUNK_BATCH_SIZE = 3
@@ -145,17 +189,25 @@ If risks are found, respond with valid JSON only:
         self.llm = llm_client
         self.qdrant_service = qdrant_service
 
-    async def analyze(self, document_id: str) -> RiskAnalysisResult:
+    async def analyze(
+        self, document_id: str, language: str | None = None
+    ) -> RiskAnalysisResult:
         """Analyze document for risks.
 
         Args:
             document_id: Document ID to analyze
+            language: Output language ('en' or 'fr'). If None, auto-detected
+                     from document content.
 
         Returns:
             RiskAnalysisResult with identified risks
 
         Raises:
             ValueError: If no chunks found for document
+
+        Note:
+            Language is detected from the DOCUMENT content (chunks),
+            ensuring French documents always get French risk analysis.
         """
         logger.info(f"Starting risk analysis for document {document_id}")
 
@@ -167,6 +219,12 @@ If risks are found, respond with valid JSON only:
 
         logger.info(f"Retrieved {len(chunks)} chunks for document {document_id}")
 
+        # 2. Detect language from document content if not provided
+        if language is None:
+            language = self._detect_language_from_chunks(chunks)
+
+        logger.info(f"Using language '{language}' for risk analysis")
+
         # Limit chunks for very long documents
         if len(chunks) > self.MAX_CHUNKS:
             logger.warning(
@@ -174,35 +232,60 @@ If risks are found, respond with valid JSON only:
             )
             chunks = chunks[: self.MAX_CHUNKS]
 
-        # 2. Analyze each chunk for risks (in batches)
-        all_risks = await self._analyze_chunks_batch(chunks)
+        # 3. Analyze each chunk for risks (in batches)
+        all_risks = await self._analyze_chunks_batch(chunks, language)
 
         logger.info(f"Found {len(all_risks)} raw risks before deduplication")
 
-        # 3. Deduplicate similar risks
+        # 4. Deduplicate similar risks
         unique_risks = self._deduplicate_risks(all_risks)
 
         logger.info(f"Found {len(unique_risks)} unique risks after deduplication")
 
-        # 4. Calculate overall risk level
+        # 5. Calculate overall risk level
         overall = self._calculate_overall_risk(unique_risks)
 
-        # 5. Generate summary
-        summary = self._generate_summary(unique_risks)
+        # 6. Generate summary
+        summary = self._generate_summary(unique_risks, language)
 
         result = RiskAnalysisResult(
             risks=unique_risks,
             overall_risk_level=overall,
             summary=summary,
             document_id=document_id,
+            language=language,
         )
 
         logger.info(
             f"Risk analysis complete: {len(unique_risks)} risks, "
-            f"overall level: {overall.value}"
+            f"overall level: {overall.value}, language={language}"
         )
 
         return result
+
+    def _detect_language_from_chunks(self, chunks: list) -> str:
+        """Detect language from document chunks.
+
+        Samples text from multiple chunks for reliable detection.
+
+        Args:
+            chunks: List of Qdrant points with content payload
+
+        Returns:
+            'fr' for French, 'en' for English (default)
+        """
+        if not chunks:
+            return "en"
+
+        # Sample text from first few chunks
+        sample_texts = []
+        for chunk in chunks[:3]:
+            content = chunk.payload.get("content", "")
+            if content:
+                sample_texts.append(content)
+
+        combined_sample = " ".join(sample_texts)[:1000]
+        return detect_language(combined_sample)
 
     async def _get_all_chunks(self, document_id: str) -> list:
         """Get all chunks for a document from Qdrant.
@@ -237,11 +320,14 @@ If risks are found, respond with valid JSON only:
 
         return results
 
-    async def _analyze_chunks_batch(self, chunks: list) -> list[Risk]:
+    async def _analyze_chunks_batch(
+        self, chunks: list, language: str = "en"
+    ) -> list[Risk]:
         """Analyze chunks in batches for risks.
 
         Args:
             chunks: List of chunk points from Qdrant
+            language: Language for prompts ('en' or 'fr')
 
         Returns:
             List of identified Risk objects
@@ -253,7 +339,7 @@ If risks are found, respond with valid JSON only:
             batch = chunks[i : i + self.CHUNK_BATCH_SIZE]
 
             # Process batch concurrently
-            tasks = [self._analyze_chunk(chunk) for chunk in batch]
+            tasks = [self._analyze_chunk(chunk, language) for chunk in batch]
             batch_results = await asyncio.gather(*tasks, return_exceptions=True)
 
             for chunk, result in zip(batch, batch_results):
@@ -266,11 +352,12 @@ If risks are found, respond with valid JSON only:
 
         return all_risks
 
-    async def _analyze_chunk(self, chunk) -> list[Risk]:
+    async def _analyze_chunk(self, chunk, language: str = "en") -> list[Risk]:
         """Analyze a single chunk for risks.
 
         Args:
             chunk: Qdrant point with payload
+            language: Language for prompts ('en' or 'fr')
 
         Returns:
             List of risks found in this chunk
@@ -281,7 +368,11 @@ If risks are found, respond with valid JSON only:
         if not content.strip():
             return []
 
-        prompt = self.RISK_ANALYSIS_PROMPT.format(page=page, content=content)
+        # Get language-specific prompt
+        prompt_template = self.RISK_ANALYSIS_PROMPTS.get(
+            language, self.RISK_ANALYSIS_PROMPTS["en"]
+        )
+        prompt = prompt_template.format(page=page, content=content)
 
         def _generate():
             return self.llm.generate(prompt)
@@ -426,16 +517,19 @@ If risks are found, respond with valid JSON only:
 
         return RiskSeverity.LOW
 
-    def _generate_summary(self, risks: list[Risk]) -> str:
+    def _generate_summary(self, risks: list[Risk], language: str = "en") -> str:
         """Generate human-readable risk summary.
 
         Args:
             risks: List of identified risks
+            language: Language for summary ('en' or 'fr')
 
         Returns:
             Summary string
         """
         if not risks:
+            if language == "fr":
+                return "Aucun risque significatif identifié dans ce document."
             return "No significant risks identified in this document."
 
         high = sum(1 for r in risks if r.severity == RiskSeverity.HIGH)
@@ -451,6 +545,12 @@ If risks are found, respond with valid JSON only:
         category_breakdown = ", ".join(
             f"{count} {cat}" for cat, count in sorted(categories.items())
         )
+
+        if language == "fr":
+            return (
+                f"{len(risks)} risques identifiés: {high} élevé(s), {medium} moyen(s), {low} faible(s). "
+                f"Catégories: {category_breakdown}."
+            )
 
         return (
             f"Identified {len(risks)} risks: {high} high, {medium} medium, {low} low severity. "

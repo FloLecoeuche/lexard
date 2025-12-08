@@ -142,8 +142,9 @@ class TestRetrieverRetrieve:
 
     def test_retrieval_returns_chunks(self, retriever, mock_qdrant_service):
         """Retrieve should return RetrievedChunk objects."""
-        # Mock Qdrant search results
-        mock_qdrant_service.client.search.return_value = [
+        # Mock Qdrant query_points results (returns object with .points attribute)
+        mock_response = MagicMock()
+        mock_response.points = [
             MockScoredPoint(
                 score=0.9,
                 payload={
@@ -165,6 +166,7 @@ class TestRetrieverRetrieve:
                 },
             ),
         ]
+        mock_qdrant_service.client.query_points.return_value = mock_response
 
         chunks = retriever.retrieve("What are the payment terms?")
 
@@ -176,30 +178,36 @@ class TestRetrieverRetrieve:
 
     def test_retrieval_respects_top_k(self, retriever, mock_qdrant_service):
         """Retrieve should pass top_k to Qdrant."""
-        mock_qdrant_service.client.search.return_value = []
+        mock_response = MagicMock()
+        mock_response.points = []
+        mock_qdrant_service.client.query_points.return_value = mock_response
 
         retriever.retrieve("test query")
 
-        mock_qdrant_service.client.search.assert_called_once()
-        call_kwargs = mock_qdrant_service.client.search.call_args[1]
+        mock_qdrant_service.client.query_points.assert_called_once()
+        call_kwargs = mock_qdrant_service.client.query_points.call_args[1]
         assert call_kwargs["limit"] == 8
 
     def test_retrieval_respects_score_threshold(self, retriever, mock_qdrant_service):
         """Retrieve should pass score_threshold to Qdrant."""
-        mock_qdrant_service.client.search.return_value = []
+        mock_response = MagicMock()
+        mock_response.points = []
+        mock_qdrant_service.client.query_points.return_value = mock_response
 
         retriever.retrieve("test query")
 
-        call_kwargs = mock_qdrant_service.client.search.call_args[1]
+        call_kwargs = mock_qdrant_service.client.query_points.call_args[1]
         assert call_kwargs["score_threshold"] == 0.7
 
     def test_retrieval_with_document_filter(self, retriever, mock_qdrant_service):
         """Retrieve should filter by document_id when provided."""
-        mock_qdrant_service.client.search.return_value = []
+        mock_response = MagicMock()
+        mock_response.points = []
+        mock_qdrant_service.client.query_points.return_value = mock_response
 
         retriever.retrieve("termination clause", document_id="doc-456")
 
-        call_kwargs = mock_qdrant_service.client.search.call_args[1]
+        call_kwargs = mock_qdrant_service.client.query_points.call_args[1]
         query_filter = call_kwargs["query_filter"]
 
         assert query_filter is not None
@@ -209,16 +217,20 @@ class TestRetrieverRetrieve:
 
     def test_retrieval_without_document_filter(self, retriever, mock_qdrant_service):
         """Retrieve should not filter when document_id is None."""
-        mock_qdrant_service.client.search.return_value = []
+        mock_response = MagicMock()
+        mock_response.points = []
+        mock_qdrant_service.client.query_points.return_value = mock_response
 
         retriever.retrieve("general query")
 
-        call_kwargs = mock_qdrant_service.client.search.call_args[1]
+        call_kwargs = mock_qdrant_service.client.query_points.call_args[1]
         assert call_kwargs["query_filter"] is None
 
     def test_retrieval_empty_results(self, retriever, mock_qdrant_service):
         """Retrieve should return empty list when no results match."""
-        mock_qdrant_service.client.search.return_value = []
+        mock_response = MagicMock()
+        mock_response.points = []
+        mock_qdrant_service.client.query_points.return_value = mock_response
 
         chunks = retriever.retrieve("xyzzy gibberish query")
 
@@ -243,30 +255,36 @@ class TestRetrieverRetrieve:
 
     def test_retrieval_uses_correct_collection(self, retriever, mock_qdrant_service):
         """Retrieve should search in configured collection."""
-        mock_qdrant_service.client.search.return_value = []
+        mock_response = MagicMock()
+        mock_response.points = []
+        mock_qdrant_service.client.query_points.return_value = mock_response
 
         retriever.retrieve("test")
 
-        call_kwargs = mock_qdrant_service.client.search.call_args[1]
+        call_kwargs = mock_qdrant_service.client.query_points.call_args[1]
         assert call_kwargs["collection_name"] == "test_collection"
 
     def test_retrieval_requests_payload(self, retriever, mock_qdrant_service):
         """Retrieve should request payload from Qdrant."""
-        mock_qdrant_service.client.search.return_value = []
+        mock_response = MagicMock()
+        mock_response.points = []
+        mock_qdrant_service.client.query_points.return_value = mock_response
 
         retriever.retrieve("test")
 
-        call_kwargs = mock_qdrant_service.client.search.call_args[1]
+        call_kwargs = mock_qdrant_service.client.query_points.call_args[1]
         assert call_kwargs["with_payload"] is True
 
     def test_retrieval_handles_missing_payload_fields(
         self, retriever, mock_qdrant_service
     ):
         """Retrieve should handle missing payload fields gracefully."""
-        mock_qdrant_service.client.search.return_value = [
+        mock_response = MagicMock()
+        mock_response.points = [
             MockScoredPoint(score=0.8, payload={}),  # Empty payload
             MockScoredPoint(score=0.75, payload=None),  # None payload
         ]
+        mock_qdrant_service.client.query_points.return_value = mock_response
 
         chunks = retriever.retrieve("test")
 
@@ -278,7 +296,8 @@ class TestRetrieverRetrieve:
     def test_results_sorted_by_score(self, retriever, mock_qdrant_service):
         """Results should be sorted by score (descending)."""
         # Qdrant returns results sorted, but verify we preserve order
-        mock_qdrant_service.client.search.return_value = [
+        mock_response = MagicMock()
+        mock_response.points = [
             MockScoredPoint(
                 score=0.95,
                 payload={"content": "best", "page": 1, "chunk_index": 0,
@@ -295,6 +314,7 @@ class TestRetrieverRetrieve:
                          "document_id": "d", "content_hash": "h3"},
             ),
         ]
+        mock_qdrant_service.client.query_points.return_value = mock_response
 
         chunks = retriever.retrieve("test")
 

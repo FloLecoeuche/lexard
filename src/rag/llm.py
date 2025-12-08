@@ -84,8 +84,9 @@ class LLMResponse:
     finish_reason: str
 
 
-# Prompt templates
-QA_SYSTEM_PROMPT = """You are an enterprise contract analyst assistant.
+# Prompt templates - Bilingual (English and French)
+QA_SYSTEM_PROMPTS = {
+    "en": """You are an enterprise contract analyst assistant.
 
 RULES:
 1. ONLY answer based on the retrieved document chunks provided
@@ -97,7 +98,55 @@ RULES:
 FORMAT:
 - Provide clear, concise answers
 - List citations at the end as [Chunk X, Page Y]
-"""
+""",
+    "fr": """Vous êtes un assistant d'analyse de contrats d'entreprise.
+
+RÈGLES:
+1. Répondez UNIQUEMENT en vous basant sur les extraits de documents fournis
+2. CITEZ TOUJOURS les extraits spécifiques qui appuient votre réponse avec [1], [2], etc.
+3. Si aucun extrait ne permet de répondre, dites: "Je ne trouve pas cette information dans les documents fournis."
+4. Ne JAMAIS inventer d'informations, de clauses ou de termes
+5. En cas d'incertitude, exprimez votre doute plutôt que de deviner
+
+FORMAT:
+- Fournissez des réponses claires et concises
+- Listez les citations à la fin sous forme [Extrait X, Page Y]
+""",
+}
+
+QA_USER_PROMPTS = {
+    "en": """Based on the following document excerpts, answer the question.
+
+DOCUMENT EXCERPTS:
+{context}
+
+QUESTION: {question}
+
+Provide a clear answer with citations to the relevant excerpts.""",
+    "fr": """En vous basant sur les extraits de documents suivants, répondez à la question.
+
+EXTRAITS DE DOCUMENTS:
+{context}
+
+QUESTION: {question}
+
+Fournissez une réponse claire avec des citations vers les extraits pertinents.""",
+}
+
+# Legacy alias for backwards compatibility
+QA_SYSTEM_PROMPT = QA_SYSTEM_PROMPTS["en"]
+
+
+def get_qa_system_prompt(language: str = "en") -> str:
+    """Get QA system prompt in specified language.
+
+    Args:
+        language: Language code ('en' or 'fr')
+
+    Returns:
+        System prompt in the specified language
+    """
+    return QA_SYSTEM_PROMPTS.get(language, QA_SYSTEM_PROMPTS["en"])
 
 
 class OllamaClient:
@@ -432,21 +481,39 @@ def create_llm_client(config: LLMConfig) -> OllamaClient | OpenAICompatibleClien
         return OllamaClient(config)
 
 
-def build_qa_prompt(question: str, context: str) -> str:
-    """Build a Q&A prompt with context.
+def detect_language_from_chunks(chunks: list) -> str:
+    """Detect language from retrieved document chunks.
+
+    Samples text from multiple chunks to get reliable detection.
+    This ensures response language matches document language,
+    regardless of query language.
+
+    Args:
+        chunks: List of RetrievedChunk objects with 'content' attribute
+
+    Returns:
+        'fr' for French, 'en' for English (default)
+    """
+    if not chunks:
+        return "en"
+
+    # Sample text from first few chunks (more reliable than single chunk)
+    sample_texts = [chunk.content for chunk in chunks[:3]]
+    combined_sample = " ".join(sample_texts)[:1000]  # Limit to 1000 chars
+
+    return detect_language(combined_sample)
+
+
+def build_qa_prompt(question: str, context: str, language: str = "en") -> str:
+    """Build a Q&A prompt with context in specified language.
 
     Args:
         question: User's question
         context: Formatted context from retrieved chunks
+        language: Language code ('en' or 'fr')
 
     Returns:
-        Formatted prompt string
+        Formatted prompt string in the specified language
     """
-    return f"""Based on the following document excerpts, answer the question.
-
-DOCUMENT EXCERPTS:
-{context}
-
-QUESTION: {question}
-
-Provide a clear answer with citations to the relevant excerpts."""
+    template = QA_USER_PROMPTS.get(language, QA_USER_PROMPTS["en"])
+    return template.format(context=context, question=question)

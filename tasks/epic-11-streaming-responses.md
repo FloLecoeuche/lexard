@@ -1,4 +1,4 @@
-# Epic 10: Streaming LLM Responses
+# Epic 11: Streaming LLM Responses
 
 ## Overview
 
@@ -58,7 +58,7 @@ User asks question → Text starts appearing immediately → Words stream in rea
 
 ---
 
-## US 10.1: Streaming LLM Client
+## US 11.1: Streaming LLM Client
 
 **Status:** 🔲 Not Started
 
@@ -280,6 +280,13 @@ class OpenAICompatibleClient:
 - [ ] Unit tests pass for both sync and async streaming
 - [ ] Non-streaming `generate()` still works (backward compatibility)
 
+### Tests
+
+- **Modified:** `tests/test_llm.py` - Add streaming generator tests
+- **Run:** `pytest tests/test_llm.py -v -k streaming`
+
+> Note: Use mock HTTP responses to test streaming parsing without real Ollama.
+
 ### Files to Modify
 
 1. `src/rag/llm.py` - Add streaming methods and `StreamChunk`
@@ -287,7 +294,7 @@ class OpenAICompatibleClient:
 
 ---
 
-## US 10.2: Streaming RAG Pipeline
+## US 11.2: Streaming RAG Pipeline
 
 **Status:** 🔲 Not Started
 
@@ -462,6 +469,13 @@ class RAGPipeline:
 - [ ] Non-streaming `query()` still works
 - [ ] Unit tests pass for streaming pipeline
 
+### Tests
+
+- **Modified:** `tests/test_pipeline.py` - Add `query_stream()` tests
+- **Run:** `pytest tests/test_pipeline.py -v -k stream`
+
+> Note: Test event ordering (metadata → tokens → done) and error handling.
+
 ### Files to Modify
 
 1. `src/rag/pipeline.py` - Add `query_stream()` and `RAGStreamEvent`
@@ -469,7 +483,7 @@ class RAGPipeline:
 
 ---
 
-## US 10.3: Streaming API Endpoints
+## US 11.3: Streaming API Endpoints
 
 **Status:** 🔲 Not Started
 
@@ -663,9 +677,16 @@ async def summarize_document_stream(
 3. `src/agent/tools/summarizer.py` - Add `summarize_stream()`
 4. `src/agent/tools/risk_detector.py` - Add `analyze_stream()`
 
+### Tests
+
+- **New:** `tests/test_streaming_endpoints.py` - Test SSE response format
+- **Run:** `pytest tests/test_streaming_endpoints.py -v`
+
+> Note: Use TestClient with httpx to consume SSE streams. Verify headers and event format.
+
 ---
 
-## US 10.4: Web UI Streaming Integration
+## US 11.4: Web UI Streaming Integration
 
 **Status:** 🔲 Not Started
 
@@ -913,13 +934,21 @@ function handleStreamEvent(event, answerDiv, citationsDiv, citationsContent) {
 - [ ] No UI flicker or layout shifts
 - [ ] Works on slow connections
 
+### Tests
+
+- **None:** UI-only changes (no Python backend tests)
+- **Manual:** Test streaming display in browser with real queries
+- **Run:** Manual browser testing
+
+> Note: UI is a single HTML file. Verify typing cursor, fallback behavior, and stop button.
+
 ### Files to Modify
 
 1. `ui/index.html` - Add streaming JavaScript and CSS
 
 ---
 
-## US 10.5: Streaming Agent Tools
+## US 11.5: Streaming Agent Tools
 
 **Status:** 🔲 Not Started
 
@@ -1064,6 +1093,14 @@ class SummarizerTool:
 - [ ] Non-streaming methods still work
 - [ ] Tests pass for streaming tools
 
+### Tests
+
+- **Modified:** `tests/test_summarizer.py` - Add `summarize_stream()` tests
+- **Modified:** `tests/test_risk_detector.py` - Add `analyze_stream()` tests
+- **Run:** `pytest tests/test_summarizer.py tests/test_risk_detector.py -v -k stream`
+
+> Note: Test event sequence and language-aware streaming.
+
 ### Files to Modify
 
 1. `src/agent/tools/summarizer.py` - Add `summarize_stream()`
@@ -1072,7 +1109,7 @@ class SummarizerTool:
 
 ---
 
-## Definition of Done (Epic 10)
+## Definition of Done (Epic 11)
 
 - [ ] All 5 User Stories completed
 - [ ] LLM clients support streaming generation
@@ -1097,19 +1134,19 @@ class SummarizerTool:
 ## Dependencies
 
 ```
-US 10.1 (LLM Streaming)
+US 11.1 (LLM Streaming)
     ↓
-US 10.2 (RAG Pipeline Streaming)
+US 11.2 (RAG Pipeline Streaming)
     ↓
-US 10.3 (API Endpoints) ←→ US 10.5 (Agent Tools)
+US 11.3 (API Endpoints) ←→ US 11.5 (Agent Tools)
     ↓
-US 10.4 (Web UI)
+US 11.4 (Web UI)
 ```
 
-US 10.1 must be completed first (foundation).
-US 10.2 depends on 10.1.
-US 10.3 and 10.5 can be done in parallel after 10.2.
-US 10.4 requires 10.3 (needs endpoints to consume).
+US 11.1 must be completed first (foundation).
+US 11.2 depends on 11.1.
+US 11.3 and 11.5 can be done in parallel after 11.2.
+US 11.4 requires 11.3 (needs endpoints to consume).
 
 ## Rollback Plan
 

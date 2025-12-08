@@ -17,9 +17,11 @@ llm:
   timeout_seconds: 30
 
 embeddings:
-  model: 'all-mpnet-base-v2'
+  model: 'intfloat/multilingual-e5-base'
   batch_size: 32
   device: 'cpu'  # cpu | cuda
+  query_prefix: 'query: '
+  document_prefix: 'passage: '
 
 chunking:
   method: 'fixed'

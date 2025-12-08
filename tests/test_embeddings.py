@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 
 from src.rag.embeddings import EmbeddingError, EmbeddingService
+from src.config import get_settings
 
 
 # Module-scoped fixture to avoid reloading the model for each test
@@ -12,8 +13,15 @@ def embedding_service():
     """Create a shared EmbeddingService instance for all tests in this module.
 
     The model is expensive to load (~5s), so we share it across tests.
+    Uses the configured model from settings (multilingual-e5-base).
     """
-    return EmbeddingService()
+    settings = get_settings()
+    return EmbeddingService(
+        model_name=settings.embeddings.model,
+        device=settings.embeddings.device,
+        query_prefix=settings.embeddings.query_prefix,
+        document_prefix=settings.embeddings.document_prefix,
+    )
 
 
 class TestEmbeddingService:
@@ -25,7 +33,7 @@ class TestEmbeddingService:
         return embedding_service
 
     def test_dimension_property(self, service):
-        """Dimension should be 768 for all-mpnet-base-v2."""
+        """Dimension should be 768 for multilingual-e5-base and all-mpnet-base-v2."""
         assert service.dimension == 768
 
     def test_model_lazy_loading(self):
@@ -169,3 +177,66 @@ class TestEmbeddingServiceIntegration:
 
         embeddings = embedding_service.embed_chunks(chunks)
         assert embeddings.shape == (2, 768)
+
+
+class TestE5MultilingualEmbeddings:
+    """Tests for E5 multilingual model with prefix support."""
+
+    def test_e5_prefixes_detected(self):
+        """E5 model should auto-detect and use prefixes."""
+        service = EmbeddingService(
+            model_name="intfloat/multilingual-e5-base",
+            query_prefix="query: ",
+            document_prefix="passage: ",
+        )
+        assert service.use_prefixes is True
+        assert service.query_prefix == "query: "
+        assert service.document_prefix == "passage: "
+
+    def test_non_e5_model_no_prefixes(self):
+        """Non-E5 models should not use prefixes."""
+        service = EmbeddingService(model_name="all-mpnet-base-v2")
+        assert service.use_prefixes is False
+        assert service.query_prefix == ""
+        assert service.document_prefix == ""
+
+    def test_cross_lingual_similarity(self, embedding_service):
+        """Test that E5 model provides cross-lingual semantic similarity.
+
+        French and English sentences with same meaning should have
+        higher similarity than unrelated sentences.
+        """
+        # Same meaning in different languages
+        english = "What is the termination notice period?"
+        french = "Quelle est la période de préavis de résiliation?"
+        unrelated = "The weather is sunny today."
+
+        emb_en = embedding_service.embed_query(english)
+        emb_fr = embedding_service.embed_query(french)
+        emb_unrelated = embedding_service.embed_query(unrelated)
+
+        # Cosine similarity (embeddings are normalized)
+        sim_cross_lingual = np.dot(emb_en, emb_fr)
+        sim_unrelated = np.dot(emb_en, emb_unrelated)
+
+        # Cross-lingual semantic match should be higher
+        assert sim_cross_lingual > sim_unrelated
+
+    def test_french_text_embedding(self, embedding_service):
+        """Test embedding French text."""
+        french_text = "Le contrat prendra fin dans 30 jours."
+        embedding = embedding_service.embed_query(french_text)
+        assert embedding.shape == (768,)
+        # Should be normalized
+        norm = np.linalg.norm(embedding)
+        assert np.isclose(norm, 1.0, atol=1e-5)
+
+    def test_french_documents_embedding(self, embedding_service):
+        """Test embedding multiple French documents."""
+        french_docs = [
+            "Ce contrat de confidentialité établit les conditions.",
+            "Les parties conviennent des obligations suivantes.",
+            "La période de validité est de deux ans.",
+        ]
+        embeddings = embedding_service.embed_documents(french_docs)
+        assert embeddings.shape == (3, 768)

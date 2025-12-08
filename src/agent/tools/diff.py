@@ -5,6 +5,9 @@ Compares two documents by:
 2. Computing semantic similarity between sections
 3. Identifying added, removed, and modified content
 4. Calculating overall document similarity
+
+Supports multilingual documents (English and French) with language
+auto-detection from document content.
 """
 
 from __future__ import annotations
@@ -13,10 +16,12 @@ import asyncio
 import logging
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 import numpy as np
 from qdrant_client.http import models
+
+from src.rag.llm import detect_language
 
 if TYPE_CHECKING:
     from src.db.qdrant import QdrantService
@@ -64,6 +69,7 @@ class ComparisonResult:
         summary: Human-readable summary of changes
         doc_a_chunk_count: Number of chunks in document A
         doc_b_chunk_count: Number of chunks in document B
+        language: Detected/used language for the comparison ('en' or 'fr')
     """
 
     differences: list[Difference]
@@ -73,6 +79,7 @@ class ComparisonResult:
     summary: str
     doc_a_chunk_count: int = 0
     doc_b_chunk_count: int = 0
+    language: Literal["en", "fr"] = "en"
 
 
 class DiffTool:
@@ -83,6 +90,10 @@ class DiffTool:
     - Modified sections (medium similarity)
     - Added sections (in B but not A)
     - Removed sections (in A but not B)
+
+    Supports multilingual documents with automatic language detection from
+    document content. The language of the first document (doc_a) determines
+    the language used for the comparison summary.
 
     Args:
         qdrant_service: Qdrant service for retrieving document chunks
@@ -103,18 +114,26 @@ class DiffTool:
         """
         self.qdrant_service = qdrant_service
 
-    async def compare(self, doc_a_id: str, doc_b_id: str) -> ComparisonResult:
+    async def compare(
+        self, doc_a_id: str, doc_b_id: str, language: str | None = None
+    ) -> ComparisonResult:
         """Compare two documents.
 
         Args:
             doc_a_id: First document ID
             doc_b_id: Second document ID
+            language: Output language ('en' or 'fr'). If None, auto-detected
+                     from first document's content.
 
         Returns:
             ComparisonResult with differences and similarity
 
         Raises:
             ValueError: If one or both documents have no chunks
+
+        Note:
+            Language is detected from the FIRST DOCUMENT's content (doc_a),
+            ensuring comparisons of French documents produce French summaries.
         """
         logger.info(f"Comparing documents: {doc_a_id} vs {doc_b_id}")
 
@@ -133,24 +152,30 @@ class DiffTool:
             f"Retrieved {len(chunks_a)} chunks from doc A, {len(chunks_b)} from doc B"
         )
 
-        # 2. Extract embeddings from chunks
+        # 2. Detect language from first document's content if not provided
+        if language is None:
+            language = self._detect_language_from_chunks(chunks_a)
+
+        logger.info(f"Using language '{language}' for comparison")
+
+        # 3. Extract embeddings from chunks
         embeddings_a = self._get_embeddings(chunks_a)
         embeddings_b = self._get_embeddings(chunks_b)
 
-        # 3. Compute pairwise similarities
+        # 4. Compute pairwise similarities
         similarity_matrix = self._compute_similarity_matrix(embeddings_a, embeddings_b)
 
-        # 4. Find differences
+        # 5. Find differences
         differences = self._find_differences(chunks_a, chunks_b, similarity_matrix)
 
-        # 5. Calculate overall similarity
+        # 6. Calculate overall similarity
         overall = self._calculate_overall_similarity(similarity_matrix)
 
-        # 6. Generate summary
-        summary = self._generate_summary(differences, overall)
+        # 7. Generate summary in detected language
+        summary = self._generate_summary(differences, overall, language)
 
         logger.info(
-            f"Comparison complete: {overall:.1%} similar, {len(differences)} differences"
+            f"Comparison complete: {overall:.1%} similar, {len(differences)} differences, language={language}"
         )
 
         return ComparisonResult(
@@ -161,7 +186,32 @@ class DiffTool:
             summary=summary,
             doc_a_chunk_count=len(chunks_a),
             doc_b_chunk_count=len(chunks_b),
+            language=language,
         )
+
+    def _detect_language_from_chunks(self, chunks: list) -> str:
+        """Detect language from document chunks.
+
+        Samples text from multiple chunks for reliable detection.
+
+        Args:
+            chunks: List of Qdrant points with content payload
+
+        Returns:
+            'fr' for French, 'en' for English (default)
+        """
+        if not chunks:
+            return "en"
+
+        # Sample text from first few chunks
+        sample_texts = []
+        for chunk in chunks[:3]:
+            content = chunk.payload.get("content", "")
+            if content:
+                sample_texts.append(content)
+
+        combined_sample = " ".join(sample_texts)[:1000]
+        return detect_language(combined_sample)
 
     async def _get_document_chunks(self, doc_id: str) -> list:
         """Get all chunks for a document from Qdrant.
@@ -360,12 +410,14 @@ class DiffTool:
         self,
         differences: list[Difference],
         overall: float,
+        language: str = "en",
     ) -> str:
         """Generate human-readable comparison summary.
 
         Args:
             differences: List of detected differences
             overall: Overall similarity score
+            language: Language for summary ('en' or 'fr')
 
         Returns:
             Summary string
@@ -375,7 +427,24 @@ class DiffTool:
         modified = sum(1 for d in differences if d.change_type == ChangeType.MODIFIED)
 
         if not differences:
+            if language == "fr":
+                return f"Les documents sont similaires à {overall:.0%} sans différences significatives détectées."
             return f"Documents are {overall:.0%} similar with no significant differences detected."
+
+        if language == "fr":
+            parts = []
+            if added:
+                parts.append(f"{added} ajouté(s)")
+            if removed:
+                parts.append(f"{removed} supprimé(s)")
+            if modified:
+                parts.append(f"{modified} modifié(s)")
+
+            changes_str = ", ".join(parts)
+            return (
+                f"Les documents sont similaires à {overall:.0%}. "
+                f"{len(differences)} différences trouvées: {changes_str} sections."
+            )
 
         parts = []
         if added:

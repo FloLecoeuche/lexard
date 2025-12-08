@@ -142,6 +142,7 @@ async def summarize_document(
         summary=result.executive_summary,
         key_points=result.key_points,
         word_count=result.word_count,
+        language=result.language,
     )
 
 
@@ -224,6 +225,7 @@ async def analyze_risks(
             for r in result.risks
         ],
         overall_risk_level=result.overall_risk_level.value,
+        language=result.language,
     )
 
 
@@ -293,4 +295,5 @@ async def compare_documents(
             for d in result.differences
         ],
         overall_similarity=result.overall_similarity,
+        language=result.language,
     )

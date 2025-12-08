@@ -35,11 +35,11 @@ class LLMConfig(BaseModel):
 class EmbeddingsConfig(BaseModel):
     """Embeddings model configuration."""
 
-    model: str = "all-mpnet-base-v2"
+    model: str = "intfloat/multilingual-e5-base"
     batch_size: int = Field(default=32, ge=1)
     device: Literal["cpu", "cuda"] = "cpu"
-    query_prefix: str = ""
-    document_prefix: str = ""
+    query_prefix: str = "query: "
+    document_prefix: str = "passage: "
 
 
 class ChunkingConfig(BaseModel):
@@ -133,7 +133,9 @@ def _get_env_override(env_vars: dict, prefix: str, key: str) -> str | None:
     return env_vars.get(env_key)
 
 
-def _apply_env_overrides(config_dict: dict, env_vars: dict, prefix: str = "LEXARD_") -> dict:
+def _apply_env_overrides(
+    config_dict: dict, env_vars: dict, prefix: str = "LEXARD_"
+) -> dict:
     """Apply environment variable overrides to config dictionary.
 
     Environment variables use the format: LEXARD_SECTION__KEY=value
@@ -191,7 +193,9 @@ def _find_config_file() -> Path:
         path = Path(config_path)
         if path.exists():
             return path
-        raise ConfigurationError(f"Configuration file not found at CONFIG_PATH: {config_path}")
+        raise ConfigurationError(
+            f"Configuration file not found at CONFIG_PATH: {config_path}"
+        )
 
     # Check relative to current working directory
     cwd_config = Path("config/config.yaml")
@@ -211,7 +215,9 @@ def _find_config_file() -> Path:
     )
 
 
-def load_settings(config_path: Path | None = None, env_vars: dict | None = None) -> Settings:
+def load_settings(
+    config_path: Path | None = None, env_vars: dict | None = None
+) -> Settings:
     """Load settings from YAML file with environment variable overrides.
 
     Args:
