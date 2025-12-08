@@ -319,9 +319,131 @@ These specialized suites serve specific purposes:
 
 ---
 
+## US 10.5: Unnecessary Tests Removal (User Approval Required)
+
+**Status:** 🔲 Not Started
+
+### Description
+
+Generate a comprehensive report of tests that are unnecessary, redundant, or over-engineered, then **present to the user for approval before any deletion**. This ensures no valuable tests are accidentally removed.
+
+### Context
+
+Too many tests is NOT a best practice:
+- Increases maintenance burden
+- Slows CI/CD pipelines
+- Creates false sense of security (quantity ≠ quality)
+- Can mask real issues with noise
+
+Tests that may be candidates for removal:
+- **Duplicate tests**: Multiple tests verifying identical behavior
+- **Trivial tests**: Testing obvious behavior (e.g., getter returns value)
+- **Over-mocked tests**: So many mocks that nothing real is tested
+- **Dead code tests**: Tests for removed/deprecated features
+- **Flaky tests**: Intermittently failing tests that provide no confidence
+- **Over-specific tests**: Testing implementation details instead of behavior
+
+### Tasks
+
+- [ ] Generate removal report (`tests/REMOVAL_REPORT.md`):
+  - List each test recommended for removal
+  - Explain WHY it should be removed (category from above)
+  - Show what functionality (if any) is still covered elsewhere
+  - Group by test file for easy review
+- [ ] Calculate impact metrics:
+  - Number of tests to remove
+  - Estimated CI time savings
+  - Remaining coverage of core functionality
+- [ ] **STOP and present report to user**:
+  - Show full report in conversation
+  - Ask: "Do you approve removing these X tests?"
+  - Wait for explicit user confirmation
+- [ ] Only after user approval:
+  - Delete approved tests
+  - Update `tests/AUDIT.md` with removal summary
+  - Commit with clear message listing removed tests
+
+### Report Format
+
+```markdown
+# Test Removal Report
+
+## Summary
+
+- **Total tests analyzed:** X
+- **Recommended for removal:** Y
+- **Estimated CI time savings:** Z seconds
+
+## Removal Recommendations
+
+### Category 1: Duplicate Tests (X tests)
+
+| Test File | Test Name | Reason | Covered By |
+|-----------|-----------|--------|------------|
+| test_foo.py | test_bar_works | Duplicate | test_bar_success |
+
+### Category 2: Trivial Tests (X tests)
+
+| Test File | Test Name | Reason |
+|-----------|-----------|--------|
+| test_config.py | test_setting_exists | Tests obvious getter |
+
+### Category 3: Dead Code Tests (X tests)
+
+| Test File | Test Name | Reason |
+|-----------|-----------|--------|
+| test_old_feature.py | test_deprecated_api | Feature removed in Epic 5 |
+
+### Category 4: Over-Mocked Tests (X tests)
+
+| Test File | Test Name | Reason |
+|-----------|-----------|--------|
+| test_integration.py | test_full_pipeline | 100% mocked, tests nothing real |
+
+### Category 5: Flaky Tests (X tests)
+
+| Test File | Test Name | Reason |
+|-----------|-----------|--------|
+| test_async.py | test_race_condition | Fails 20% of runs |
+
+## Tests to KEEP (Justification)
+
+Brief explanation of why remaining tests are valuable.
+
+---
+
+**ACTION REQUIRED:** Review this report and confirm removal.
+```
+
+### Acceptance Criteria
+
+- [ ] Removal report generated with all categories
+- [ ] Each recommendation has clear justification
+- [ ] Report shows what coverage remains after removal
+- [ ] **Report presented to user before any deletion**
+- [ ] **User explicitly approves removal**
+- [ ] Only approved tests are deleted
+- [ ] Deletion commit has descriptive message
+- [ ] `tests/AUDIT.md` updated with removal summary
+
+### Tests
+
+- **None:** This US is about reviewing/removing tests, not adding them
+- **Run:** After removal, run `pytest tests/ -v` to ensure no breakage
+
+> Note: **CRITICAL** - Never delete tests without user approval. Present report and WAIT.
+
+### Files to Create/Modify
+
+1. `tests/REMOVAL_REPORT.md` (new - removal recommendations)
+2. `tests/AUDIT.md` (modify - add removal summary)
+3. Various `tests/*.py` files (delete approved tests only)
+
+---
+
 ## Definition of Done (Epic 10)
 
-- [ ] All User Stories completed (4/4)
+- [ ] All User Stories completed (5/5)
 - [ ] Test audit document created (`tests/AUDIT.md`)
 - [ ] All unit tests pass
 - [ ] All E2E tests pass (with services)
