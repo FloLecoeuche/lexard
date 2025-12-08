@@ -1754,7 +1754,13 @@
 
                 if (!response.ok) {
                     const error = await response.json();
-                    throw new Error(error.detail?.code || error.detail || 'Failed to fetch document');
+                    const errorCode = error.detail?.error?.code || error.detail?.code || '';
+
+                    // User-friendly message for legacy documents without BLOB
+                    if (errorCode === 'FILE_NOT_FOUND') {
+                        throw new Error('Preview not available for this document. It was uploaded before preview support was added. Please re-upload to enable preview.');
+                    }
+                    throw new Error(error.detail?.error?.message || error.detail || 'Failed to fetch document');
                 }
 
                 const blob = await response.blob();
