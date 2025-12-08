@@ -18,7 +18,7 @@ This folder contains detailed specifications for each Epic and User Story. Each 
 | 8    | UX & Testing          | ✅ Completed   | 2/2 US   |
 | 9    | Multilingual Fix      | ✅ Completed   | 5/5 US   |
 | 10   | Test Suite Review     | ✅ Completed   | 5/5 US   |
-| 11   | Document Preview      | 🔲 Not Started | 0/3 US   |
+| 11   | Document Preview      | 🔶 In Progress | 0/3 US   |
 | 12   | Streaming Responses   | 🔲 Not Started | 0/4 US   |
 
 **Legend:** 🔲 Not Started | 🔶 In Progress | ✅ Completed

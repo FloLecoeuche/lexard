@@ -8,6 +8,7 @@ import tempfile
 from pathlib import Path
 
 from fastapi import APIRouter, BackgroundTasks, File, HTTPException, Request, UploadFile
+from fastapi.responses import Response
 from sse_starlette.sse import EventSourceResponse
 
 from src.api.exceptions import DocumentParseError
@@ -32,6 +33,13 @@ upload_router = APIRouter(tags=["documents"])
 # Maximum file size in bytes (50 MB)
 MAX_FILE_SIZE = 50 * 1024 * 1024
 ALLOWED_EXTENSIONS = {".pdf", ".docx", ".txt"}
+
+# MIME type mapping for document preview
+MIME_TYPES = {
+    ".pdf": "application/pdf",
+    ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ".txt": "text/plain; charset=utf-8",
+}
 
 
 def get_document_registry():
@@ -157,6 +165,9 @@ async def _process_document_with_progress(
             filename=filename,
             file_hash=file_hash,
         )
+
+        # Store original file content for preview
+        registry.store_file_content(doc.id, content)
 
         # Stage 2: Chunking (20-40%)
         await progress_tracker.update(
@@ -473,3 +484,66 @@ async def delete_document(
     registry.delete(document_id)
 
     return DeleteResponse(success=True, message="Document deleted successfully")
+
+
+@router.get(
+    "/{document_id}/file",
+    responses={404: {"model": ErrorResponse, "description": "Document or file not found"}},
+    summary="Get document file",
+    description="Serve the original document file for preview.",
+)
+async def get_document_file(
+    document_id: str,
+    request: Request,
+) -> Response:
+    """Serve original document file for preview.
+
+    Args:
+        document_id: Document UUID
+
+    Returns:
+        Original file with appropriate Content-Type
+
+    Raises:
+        HTTPException: If document or file not found
+    """
+    trace_id = getattr(request.state, "trace_id", "")
+    registry = get_document_registry()
+
+    # Get document metadata
+    doc = registry.get(document_id)
+    if not doc:
+        raise HTTPException(
+            status_code=404,
+            detail={
+                "error": {
+                    "code": "DOCUMENT_NOT_FOUND",
+                    "message": f"Document with ID {document_id} not found",
+                    "trace_id": trace_id,
+                }
+            },
+        )
+
+    # Get file content from database
+    content = registry.get_file_content(document_id)
+    if not content:
+        raise HTTPException(
+            status_code=404,
+            detail={
+                "error": {
+                    "code": "FILE_NOT_FOUND",
+                    "message": "File content not available for this document",
+                    "trace_id": trace_id,
+                }
+            },
+        )
+
+    # Determine MIME type from filename
+    suffix = Path(doc.filename).suffix.lower()
+    media_type = MIME_TYPES.get(suffix, "application/octet-stream")
+
+    return Response(
+        content=content,
+        media_type=media_type,
+        headers={"Content-Disposition": f'inline; filename="{doc.filename}"'},
+    )
