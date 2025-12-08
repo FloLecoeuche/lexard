@@ -100,8 +100,8 @@ class ServerConfig(BaseModel):
 class AdminConfig(BaseModel):
     """Admin dashboard configuration."""
 
-    analytics_password: str = "change-me-in-production"
-    dashboard_path: str = "metrics-a7x9k2"
+    analytics_password: str  # Required - must be set in config file
+    dashboard_path: str  # Required - must be set in config file
 
 
 class Settings(BaseModel):
@@ -117,7 +117,7 @@ class Settings(BaseModel):
     guardrails: GuardrailsConfig = Field(default_factory=GuardrailsConfig)
     storage: StorageConfig = Field(default_factory=StorageConfig)
     server: ServerConfig = Field(default_factory=ServerConfig)
-    admin: AdminConfig = Field(default_factory=AdminConfig)
+    admin: AdminConfig  # Required - must be set in config file
 
 
 class ConfigurationError(Exception):
