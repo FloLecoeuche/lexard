@@ -7,6 +7,7 @@ grounded answers with citations.
 import logging
 from dataclasses import dataclass
 from enum import Enum
+from typing import TYPE_CHECKING
 
 from src.config import Settings, get_settings
 from src.rag.context import BuiltContext, ContextBuilder
@@ -18,6 +19,9 @@ from src.rag.llm import (
     get_qa_system_prompt,
 )
 from src.rag.retriever import Retriever, RetrievedChunk
+
+if TYPE_CHECKING:
+    from src.api.progress import OperationProgressTracker, OperationStage
 
 logger = logging.getLogger(__name__)
 
@@ -276,3 +280,183 @@ class RAGPipeline:
             )
             for chunk in chunks[:used_chunk_count]
         ]
+
+    async def query_with_progress(
+        self,
+        question: str,
+        document_id: str | None = None,
+        language: str | None = None,
+    ) -> tuple[str, RAGResponse]:
+        """Execute RAG query with progress tracking.
+
+        Creates a new operation, tracks progress through all stages,
+        and returns both the operation_id and result.
+
+        Args:
+            question: User's question
+            document_id: Optional document filter
+            language: Language for response. If None, auto-detected from document chunks.
+
+        Returns:
+            Tuple of (operation_id, RAGResponse) for progress subscription.
+        """
+        from src.api.progress import get_operation_tracker
+
+        tracker = get_operation_tracker()
+        operation_id = await tracker.start("query")
+
+        try:
+            result = await self._query_with_events(
+                question=question,
+                document_id=document_id,
+                language=language,
+                tracker=tracker,
+                operation_id=operation_id,
+            )
+            await tracker.complete(operation_id, result)
+            return operation_id, result
+        except Exception as e:
+            await tracker.fail(operation_id, str(e))
+            raise
+
+    async def _query_with_events(
+        self,
+        question: str,
+        document_id: str | None,
+        language: str | None,
+        tracker: "OperationProgressTracker",
+        operation_id: str,
+    ) -> RAGResponse:
+        """Internal query with progress event emission.
+
+        Args:
+            question: User's question
+            document_id: Optional document filter
+            language: Language for response
+            tracker: Progress tracker instance
+            operation_id: Operation ID for tracking
+
+        Returns:
+            RAGResponse with answer and citations
+        """
+        from src.api.progress import OperationStage
+
+        logger.info(
+            "Processing RAG query with progress",
+            extra={
+                "question_length": len(question),
+                "document_id": document_id,
+                "operation_id": operation_id,
+            },
+        )
+
+        # Stage 1: Retrieval (0-25%)
+        await tracker.update(
+            operation_id,
+            OperationStage.RETRIEVING,
+            0.1,
+            "Finding relevant sections...",
+        )
+
+        chunks = self.retriever.retrieve(question, document_id)
+
+        await tracker.update(
+            operation_id,
+            OperationStage.RETRIEVING,
+            0.25,
+            f"Found {len(chunks)} relevant sections",
+        )
+
+        # Handle no results
+        if not chunks:
+            logger.info("No relevant chunks found for query")
+            return RAGResponse(
+                answer="I could not find relevant information in the provided documents to answer this question.",
+                citation_chunks=[],
+                confidence=Confidence.LOW,
+                has_relevant_content=False,
+                language="en",
+            )
+
+        # Stage 2: Context Building (25-35%)
+        await tracker.update(
+            operation_id,
+            OperationStage.BUILDING_CONTEXT,
+            0.30,
+            "Building context from sections...",
+        )
+
+        # Detect language from DOCUMENT CHUNKS (not query)
+        if language is None:
+            language = detect_language_from_chunks(chunks)
+
+        logger.info(
+            "Detected document language",
+            extra={"language": language, "chunk_count": len(chunks)},
+        )
+
+        context = self.context_builder.build(chunks)
+
+        await tracker.update(
+            operation_id,
+            OperationStage.BUILDING_CONTEXT,
+            0.35,
+            f"Context ready ({language.upper()})",
+        )
+
+        # Stage 3: LLM Generation (35-90%)
+        await tracker.update(
+            operation_id,
+            OperationStage.GENERATING,
+            0.40,
+            "Generating answer...",
+        )
+
+        answer = self._generate_answer(question, context, language=language)
+
+        await tracker.update(
+            operation_id,
+            OperationStage.GENERATING,
+            0.85,
+            "Answer generated",
+        )
+
+        # Stage 4: Validation (90-100%)
+        await tracker.update(
+            operation_id,
+            OperationStage.VALIDATING,
+            0.90,
+            "Validating response...",
+        )
+
+        # Calculate confidence from retrieval scores
+        confidence = self._calculate_confidence(chunks)
+
+        await tracker.update(
+            operation_id,
+            OperationStage.VALIDATING,
+            0.95,
+            "Building citations...",
+        )
+
+        # Build citation chunks
+        citation_chunks = self._build_citation_chunks(chunks, context)
+
+        logger.info(
+            "RAG query with progress complete",
+            extra={
+                "operation_id": operation_id,
+                "chunk_count": len(citation_chunks),
+                "confidence": confidence.value,
+                "answer_length": len(answer),
+                "language": language,
+            },
+        )
+
+        return RAGResponse(
+            answer=answer,
+            citation_chunks=citation_chunks,
+            confidence=confidence,
+            has_relevant_content=True,
+            language=language,
+        )

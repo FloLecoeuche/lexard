@@ -908,6 +908,128 @@
             font-size: 3rem;
             margin-bottom: 1rem;
         }
+
+        /* Operation Progress Styles */
+        .operation-progress {
+            padding: 1.5rem;
+        }
+
+        .progress-stages {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .op-stage {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.875rem;
+        }
+
+        .op-stage-icon {
+            width: 1.5rem;
+            height: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-size: 0.75rem;
+            flex-shrink: 0;
+        }
+
+        .op-stage-icon.pending {
+            color: #94a3b8;
+        }
+
+        .op-stage-icon.active {
+            color: #2563eb;
+        }
+
+        .op-stage-icon.complete {
+            background: #10b981;
+            color: white;
+        }
+
+        .op-stage-label {
+            flex: 1;
+            color: #475569;
+        }
+
+        .op-stage.active .op-stage-label {
+            color: #1e293b;
+            font-weight: 500;
+        }
+
+        .op-stage.complete .op-stage-label {
+            color: #64748b;
+        }
+
+        .op-stage-time {
+            font-size: 0.75rem;
+            color: #94a3b8;
+        }
+
+        .op-mini-spinner {
+            width: 1rem;
+            height: 1rem;
+            border: 2px solid #e2e8f0;
+            border-top-color: #2563eb;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .op-progress-bar-container {
+            width: 100%;
+            height: 6px;
+            background-color: #e2e8f0;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 0.75rem;
+        }
+
+        .op-progress-bar-fill {
+            height: 100%;
+            background-color: #2563eb;
+            transition: width 0.3s ease;
+            border-radius: 3px;
+        }
+
+        .op-progress-bar-fill.animated {
+            background: linear-gradient(
+                90deg,
+                #2563eb 0%,
+                #60a5fa 50%,
+                #2563eb 100%
+            );
+            background-size: 200% 100%;
+            animation: shimmer 2s ease-in-out infinite;
+        }
+
+        .op-progress-bar-fill.failed {
+            background-color: #ef4444;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        .op-progress-message {
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+
+        .op-progress-error {
+            padding: 0.75rem;
+            background-color: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 6px;
+            color: #dc2626;
+            margin-top: 0.75rem;
+            font-size: 0.875rem;
+        }
     </style>
 
     <!-- PDF.js for PDF rendering -->
@@ -1014,6 +1136,203 @@
         // State
         let selectedDocumentId = null;
         let documents = [];
+
+        // Operation Progress Configuration
+        const OPERATION_STAGES = {
+            query: {
+                stages: ['pending', 'retrieving', 'building_context', 'generating', 'validating'],
+                labels: {
+                    pending: 'Starting...',
+                    retrieving: 'Finding relevant sections',
+                    building_context: 'Building context',
+                    generating: 'Generating answer',
+                    validating: 'Validating response'
+                }
+            },
+            summarize: {
+                stages: ['pending', 'loading', 'processing_chunks', 'aggregating', 'validating'],
+                labels: {
+                    pending: 'Starting...',
+                    loading: 'Loading document',
+                    processing_chunks: 'Processing sections',
+                    aggregating: 'Creating summary',
+                    validating: 'Validating response'
+                }
+            },
+            risks: {
+                stages: ['pending', 'loading', 'analyzing', 'evaluating', 'validating'],
+                labels: {
+                    pending: 'Starting...',
+                    loading: 'Loading document',
+                    analyzing: 'Analyzing clauses',
+                    evaluating: 'Evaluating risks',
+                    validating: 'Validating response'
+                }
+            }
+        };
+
+        // Show operation progress UI in a container
+        function showOperationProgress(container, operationType) {
+            const config = OPERATION_STAGES[operationType];
+            if (!config) {
+                console.error('Unknown operation type:', operationType);
+                return;
+            }
+
+            // Skip 'pending' in visual display (it's the initial state)
+            const displayStages = config.stages.filter(s => s !== 'pending');
+
+            const stagesHtml = displayStages.map(stage => `
+                <div class="op-stage" data-stage="${stage}">
+                    <span class="op-stage-icon pending">&#9675;</span>
+                    <span class="op-stage-label">${config.labels[stage]}</span>
+                    <span class="op-stage-time"></span>
+                </div>
+            `).join('');
+
+            container.innerHTML = `
+                <div class="operation-progress">
+                    <div class="progress-stages">${stagesHtml}</div>
+                    <div class="op-progress-bar-container">
+                        <div class="op-progress-bar-fill" style="width: 0%"></div>
+                    </div>
+                    <div class="op-progress-message">Starting...</div>
+                </div>
+            `;
+        }
+
+        // Update operation progress UI based on progress data
+        function updateOperationProgressUI(container, progressData, operationType) {
+            const progressBar = container.querySelector('.op-progress-bar-fill');
+            const message = container.querySelector('.op-progress-message');
+            const stages = container.querySelectorAll('.op-stage');
+
+            if (!progressBar || !message) return;
+
+            // Update progress bar
+            const percent = Math.round(progressData.progress * 100);
+            progressBar.style.width = `${percent}%`;
+
+            // Add animation class for generating/processing stages (slow, unpredictable)
+            const animatedStages = ['generating', 'aggregating', 'evaluating', 'processing_chunks'];
+            if (animatedStages.includes(progressData.stage)) {
+                progressBar.classList.add('animated');
+            } else {
+                progressBar.classList.remove('animated');
+            }
+
+            // Update message
+            message.textContent = progressData.message;
+
+            // Get stage order for this operation type
+            const config = OPERATION_STAGES[operationType];
+            const stageOrder = config ? config.stages.filter(s => s !== 'pending') : [];
+            const currentStageIndex = stageOrder.indexOf(progressData.stage);
+
+            // Update stage icons
+            stages.forEach((stageEl) => {
+                const icon = stageEl.querySelector('.op-stage-icon');
+                const stageName = stageEl.dataset.stage;
+                const stageIndex = stageOrder.indexOf(stageName);
+
+                if (stageIndex < currentStageIndex) {
+                    // Completed stage
+                    stageEl.classList.remove('active');
+                    stageEl.classList.add('complete');
+                    icon.className = 'op-stage-icon complete';
+                    icon.innerHTML = '&#10003;';
+                } else if (stageIndex === currentStageIndex) {
+                    // Current stage
+                    stageEl.classList.remove('complete');
+                    stageEl.classList.add('active');
+                    icon.className = 'op-stage-icon active';
+                    icon.innerHTML = '<span class="op-mini-spinner"></span>';
+                } else {
+                    // Pending stage
+                    stageEl.classList.remove('active', 'complete');
+                    icon.className = 'op-stage-icon pending';
+                    icon.innerHTML = '&#9675;';
+                }
+            });
+        }
+
+        // Show error in operation progress
+        function showOperationError(container, errorMessage, failedStage) {
+            const progressBar = container.querySelector('.op-progress-bar-fill');
+            const message = container.querySelector('.op-progress-message');
+
+            if (progressBar) {
+                progressBar.classList.remove('animated');
+                progressBar.classList.add('failed');
+            }
+
+            if (message) {
+                message.textContent = `Failed at: ${failedStage || 'Unknown stage'}`;
+            }
+
+            // Add error message
+            const existingError = container.querySelector('.op-progress-error');
+            if (existingError) {
+                existingError.textContent = errorMessage;
+            } else {
+                const progressDiv = container.querySelector('.operation-progress');
+                if (progressDiv) {
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'op-progress-error';
+                    errorDiv.textContent = errorMessage;
+                    progressDiv.appendChild(errorDiv);
+                }
+            }
+        }
+
+        // Track operation progress via SSE
+        async function trackOperationProgress(operationId, container, operationType, renderResultFn) {
+            return new Promise((resolve, reject) => {
+                const eventSource = new EventSource(`/operations/${operationId}/progress`);
+
+                eventSource.addEventListener('progress', (event) => {
+                    const progress = JSON.parse(event.data);
+                    updateOperationProgressUI(container, progress, operationType);
+
+                    if (progress.stage === 'complete') {
+                        eventSource.close();
+                        // Fetch final result
+                        fetch(`/operations/${operationId}/result`)
+                            .then(r => r.json())
+                            .then(data => {
+                                if (data.status === 'complete' && data.result) {
+                                    renderResultFn(data.result);
+                                    resolve(data.result);
+                                } else if (data.status === 'failed') {
+                                    showOperationError(container, data.error || 'Operation failed', progress.stage);
+                                    reject(new Error(data.error || 'Operation failed'));
+                                } else {
+                                    // Unexpected status, show error
+                                    showOperationError(container, 'Unexpected operation status', progress.stage);
+                                    reject(new Error('Unexpected operation status'));
+                                }
+                            })
+                            .catch(err => {
+                                showOperationError(container, err.message, 'complete');
+                                reject(err);
+                            });
+                    }
+
+                    if (progress.stage === 'failed') {
+                        eventSource.close();
+                        const errorMsg = progress.error || progress.message || 'Operation failed';
+                        showOperationError(container, errorMsg, progress.stage);
+                        reject(new Error(errorMsg));
+                    }
+                });
+
+                eventSource.onerror = () => {
+                    eventSource.close();
+                    showOperationError(container, 'Connection to server lost. Please try again.', 'Unknown');
+                    reject(new Error('SSE connection lost'));
+                };
+            });
+        }
 
         // DOM Elements
         const statusIndicator = document.getElementById('status-indicator');
@@ -1378,10 +1697,12 @@
             }
 
             const resultBox = document.getElementById('query-result');
-            showLoading(resultBox);
+
+            // Show progress UI
+            showOperationProgress(resultBox, 'query');
 
             try {
-                const response = await fetch('/query', {
+                const response = await fetch('/query/async', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -1396,7 +1717,14 @@
                 }
 
                 const data = await response.json();
-                renderAnswer(data);
+
+                // If operation_id present, track progress via SSE
+                if (data.operation_id) {
+                    await trackOperationProgress(data.operation_id, resultBox, 'query', renderAnswer);
+                } else {
+                    // Fallback: direct result (backward compatibility)
+                    renderAnswer(data);
+                }
             } catch (error) {
                 showError(resultBox, error.message);
             }
@@ -1442,10 +1770,12 @@
 
             const style = document.getElementById('summary-style').value;
             const resultBox = document.getElementById('summary-result');
-            showLoading(resultBox);
+
+            // Show progress UI
+            showOperationProgress(resultBox, 'summarize');
 
             try {
-                const response = await fetch('/summarize', {
+                const response = await fetch('/summarize/async', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -1460,7 +1790,14 @@
                 }
 
                 const data = await response.json();
-                renderSummary(data);
+
+                // If operation_id present, track progress via SSE
+                if (data.operation_id) {
+                    await trackOperationProgress(data.operation_id, resultBox, 'summarize', renderSummary);
+                } else {
+                    // Fallback: direct result (backward compatibility)
+                    renderSummary(data);
+                }
             } catch (error) {
                 showError(resultBox, error.message);
             }
@@ -1503,10 +1840,12 @@
             }
 
             const resultBox = document.getElementById('risks-result');
-            showLoading(resultBox);
+
+            // Show progress UI
+            showOperationProgress(resultBox, 'risks');
 
             try {
-                const response = await fetch('/risks', {
+                const response = await fetch('/risks/async', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -1520,7 +1859,14 @@
                 }
 
                 const data = await response.json();
-                renderRisks(data);
+
+                // If operation_id present, track progress via SSE
+                if (data.operation_id) {
+                    await trackOperationProgress(data.operation_id, resultBox, 'risks', renderRisks);
+                } else {
+                    // Fallback: direct result (backward compatibility)
+                    renderRisks(data);
+                }
             } catch (error) {
                 showError(resultBox, error.message);
             }

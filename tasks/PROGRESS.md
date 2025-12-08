@@ -19,7 +19,8 @@ This folder contains detailed specifications for each Epic and User Story. Each 
 | 9    | Multilingual Fix      | ✅ Completed   | 5/5 US   |
 | 10   | Test Suite Review     | ✅ Completed   | 5/5 US   |
 | 11   | Document Preview      | ✅ Completed   | 3/3 US   |
-| 12   | Streaming Responses   | 🔲 Not Started | 0/4 US   |
+| 12   | Progress Indicators   | ✅ Completed   | 4/4 US   |
+| 13   | User Analytics        | 🔲 Not Started | 0/4 US   |
 
 **Legend:** 🔲 Not Started | 🔶 In Progress | ✅ Completed
 
@@ -36,7 +37,8 @@ This folder contains detailed specifications for each Epic and User Story. Each 
 - [Epic 9: Multilingual Fix](./epic-9-multilingual-fix.md)
 - [Epic 10: Test Suite Review](./epic-10-test-review.md)
 - [Epic 11: Document Preview](./epic-11-document-preview.md)
-- [Epic 12: Streaming Responses](./epic-12-streaming-responses.md)
+- [Epic 12: Progress Indicators](./epic-12-progress-indicators.md)
+- [Epic 13: User Analytics](./epic-13-analytics.md)
 
 ## Completed User Stories
 
@@ -86,6 +88,10 @@ This folder contains detailed specifications for each Epic and User Story. Each 
 | 11.1  | Document File Serving Endpoint | 2025-12-08 | 1f517aa  |
 | 11.2  | Preview Modal UI Component     | 2025-12-08 | 17dd3ab  |
 | 11.3  | Integration Testing & Polish   | 2025-12-08 | b5156b7  |
+| 12.1  | Backend Progress Event Infrastructure | 2025-12-08 | 05ee3c8  |
+| 12.2  | Progress-Aware RAG Pipeline           | 2025-12-08 | 66a272b  |
+| 12.3  | Progress-Aware API Endpoints          | 2025-12-08 | b8828a6  |
+| 12.4  | Web UI Progress Display               | 2025-12-08 | 32b8b34  |
 
 <!-- Format: | US ID | Name | Completed Date | Commit Hash | -->
 

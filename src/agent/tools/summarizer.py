@@ -21,6 +21,7 @@ from src.agent.prompts import get_prompt
 from src.rag.llm import detect_language
 
 if TYPE_CHECKING:
+    from src.api.progress import OperationProgressTracker
     from src.db.qdrant import QdrantService
     from src.rag.llm import OllamaClient
 
@@ -175,6 +176,199 @@ RÉSUMÉS:
         )
 
         return result
+
+    async def summarize_with_progress(
+        self,
+        document_id: str,
+        style: str = "executive",
+        language: str | None = None,
+        tracker: "OperationProgressTracker | None" = None,
+        operation_id: str | None = None,
+    ) -> SummaryResult:
+        """Summarize a document with progress tracking.
+
+        Args:
+            document_id: Document ID to summarize
+            style: Summary style - "executive" (default) or "detailed"
+            language: Output language ('en' or 'fr'). If None, auto-detected
+            tracker: Progress tracker instance
+            operation_id: Operation ID for tracking
+
+        Returns:
+            SummaryResult with summary and key points
+
+        Raises:
+            ValueError: If no chunks found for document
+        """
+        from src.api.progress import OperationStage
+
+        logger.info(
+            f"Starting summarization with progress for document {document_id}, style={style}"
+        )
+
+        # Stage 1: Loading (0-15%)
+        if tracker and operation_id:
+            await tracker.update(
+                operation_id,
+                OperationStage.RETRIEVING,  # Using RETRIEVING for loading
+                0.05,
+                "Loading document...",
+            )
+
+        # Retrieve all chunks for document
+        chunks = await self._get_all_chunks(document_id)
+
+        if not chunks:
+            raise ValueError(f"No chunks found for document {document_id}")
+
+        if tracker and operation_id:
+            await tracker.update(
+                operation_id,
+                OperationStage.RETRIEVING,
+                0.15,
+                f"Loaded {len(chunks)} sections",
+            )
+
+        logger.info(f"Retrieved {len(chunks)} chunks for document {document_id}")
+
+        # Detect language from document content if not provided
+        if language is None:
+            language = self._detect_language_from_chunks(chunks)
+
+        logger.info(f"Using language '{language}' for summarization")
+
+        # Limit chunks for very long documents
+        if len(chunks) > self.MAX_CHUNKS:
+            logger.warning(
+                f"Document has {len(chunks)} chunks, limiting to {self.MAX_CHUNKS}"
+            )
+            chunks = chunks[: self.MAX_CHUNKS]
+
+        # Stage 2: Processing chunks (15-60%)
+        if tracker and operation_id:
+            await tracker.update(
+                operation_id,
+                OperationStage.GENERATING,  # Using GENERATING for processing
+                0.20,
+                "Processing sections...",
+            )
+
+        chunk_summaries = await self._summarize_chunks_batch_with_progress(
+            chunks, language, tracker, operation_id
+        )
+
+        # Stage 3: Aggregating (60-85%)
+        if tracker and operation_id:
+            await tracker.update(
+                operation_id,
+                OperationStage.GENERATING,
+                0.60,
+                "Creating summary...",
+            )
+
+        aggregated = await self._aggregate_summaries(chunk_summaries, language)
+
+        if tracker and operation_id:
+            await tracker.update(
+                operation_id,
+                OperationStage.GENERATING,
+                0.85,
+                "Summary generated",
+            )
+
+        # Stage 4: Validation (85-100%)
+        if tracker and operation_id:
+            await tracker.update(
+                operation_id,
+                OperationStage.VALIDATING,
+                0.90,
+                "Validating response...",
+            )
+
+        # Build result
+        result = SummaryResult(
+            executive_summary=aggregated["executive_summary"],
+            key_points=aggregated["key_points"],
+            section_summaries=chunk_summaries if style == "detailed" else [],
+            word_count=len(aggregated["executive_summary"].split()),
+            chunk_count=len(chunks),
+            language=language,
+        )
+
+        if tracker and operation_id:
+            await tracker.update(
+                operation_id,
+                OperationStage.VALIDATING,
+                0.95,
+                "Building result...",
+            )
+
+        logger.info(
+            f"Summarization with progress complete: {result.word_count} words, "
+            f"{len(result.key_points)} key points, language={language}"
+        )
+
+        return result
+
+    async def _summarize_chunks_batch_with_progress(
+        self,
+        chunks: list,
+        language: str = "en",
+        tracker: "OperationProgressTracker | None" = None,
+        operation_id: str | None = None,
+    ) -> list[dict]:
+        """Summarize chunks in batches with progress updates.
+
+        Args:
+            chunks: List of chunk points from Qdrant
+            language: Language for prompts ('en' or 'fr')
+            tracker: Progress tracker instance
+            operation_id: Operation ID for tracking
+
+        Returns:
+            List of dictionaries with page and summary
+        """
+        from src.api.progress import OperationStage
+
+        chunk_summaries = []
+        total_chunks = len(chunks)
+
+        # Process in batches
+        for i in range(0, len(chunks), self.CHUNK_BATCH_SIZE):
+            batch = chunks[i : i + self.CHUNK_BATCH_SIZE]
+
+            # Update progress (15% to 60% range)
+            if tracker and operation_id:
+                progress = 0.20 + (0.40 * (i / total_chunks))
+                await tracker.update(
+                    operation_id,
+                    OperationStage.GENERATING,
+                    progress,
+                    f"Processing section {i + 1} of {total_chunks}...",
+                )
+
+            # Process batch concurrently
+            tasks = [self._summarize_chunk(chunk, language) for chunk in batch]
+            batch_results = await asyncio.gather(*tasks, return_exceptions=True)
+
+            for chunk, result in zip(batch, batch_results):
+                if isinstance(result, Exception):
+                    logger.warning(
+                        f"Failed to summarize chunk {chunk.payload.get('chunk_index', 0)}: {result}"
+                    )
+                    summary = "[Summary unavailable]" if language == "en" else "[Résumé non disponible]"
+                else:
+                    summary = result
+
+                chunk_summaries.append(
+                    {
+                        "page": chunk.payload.get("page", 0),
+                        "chunk_index": chunk.payload.get("chunk_index", 0),
+                        "summary": summary,
+                    }
+                )
+
+        return chunk_summaries
 
     def _detect_language_from_chunks(self, chunks: list) -> str:
         """Detect language from document chunks.
