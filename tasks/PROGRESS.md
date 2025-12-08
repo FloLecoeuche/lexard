@@ -22,6 +22,7 @@ This folder contains detailed specifications for each Epic and User Story. Each 
 | 12   | Progress Indicators   | ✅ Completed   | 4/4 US   |
 | 13   | User Analytics        | ✅ Completed   | 4/4 US   |
 | 14   | Internet Exposure     | 🔲 Not Started | 0/2 US   |
+| 15   | Responsive Mobile UI  | 🔲 Not Started | 0/3 US   |
 
 **Legend:** 🔲 Not Started | 🔶 In Progress | ✅ Completed
 
@@ -41,6 +42,7 @@ This folder contains detailed specifications for each Epic and User Story. Each 
 - [Epic 12: Progress Indicators](./epic-12-progress-indicators.md)
 - [Epic 13: User Analytics](./epic-13-analytics.md)
 - [Epic 14: Internet Exposure](./epic-14-internet-exposure.md)
+- [Epic 15: Responsive Mobile UI](./epic-15-responsive-mobile-ui.md)
 
 ## Completed User Stories
 
