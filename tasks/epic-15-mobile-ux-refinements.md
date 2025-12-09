@@ -105,7 +105,7 @@ Currently on mobile, the entire page scrolls including header and footer. Users 
 
 ## US 15.2: Document Display Width & Pinch-to-Zoom
 
-**Status:** 🔲 Not Started
+**Status:** 🔶 In Progress
 
 ### Description
 

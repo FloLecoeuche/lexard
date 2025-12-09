@@ -1103,6 +1103,41 @@
             .panel {
                 min-height: auto;
             }
+
+            /* ==================== US 15.2: Document Display Width & Pinch-to-Zoom ==================== */
+            /* Document content fills modal width on mobile */
+            .preview-modal-body {
+                touch-action: pan-x pan-y pinch-zoom;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            /* PDF viewer canvases fill width */
+            .pdf-viewer canvas {
+                width: 100% !important;
+                height: auto !important;
+                max-width: 100%;
+            }
+
+            /* DOCX viewer fills width */
+            .docx-viewer {
+                width: 100%;
+                max-width: 100%;
+                padding: 1rem;
+            }
+
+            /* TXT viewer fills width */
+            .txt-viewer {
+                width: 100%;
+                max-width: 100%;
+                font-size: 0.8125rem;
+            }
+
+            /* Any images in preview fill width */
+            .preview-modal-body img {
+                width: 100%;
+                max-width: 100%;
+                height: auto;
+            }
         }
     </style>
 
