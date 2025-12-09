@@ -69,6 +69,7 @@ Technical architecture and design decisions for Lexard.
 ### 1. API Layer (FastAPI)
 
 **Responsibilities:**
+
 - HTTP request handling
 - Input validation (Pydantic schemas)
 - Response serialization
@@ -76,12 +77,14 @@ Technical architecture and design decisions for Lexard.
 - Authentication (future)
 
 **Key Files:**
+
 - `src/api/main.py` - Application entry point
 - `src/api/routes/` - Endpoint definitions
 - `src/api/schemas.py` - Pydantic models
 - `src/api/middleware.py` - Request processing
 
 **Design Patterns:**
+
 - Dependency injection via `Depends()`
 - Lazy loading of services
 - Error handling via middleware
@@ -91,12 +94,14 @@ Technical architecture and design decisions for Lexard.
 ### 2. Agent Layer (LangGraph)
 
 **Responsibilities:**
+
 - Intent classification
 - Tool selection and execution
 - Multi-step reasoning
 - State management
 
 **Key Files:**
+
 - `src/agent/graph.py` - LangGraph state machine
 - `src/agent/classifier.py` - Intent classification
 - `src/agent/state.py` - Agent state definition
@@ -118,6 +123,7 @@ Intent Classifier
 ```
 
 **Intents:**
+
 - `summarize` - Document summarization
 - `answer_question` - RAG-powered Q&A
 - `risk_analysis` - Risk detection
@@ -129,6 +135,7 @@ Intent Classifier
 ### 3. RAG Engine
 
 **Responsibilities:**
+
 - Document ingestion and chunking
 - Embedding generation
 - Vector similarity search
@@ -146,7 +153,7 @@ Intent Classifier
 2. Retrieval (Qdrant)
    ├─► HNSW search
    ├─► top_k=8
-   └─► score_threshold=0.7
+   └─► score_threshold=0.4
 
 3. Context Building
    ├─► Deduplicate chunks
@@ -164,18 +171,21 @@ Intent Classifier
 ```
 
 **Key Files:**
+
 - `src/rag/pipeline.py` - Main pipeline
 - `src/rag/retriever.py` - Vector search
 - `src/rag/embeddings.py` - Embedding service
 - `src/rag/context.py` - Context building
-- `src/rag/llm.py` - Ollama client
+- `src/rag/llm.py` - LLM client and language detection
 - `src/rag/chunking.py` - Text chunking
+- `src/agent/prompts.py` - Bilingual prompt templates
 
 ---
 
 ### 4. Guardrails Layer
 
 **Responsibilities:**
+
 - Input validation (prompt injection)
 - Output validation (hallucination)
 - PII redaction
@@ -196,6 +206,7 @@ Output Validation:
 ```
 
 **Key Files:**
+
 - `src/guardrails/__init__.py` - Pipeline
 - `src/guardrails/prompt_injection.py` - Input validation
 - `src/guardrails/hallucination.py` - Grounding check
@@ -224,6 +235,7 @@ if max_similarity < threshold:
 **Purpose:** Store and search document embeddings
 
 **Configuration:**
+
 - Collection: `documents`
 - Vector size: 768 dimensions
 - Distance: Cosine similarity
@@ -267,6 +279,7 @@ CREATE TABLE documents (
 ```
 
 **Statuses:**
+
 - `pending` - Uploaded but not processed
 - `processing` - Currently being indexed
 - `processed` - Ready for queries
@@ -276,16 +289,18 @@ CREATE TABLE documents (
 
 ### 6. External Services
 
-#### Ollama (LLM)
+#### LLM Service (Ollama or llama-server)
 
 **Purpose:** Local LLM inference
 
 **Model:** Mistral 7B Instruct
+
 - Parameters: 7 billion
 - Context window: 8k tokens
 - Format: Instruct-tuned
 
-**API:**
+**Option A: Ollama (Recommended)**
+
 ```bash
 POST http://localhost:11434/api/generate
 {
@@ -294,6 +309,21 @@ POST http://localhost:11434/api/generate
   "stream": false
 }
 ```
+
+**Option B: llama-server (AMD RDNA4 Workaround)**
+
+> AMD RDNA4 GPUs (gfx1201) have a ROCm HIP backend bug causing 100% idle GPU usage with Ollama. Use llama-server with Vulkan instead.
+
+```bash
+POST http://localhost:8080/v1/chat/completions
+{
+  "model": "mistral",
+  "messages": [{"role": "user", "content": "..."}],
+  "stream": false
+}
+```
+
+See [Quickstart - AMD GPU Setup](quickstart.md#amd-gpu-setup-vulkan) for setup instructions.
 
 ---
 
@@ -304,13 +334,15 @@ POST http://localhost:11434/api/generate
 **Decision:** No external API calls
 
 **Rationale:**
+
 - Data privacy for contract analysis
 - No vendor lock-in
 - Predictable costs
 - Offline operation
 
 **Implementation:**
-- Local LLM (Ollama)
+
+- Local LLM (Ollama or llama-server)
 - Local embeddings (sentence-transformers)
 - Local vector DB (Qdrant)
 
@@ -321,15 +353,18 @@ POST http://localhost:11434/api/generate
 **Decision:** Fixed-size chunking with overlap
 
 **Parameters:**
+
 - Chunk size: 512 tokens
 - Overlap: 50 tokens
 
 **Rationale:**
+
 - Simple and predictable
 - Good balance of context vs. precision
 - Overlap prevents information loss at boundaries
 
 **Alternative considered:**
+
 - Semantic chunking (rejected: too slow, less predictable)
 
 ---
@@ -339,15 +374,18 @@ POST http://localhost:11434/api/generate
 **Decision:** Dense retrieval only (no hybrid)
 
 **Parameters:**
+
 - top_k: 8 chunks
-- score_threshold: 0.7
+- score_threshold: 0.4 (tuned for cross-lingual retrieval with multilingual-e5-base)
 
 **Rationale:**
+
 - Sufficient for contract analysis
 - Faster than hybrid
 - Less complex
 
 **Future enhancement:**
+
 - Add BM25 for hybrid search
 
 ---
@@ -357,11 +395,13 @@ POST http://localhost:11434/api/generate
 **Decision:** Post-generation validation
 
 **Rationale:**
+
 - More flexible than constrained generation
 - Can retry on failure
 - Better for hallucination detection
 
 **Tradeoff:**
+
 - Slower (requires retry)
 - But: higher quality
 
@@ -372,12 +412,14 @@ POST http://localhost:11434/api/generate
 **Decision:** LangGraph state machine
 
 **Rationale:**
+
 - Clear control flow
 - Easy to debug
 - Deterministic behavior
 - Better than ReAct for this use case
 
 **Flow:**
+
 ```
 User Input → Classify Intent → Route to Tool → Execute → Return
 ```
@@ -501,17 +543,20 @@ Structured JSON logs:
 ## Future Architecture Evolution
 
 ### Phase 1: Current (MVP)
+
 - Single document queries
 - Basic guardrails
 - Local deployment
 
 ### Phase 2: Enhanced
+
 - Multi-document queries
 - Advanced reranking
 - API authentication
 - Streaming responses
 
 ### Phase 3: Enterprise
+
 - Multi-tenant support
 - Distributed deployment
 - Custom model fine-tuning

@@ -95,7 +95,9 @@ docker exec -it lexard-ollama ollama pull llama3:8b
 
 #### Provider: OpenAI-compatible (llama.cpp, vLLM)
 
-Use this for llama.cpp with Vulkan (recommended for AMD RDNA3/RDNA4 GPUs):
+Use this for llama.cpp's `llama-server` or other OpenAI-compatible APIs.
+
+> **AMD RDNA4 Users:** This is the recommended workaround for AMD RDNA4 GPUs (gfx1201) due to a [ROCm HIP backend bug](https://github.com/ROCm/ROCm/issues/5706) that causes 100% idle GPU usage with Ollama. Use llama-server with Vulkan instead.
 
 ```yaml
 llm:
@@ -225,7 +227,7 @@ RAG retrieval configuration.
 | Setting           | Type    | Default | Description                         |
 | ----------------- | ------- | ------- | ----------------------------------- |
 | `top_k`           | int     | `8`     | Number of chunks to retrieve        |
-| `score_threshold` | float   | `0.7`   | Minimum similarity score (0.0-1.0)  |
+| `score_threshold` | float   | `0.4`   | Minimum similarity score (0.0-1.0)  |
 | `rerank`          | boolean | `false` | Enable re-ranking (not implemented) |
 
 **Example:**
@@ -233,7 +235,7 @@ RAG retrieval configuration.
 ```yaml
 retrieval:
   top_k: 8
-  score_threshold: 0.7
+  score_threshold: 0.4
   rerank: false
 ```
 
@@ -242,10 +244,10 @@ retrieval:
 - **top_k**: More chunks = more context but slower
   - 5-8: Good for focused queries
   - 10-15: Better for comprehensive answers
-- **score_threshold**: Controls answer quality
-  - 0.5-0.6: Permissive, more answers
-  - 0.7-0.8: Balanced (recommended)
-  - 0.8+: Strict, fewer but higher quality
+- **score_threshold**: Controls answer quality (tuned for multilingual-e5-base)
+  - 0.3-0.4: Good for cross-lingual retrieval (current default)
+  - 0.5-0.6: Balanced for monolingual queries
+  - 0.7+: Strict, fewer but higher quality
 
 ---
 
@@ -339,6 +341,34 @@ server:
 
 ---
 
+### admin
+
+Admin and security configuration.
+
+| Setting               | Type    | Default                     | Description                              |
+| --------------------- | ------- | --------------------------- | ---------------------------------------- |
+| `analytics_password`  | string  | `"change-me-in-production"` | Password for analytics dashboard access  |
+| `dashboard_path`      | string  | `"metrics-a7x9k2"`          | Non-obvious URL path for admin dashboard |
+| `ui_password_enabled` | boolean | `true`                      | Enable password protection for main UI   |
+
+**Example:**
+
+```yaml
+admin:
+  analytics_password: 'your-secure-password'
+  dashboard_path: 'metrics-a7x9k2'
+  ui_password_enabled: true
+```
+
+**Security Notes:**
+
+- **IMPORTANT**: Always change `analytics_password` before production deployment
+- The `dashboard_path` provides security through obscurity - use a random string
+- When `ui_password_enabled` is true, users must authenticate to access the main UI
+- Access the analytics dashboard at `/internal/{dashboard_path}`
+
+---
+
 ## Complete Examples
 
 ### With Ollama (Default)
@@ -378,7 +408,7 @@ qdrant:
 
 retrieval:
   top_k: 8
-  score_threshold: 0.7
+  score_threshold: 0.4
   rerank: false
 
 guardrails:
@@ -394,6 +424,11 @@ server:
   host: '0.0.0.0'
   port: 8000
   workers: 4
+
+admin:
+  analytics_password: 'your-secure-password'
+  dashboard_path: 'metrics-a7x9k2'
+  ui_password_enabled: true
 ```
 
 ### With llama.cpp (AMD GPU with Vulkan)
@@ -433,7 +468,7 @@ qdrant:
 
 retrieval:
   top_k: 8
-  score_threshold: 0.7
+  score_threshold: 0.4
   rerank: false
 
 guardrails:
@@ -449,6 +484,11 @@ server:
   host: '0.0.0.0'
   port: 8000
   workers: 4
+
+admin:
+  analytics_password: 'your-secure-password'
+  dashboard_path: 'metrics-a7x9k2'
+  ui_password_enabled: true
 ```
 
 ---

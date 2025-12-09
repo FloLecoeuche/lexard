@@ -14,8 +14,8 @@ The French language support includes:
 
 ## Supported Languages
 
-| Language | Code | Status |
-|----------|------|--------|
+| Language | Code | Status             |
+| -------- | ---- | ------------------ |
 | English  | `en` | ✅ Fully supported |
 | French   | `fr` | ✅ Fully supported |
 
@@ -46,6 +46,7 @@ Documents and queries are embedded using the **E5 multilingual model** (`intfloa
 - **E5 Prefixes**: Queries use `"query: "` prefix, documents use `"passage: "` prefix
 
 This enables:
+
 - **Monolingual search**: French query → French document
 - **Cross-lingual search**: English query → French document
 - **Semantic understanding**: Conceptual matching across languages
@@ -54,11 +55,11 @@ This enables:
 
 All agent operations have French and English prompts:
 
-| Operation | English | French |
-|-----------|---------|--------|
-| System prompt | "You are a legal contract analysis assistant..." | "Vous êtes un assistant d'analyse de contrats juridiques..." |
-| Query | "Answer based on the context..." | "Répondez en vous basant sur le contexte..." |
-| Summarization | "Summarize the following document..." | "Résumez le document suivant..." |
+| Operation     | English                                               | French                                                              |
+| ------------- | ----------------------------------------------------- | ------------------------------------------------------------------- |
+| System prompt | "You are a legal contract analysis assistant..."      | "Vous êtes un assistant d'analyse de contrats juridiques..."        |
+| Query         | "Answer based on the context..."                      | "Répondez en vous basant sur le contexte..."                        |
+| Summarization | "Summarize the following document..."                 | "Résumez le document suivant..."                                    |
 | Risk analysis | "Identify financial, legal, and operational risks..." | "Identifiez les risques financiers, juridiques et opérationnels..." |
 
 The system selects the appropriate prompt based on the detected language.
@@ -69,11 +70,11 @@ The system selects the appropriate prompt based on the detected language.
 
 French-specific patterns protect sensitive information:
 
-| PII Type | Pattern | Example |
-|----------|---------|---------|
-| French SSN | `fr_ssn` | 1 85 03 75 116 054 12 |
+| PII Type     | Pattern    | Example                           |
+| ------------ | ---------- | --------------------------------- |
+| French SSN   | `fr_ssn`   | 1 85 03 75 116 054 12             |
 | French Phone | `fr_phone` | 06 12 34 56 78, +33 6 12 34 56 78 |
-| IBAN | `iban` | FR76 3000 6000 0112 3456 7890 189 |
+| IBAN         | `iban`     | FR76 3000 6000 0112 3456 7890 189 |
 
 All standard patterns (email, credit card, IP) also work.
 
@@ -158,7 +159,7 @@ curl -X POST http://localhost:8000/summarize \
 ### Risk Analysis in French
 
 ```bash
-curl -X POST http://localhost:8000/analyze-risks \
+curl -X POST http://localhost:8000/risks \
   -H "Content-Type: application/json" \
   -d '{
     "document_id": "abc123"
@@ -199,6 +200,7 @@ python scripts/migrate_embeddings.py
 ```
 
 The script will:
+
 1. Load all documents from the registry
 2. Extract text from original files
 3. Re-chunk with current settings
@@ -233,6 +235,7 @@ embeddings:
 ### Response Times
 
 Target latency remains the same:
+
 - **Query**: <3 seconds
 - **Summarization**: <15 seconds for 10-page documents
 - **Risk Analysis**: <10 seconds
@@ -302,12 +305,14 @@ print(report)
 ### Test Documents
 
 Sample French contracts for testing are located in:
+
 - `data/test/contrat_nda_fr.txt` - French NDA
 - `data/test/contrat_service_fr.txt` - French service agreement
 
 ### French Evaluation Dataset
 
 The French evaluation dataset (`data/eval/french_qa.yaml`) contains 33 test cases covering:
+
 - Termination clauses (résiliation)
 - Payment terms (conditions de paiement)
 - Confidentiality (confidentialité)
@@ -327,27 +332,31 @@ The French evaluation dataset (`data/eval/french_qa.yaml`) contains 33 test case
 
 3. **Domain-Specific Terms**: Some legal French terms may not have perfect semantic matches in English (e.g., "mise en demeure" vs "formal notice").
 
-4. **Response Language**: The system responds in the detected query language. Mixed-language queries use the primary detected language.
+4. **Response Language**: The system responds in the **document's language**, not the query language. This ensures consistency - a French document always gets French responses regardless of the query language.
 
 ## Troubleshooting
 
-### French Queries Returning English Responses
+### Getting English Responses for French Documents
 
-**Problem**: Asking in French but getting English answers.
+**Problem**: Querying a French document but getting English answers.
 
-**Solution**: Check language detection:
+**Solution**: The response language is determined by the **document content**, not the query. Check that:
+
+1. The document was properly detected as French during upload
+2. Language detection is working from document chunks:
 
 ```python
-from src.rag.llm import detect_language
+from src.rag.llm import detect_language_from_chunks
 
-question = "Votre question ici"
-print(detect_language(question))  # Should print 'fr'
+# This function detects language from the retrieved document chunks
+# and uses that for the response language
 ```
 
-If detection is wrong, make sure:
-- Query is long enough (>10 words recommended)
-- Query is clearly French (not mixed with English)
-- `langdetect` library is installed
+If you're getting English responses for a French document:
+
+- The document may contain mostly English text
+- Try re-uploading the document
+- Check the `language` field in API responses
 
 ### Migration Script Fails
 
@@ -356,11 +365,13 @@ If detection is wrong, make sure:
 **Solution**:
 
 1. Check services are running:
+
    ```bash
    docker-compose ps
    ```
 
 2. Verify Qdrant is accessible:
+
    ```bash
    curl http://localhost:6333/health
    ```
@@ -449,6 +460,7 @@ Potential improvements for future versions:
 ## Support
 
 For issues or questions:
+
 - GitHub Issues: https://github.com/your-org/lexard/issues
 - Documentation: https://docs.lexard.io
 - Email: support@lexard.io

@@ -41,6 +41,7 @@ pip install -e ".[dev]"
 ```
 
 This installs:
+
 - Core dependencies (FastAPI, LangChain, etc.)
 - Development tools (pytest, black, ruff, mypy)
 - The project in editable mode
@@ -52,14 +53,23 @@ docker-compose up -d
 ```
 
 This starts:
+
 - **Qdrant** on port 6333 (vector database)
-- **Ollama** on port 11434 (local LLM)
+- **Ollama** on port 11434 (local LLM) - or use llama-server for AMD RDNA4
 
 ### 5. Pull the LLM model
+
+**For Ollama (recommended):**
 
 ```bash
 docker exec -it lexard-ollama ollama pull mistral:7b-instruct
 ```
+
+**For AMD RDNA4 GPUs (llama-server workaround):**
+
+> AMD RDNA4 GPUs (gfx1201) have a ROCm HIP backend bug causing 100% idle GPU usage with Ollama. Use llama-server with Vulkan instead.
+
+See [Quickstart - AMD GPU Setup](quickstart.md#amd-gpu-setup-vulkan) for full instructions.
 
 ### 6. Configure the application
 
@@ -91,40 +101,51 @@ lexard/
 │   │   ├── routes/       # API endpoints
 │   │   ├── schemas.py    # Pydantic models
 │   │   ├── exceptions.py # Custom exceptions
-│   │   └── middleware.py # Request middleware
+│   │   ├── middleware.py # Request middleware
+│   │   ├── progress.py   # Operation progress tracking
+│   │   └── logging.py    # Structured logging
 │   ├── agent/            # LangGraph agent system
 │   │   ├── graph.py      # State machine
-│   │   ├── intent.py     # Intent classifier
-│   │   └── tools/        # Agent tools
+│   │   ├── classifier.py # Intent classifier
+│   │   ├── state.py      # Agent state definitions
+│   │   ├── prompts.py    # Bilingual prompt templates
+│   │   └── tools/        # Agent tools (summarizer, risk, diff)
 │   ├── rag/              # RAG engine
 │   │   ├── pipeline.py   # RAG pipeline
 │   │   ├── retriever.py  # Vector retrieval
 │   │   ├── embeddings.py # Embedding generation
 │   │   ├── chunking.py   # Text chunking
 │   │   ├── context.py    # Context building
-│   │   ├── llm.py        # LLM client
-│   │   └── extractors/   # Text extractors
+│   │   ├── llm.py        # LLM client & language detection
+│   │   └── extractors/   # Text extractors (PDF, DOCX, TXT)
 │   ├── guardrails/       # Output validation
 │   │   ├── __init__.py   # Pipeline
 │   │   ├── hallucination.py
 │   │   ├── pii.py
 │   │   ├── schema.py
+│   │   ├── validators.py
 │   │   └── prompt_injection.py
 │   ├── mcp/              # MCP server
-│   │   └── server.py
+│   │   ├── server.py
+│   │   ├── methods.py
+│   │   ├── schemas.py
+│   │   └── errors.py
 │   ├── db/               # Database services
 │   │   ├── qdrant.py     # Vector DB
 │   │   └── sqlite.py     # Document registry
 │   └── config.py         # Configuration management
 ├── ui/                   # Web interface
-│   └── static/
-│       ├── index.html
-│       └── style.css
+│   ├── index.html        # Main application
+│   ├── login.html        # Authentication page
+│   ├── admin-*.html      # Admin dashboard
+│   └── static/js/        # JavaScript modules
 ├── tests/                # Test suite
+│   ├── test_*.py         # Unit tests (at root level)
+│   ├── e2e/              # End-to-end tests
+│   ├── integration/      # Integration tests
 │   ├── evaluation/       # Evaluation harness
 │   ├── red_team/         # Adversarial tests
-│   ├── performance/      # Benchmarks
-│   └── unit/             # Unit tests
+│   └── performance/      # Benchmarks
 ├── tasks/                # User stories & progress
 │   ├── PROGRESS.md
 │   └── epic-*.md
@@ -132,7 +153,9 @@ lexard/
 │   └── config.yaml       # Configuration file
 ├── data/                 # Data directory
 │   ├── uploads/          # Uploaded files
+│   ├── test/             # Test fixtures
 │   └── eval/             # Evaluation datasets
+├── docs/                 # Documentation
 ├── docker-compose.yml    # Service orchestration
 ├── pyproject.toml        # Python dependencies
 └── README.md
@@ -147,6 +170,7 @@ lexard/
 We use Gitflow for branch management:
 
 **Branches:**
+
 - `main` - Production-ready code
 - `develop` - Integration branch
 - `feature/<name>` - New features
@@ -303,10 +327,7 @@ Or VS Code's debugger with this `.vscode/launch.json`:
       "type": "python",
       "request": "launch",
       "module": "uvicorn",
-      "args": [
-        "src.api.main:app",
-        "--reload"
-      ],
+      "args": ["src.api.main:app", "--reload"],
       "jinja": true,
       "justMyCode": false
     }
@@ -406,6 +427,7 @@ git checkout -b feature/new-feature develop
 ### 2. Implement Feature
 
 Follow existing patterns:
+
 - Use type hints
 - Add docstrings
 - Write tests
