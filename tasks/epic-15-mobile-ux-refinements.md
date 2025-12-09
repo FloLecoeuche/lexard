@@ -105,7 +105,7 @@ Currently on mobile, the entire page scrolls including header and footer. Users 
 
 ## US 15.2: Document Display Width & Pinch-to-Zoom
 
-**Status:** 🔲 Not Started
+**Status:** ✅ Completed
 
 ### Description
 
@@ -164,14 +164,14 @@ The modal container already displays at the right size on mobile. The only issue
 
 ## Definition of Done (Epic 15)
 
-- [ ] All User Stories completed (2/2 US)
-- [ ] Header and footer fixed on mobile
-- [ ] Only body content scrolls on mobile
-- [ ] Document content displays at 100% width of modal on mobile
-- [ ] Pinch-to-zoom works on document content
-- [ ] Desktop UI unchanged
-- [ ] Tested on Chrome DevTools mobile emulation
-- [ ] No console errors
+- [x] All User Stories completed (2/2 US)
+- [x] Header and footer fixed on mobile
+- [x] Only body content scrolls on mobile
+- [x] Document content displays at 100% width of modal on mobile
+- [x] Pinch-to-zoom works on document content
+- [x] Desktop UI unchanged
+- [x] Tested on Chrome DevTools mobile emulation
+- [x] No console errors
 
 ## Test Devices (Chrome DevTools Emulation)
 
