@@ -16,7 +16,7 @@ Enable secure temporary internet exposure of the Lexard UI for external testers.
 
 ## US 14.1: UI Password Protection
 
-**Status:** 🔶 In Progress
+**Status:** ✅ Completed
 
 ### Description
 
@@ -28,10 +28,10 @@ Currently, the main UI at `/` is publicly accessible without authentication. The
 
 ### Tasks
 
-- [ ] Create login HTML page (`ui/login.html`) with password form
-- [ ] Modify `index.html` to check auth state and redirect to login if needed
-- [ ] Add logout button to main UI
-- [ ] Reuse existing admin auth endpoint for password verification
+- [x] Create login HTML page (`ui/login.html`) with password form
+- [x] Modify `index.html` to check auth state and redirect to login if needed
+- [x] Add logout button to main UI
+- [x] Reuse existing admin auth endpoint for password verification
 
 ### Implementation Details
 
@@ -56,12 +56,12 @@ Currently, the main UI at `/` is publicly accessible without authentication. The
 
 ### Acceptance Criteria
 
-- [ ] Visiting `/` without auth redirects to `/login`
-- [ ] Login page accepts password and redirects to `/` on success
-- [ ] Invalid password shows error message
-- [ ] Valid session persists across page refreshes (localStorage)
-- [ ] Logout clears session and redirects to login
-- [ ] Same password works for both main UI and admin dashboard
+- [x] Visiting `/` without auth redirects to `/login`
+- [x] Login page accepts password and redirects to `/` on success
+- [x] Invalid password shows error message
+- [x] Valid session persists across page refreshes (localStorage)
+- [x] Logout clears session and redirects to login
+- [x] Same password works for both main UI and admin dashboard
 
 ### Tests
 
