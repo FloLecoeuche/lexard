@@ -78,7 +78,7 @@ Currently, the main UI at `/` is publicly accessible without authentication. The
 
 ## US 14.2: Cloudflare Tunnel Setup Guide
 
-**Status:** 🔲 Not Started
+**Status:** ✅ Completed
 
 ### Description
 
@@ -94,10 +94,10 @@ Cloudflare Tunnel (formerly Argo Tunnel) creates an outbound-only connection fro
 
 ### Tasks
 
-- [ ] Create `docs/INTERNET_EXPOSURE.md` with step-by-step setup guide
-- [ ] Create `scripts/tunnel.sh` helper script for starting tunnel
-- [ ] Document security checklist (password change, monitoring, shutdown)
-- [ ] Add troubleshooting section for common issues
+- [x] Create `docs/INTERNET_EXPOSURE.md` with step-by-step setup guide
+- [x] Create `scripts/tunnel.sh` helper script for starting tunnel
+- [x] Document security checklist (password change, monitoring, shutdown)
+- [x] Add troubleshooting section for common issues
 
 ### Implementation Details
 
@@ -150,12 +150,12 @@ fi
 
 ### Acceptance Criteria
 
-- [ ] `docs/INTERNET_EXPOSURE.md` contains complete setup instructions
-- [ ] Quick-start option works without domain (trycloudflare.com)
-- [ ] Production setup documented for custom domain
-- [ ] Security checklist included
-- [ ] Shutdown/cleanup instructions clear
-- [ ] `scripts/tunnel.sh` helper script works
+- [x] `docs/INTERNET_EXPOSURE.md` contains complete setup instructions
+- [x] Quick-start option works without domain (trycloudflare.com)
+- [x] Production setup documented for custom domain
+- [x] Security checklist included
+- [x] Shutdown/cleanup instructions clear
+- [x] `scripts/tunnel.sh` helper script works
 
 ### Tests
 
@@ -171,9 +171,9 @@ fi
 
 ## Definition of Done (Epic 14)
 
-- [ ] All User Stories completed (2/2 US)
-- [ ] Main UI requires password to access (UI-only gate)
-- [ ] Same password works for UI and admin dashboard
-- [ ] Cloudflare Tunnel documentation complete
-- [ ] Helper script for easy tunnel startup
-- [ ] Security checklist documented
+- [x] All User Stories completed (2/2 US)
+- [x] Main UI requires password to access (UI-only gate)
+- [x] Same password works for UI and admin dashboard
+- [x] Cloudflare Tunnel documentation complete
+- [x] Helper script for easy tunnel startup
+- [x] Security checklist documented
