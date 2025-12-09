@@ -1016,6 +1016,94 @@
             margin-top: 0.75rem;
             font-size: 0.875rem;
         }
+
+        /* ==================== MOBILE STYLES ==================== */
+        @media (max-width: 768px) {
+            :root {
+                --header-height: 56px;
+                --footer-height: 48px;
+            }
+
+            /* Fixed header on mobile */
+            header {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                z-index: 100;
+                padding: 0.75rem 1rem;
+                padding-top: calc(0.75rem + env(safe-area-inset-top, 0px));
+            }
+
+            header h1 {
+                font-size: 1.25rem;
+            }
+
+            /* Fixed footer on mobile */
+            footer {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                z-index: 100;
+                padding: 0.5rem 1rem;
+                padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px));
+            }
+
+            /* Body scrolls naturally with padding for fixed elements */
+            body {
+                padding-top: calc(var(--header-height) + env(safe-area-inset-top, 0px));
+                padding-bottom: calc(var(--footer-height) + env(safe-area-inset-bottom, 0px));
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            /* Main content flows naturally */
+            main {
+                flex-direction: column;
+                padding: 0.5rem;
+                min-height: auto;
+            }
+
+            /* Stack panels vertically on mobile */
+            #documents-panel {
+                width: 100%;
+                flex-shrink: 0;
+            }
+
+            /* Compact upload zone on mobile */
+            #upload-zone {
+                padding: 0.75rem;
+            }
+
+            #upload-zone p {
+                display: none; /* Hide "Drag & drop" text on mobile */
+            }
+
+            /* Show document list below upload zone */
+            #document-list {
+                max-height: 150px;
+                overflow-y: auto;
+            }
+
+            /* Main panel takes natural height */
+            #main-panel {
+                width: 100%;
+                min-height: auto;
+            }
+
+            /* Result boxes expand to fit content */
+            .result-box {
+                min-height: 200px;
+                max-height: none;
+                overflow: visible;
+            }
+
+            /* Panels flow naturally */
+            .panel {
+                min-height: auto;
+            }
+        }
     </style>
 
     <!-- PDF.js for PDF rendering -->

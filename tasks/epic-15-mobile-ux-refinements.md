@@ -17,7 +17,7 @@ Minimal mobile UX improvements to make the current UI fully usable on mobile dev
 
 ## US 15.1: Fixed Header & Footer on Mobile
 
-**Status:** 🔲 Not Started
+**Status:** ✅ Completed
 
 ### Description
 
