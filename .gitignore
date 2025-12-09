@@ -37,9 +37,11 @@ data/uploads/*
 # Docker
 docker-compose.override.yml
 
-# Config (keep example)
+# Config (keep examples, ignore real configs with secrets)
 config/config.yaml
+config/config.docker.yaml
 !config/config.example.yaml
+!config/config.docker.example.yaml
 
 # OS
 .DS_Store

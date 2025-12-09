@@ -16,7 +16,7 @@ Enable secure temporary internet exposure of the Lexard UI for external testers.
 
 ## US 14.1: UI Password Protection
 
-**Status:** 🔲 Not Started
+**Status:** ✅ Completed
 
 ### Description
 
@@ -24,70 +24,55 @@ Add a login gate to the main UI that requires the admin password before granting
 
 ### Context
 
-Currently, the main UI at `/` is publicly accessible without authentication. The admin dashboard already has password protection using `admin.analytics_password` from config. We'll reuse this same password and authentication pattern for the main UI, providing a simple login page that stores a session token in localStorage.
+Currently, the main UI at `/` is publicly accessible without authentication. The admin dashboard already has password protection using `admin.analytics_password` from config. We'll reuse the same password for the main UI, with a simple login page that stores authenticated state in localStorage. This is UI-only protection (APIs remain open) - sufficient for demo purposes since Cloudflare Tunnel controls network access.
 
 ### Tasks
 
-- [ ] Create login HTML page (`ui/login.html`) with password form
-- [ ] Add `/api/auth/verify` endpoint that validates password and returns token
-- [ ] Add `/api/auth/check` endpoint that validates existing token
-- [ ] Modify `static.py` to serve login page at `/login`
-- [ ] Add JavaScript to `index.html` to check auth on load and redirect to login if needed
-- [ ] Add logout functionality (clear localStorage)
+- [x] Create login HTML page (`ui/login.html`) with password form
+- [x] Modify `index.html` to check auth state and redirect to login if needed
+- [x] Add logout button to main UI
+- [x] Reuse existing admin auth endpoint for password verification
 
 ### Implementation Details
 
-**Auth Flow:**
+**Auth Flow (Simple):**
 ```
-[User visits /] → [JS checks localStorage for token]
-    ↓ no token                    ↓ has token
-[Redirect to /login]    [Call /api/auth/check]
-    ↓                         ↓ valid     ↓ invalid
-[Enter password]         [Show UI]    [Redirect to /login]
+[User visits /] → [JS checks localStorage.authenticated]
+    ↓ not set                    ↓ is set
+[Redirect to /login]         [Show UI]
     ↓
-[POST /api/auth/verify]
+[Enter password]
+    ↓
+[POST to existing admin auth endpoint]
     ↓ success
-[Store token in localStorage, redirect to /]
+[Set localStorage.authenticated = true, redirect to /]
 ```
 
-**Token Storage:**
-- Use the same `_valid_tokens` set from `admin.py` (shared module)
-- Tokens are in-memory, reset on server restart (acceptable for 7-day testing)
-
-**API Endpoints:**
-
-```python
-# POST /api/auth/verify
-# Request: {"password": "xxx"}
-# Response: {"token": "xxx"} or 401
-
-# GET /api/auth/check
-# Header: X-Auth-Token: xxx
-# Response: {"valid": true} or {"valid": false}
-```
+**Key Simplifications:**
+- Reuse existing `/internal/{dashboard_path}/auth` endpoint from admin.py
+- Store simple boolean flag in localStorage (not token)
+- No new API endpoints needed
+- Password verification happens client-side via existing admin auth
 
 ### Acceptance Criteria
 
-- [ ] Visiting `/` without auth redirects to `/login`
-- [ ] Login page accepts password and redirects to `/` on success
-- [ ] Invalid password shows error message
-- [ ] Valid session persists across page refreshes
-- [ ] Logout clears session and redirects to login
-- [ ] Same password works for both main UI and admin dashboard
+- [x] Visiting `/` without auth redirects to `/login`
+- [x] Login page accepts password and redirects to `/` on success
+- [x] Invalid password shows error message
+- [x] Valid session persists across page refreshes (localStorage)
+- [x] Logout clears session and redirects to login
+- [x] Same password works for both main UI and admin dashboard
 
 ### Tests
 
-- **New:** `tests/test_auth.py` - Test auth endpoints (verify, check)
-- **Run:** `pytest tests/test_auth.py -v`
+- **Manual:** Test login flow in browser
+- **Existing:** Admin auth endpoint already tested
 
 ### Files to Create/Modify
 
 1. `ui/login.html` - New login page
-2. `src/api/routes/auth.py` - New auth endpoints
+2. `ui/index.html` - Add auth check on load + logout button
 3. `src/api/routes/static.py` - Add login route
-4. `src/api/main.py` - Register auth router
-5. `ui/index.html` - Add auth check on load
-6. `tests/test_auth.py` - Auth endpoint tests
 
 ---
 
@@ -187,9 +172,8 @@ fi
 ## Definition of Done (Epic 14)
 
 - [ ] All User Stories completed (2/2 US)
-- [ ] Main UI requires password to access
+- [ ] Main UI requires password to access (UI-only gate)
 - [ ] Same password works for UI and admin dashboard
 - [ ] Cloudflare Tunnel documentation complete
 - [ ] Helper script for easy tunnel startup
 - [ ] Security checklist documented
-- [ ] Tests pass

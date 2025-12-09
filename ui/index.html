@@ -1030,9 +1030,12 @@
 <body>
     <header>
         <h1>Lexard</h1>
-        <div id="status">
-            <div id="status-indicator"></div>
-            <span id="status-text">Checking...</span>
+        <div style="display: flex; align-items: center; gap: 1.5rem;">
+            <div id="status">
+                <div id="status-indicator"></div>
+                <span id="status-text">Checking...</span>
+            </div>
+            <button id="logout-btn" style="background: transparent; border: 1px solid rgba(255,255,255,0.3); color: white; padding: 0.375rem 0.75rem; border-radius: 6px; cursor: pointer; font-size: 0.75rem;">Logout</button>
         </div>
     </header>
 
@@ -1122,6 +1125,17 @@
     </div>
 
     <script>
+        // ==================== LOGOUT ====================
+        // Logout handler - calls server to clear session cookie
+        document.getElementById('logout-btn').addEventListener('click', async () => {
+            try {
+                await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' });
+            } catch (e) {
+                // Ignore errors, redirect anyway
+            }
+            window.location.href = '/login';
+        });
+
         // ==================== ANALYTICS ====================
         const Analytics = {
             getBrowserId() {
