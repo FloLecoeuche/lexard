@@ -1125,15 +1125,14 @@
     </div>
 
     <script>
-        // ==================== AUTH CHECK ====================
-        // Redirect to login if not authenticated
-        if (localStorage.getItem('lexard_authenticated') !== 'true') {
-            window.location.href = '/login';
-        }
-
-        // Logout handler
-        document.getElementById('logout-btn').addEventListener('click', () => {
-            localStorage.removeItem('lexard_authenticated');
+        // ==================== LOGOUT ====================
+        // Logout handler - calls server to clear session cookie
+        document.getElementById('logout-btn').addEventListener('click', async () => {
+            try {
+                await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' });
+            } catch (e) {
+                // Ignore errors, redirect anyway
+            }
             window.location.href = '/login';
         });
 

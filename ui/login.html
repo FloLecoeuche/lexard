@@ -129,12 +129,12 @@
 
         <div id="error-message" class="error-message"></div>
 
-        <form id="login-form">
+        <form id="login-form" onsubmit="return false">
             <div class="form-group">
                 <label for="password">Password</label>
                 <input type="password" id="password" name="password" placeholder="Enter password" required autofocus>
             </div>
-            <button type="submit" class="btn" id="login-btn">Sign In</button>
+            <button type="button" class="btn" id="login-btn">Sign In</button>
         </form>
 
         <div class="footer">
@@ -143,19 +143,11 @@
     </div>
 
     <script>
-        const form = document.getElementById('login-form');
         const passwordInput = document.getElementById('password');
         const loginBtn = document.getElementById('login-btn');
         const errorDiv = document.getElementById('error-message');
 
-        // Check if already authenticated
-        if (localStorage.getItem('lexard_authenticated') === 'true') {
-            window.location.href = '/';
-        }
-
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-
+        async function doLogin() {
             const password = passwordInput.value;
             if (!password) return;
 
@@ -164,16 +156,15 @@
             errorDiv.classList.remove('show');
 
             try {
-                // Use the existing admin auth endpoint
                 const response = await fetch('/api/auth/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ password })
+                    body: JSON.stringify({ password }),
+                    credentials: 'same-origin'
                 });
 
                 if (response.ok) {
-                    // Store authenticated state
-                    localStorage.setItem('lexard_authenticated', 'true');
+                    // Cookie is set by server, redirect to main UI
                     window.location.href = '/';
                 } else {
                     const data = await response.json();
@@ -187,6 +178,17 @@
             } finally {
                 loginBtn.disabled = false;
                 loginBtn.textContent = 'Sign In';
+            }
+        }
+
+        // Handle button click
+        loginBtn.addEventListener('click', doLogin);
+
+        // Handle Enter key in password field
+        passwordInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                doLogin();
             }
         });
     </script>
