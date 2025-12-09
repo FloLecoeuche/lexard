@@ -9,6 +9,7 @@ Lexard includes a comprehensive end-to-end (E2E) test suite that validates the c
 The E2E test suite covers the following scenarios:
 
 ### 1. Document Upload and Query (`test_upload_query.py`)
+
 - Upload English documents (PDF and DOCX)
 - Query uploaded documents
 - Document summarization (executive and detailed)
@@ -17,6 +18,7 @@ The E2E test suite covers the following scenarios:
 - Citation quality checks
 
 ### 2. Multilingual Support (`test_multilingual.py`)
+
 - French document upload and query (PDF and DOCX)
 - French summarization
 - Cross-language quality comparison
@@ -24,6 +26,7 @@ The E2E test suite covers the following scenarios:
 - Mixed language document handling
 
 ### 3. Risk Analysis & Summarization (`test_analysis.py`)
+
 - Risk analysis for English and French documents
 - Executive summary generation
 - Detailed summary generation
@@ -32,6 +35,7 @@ The E2E test suite covers the following scenarios:
 - Complete analysis workflow
 
 ### 4. Document Comparison (`test_comparison.py`)
+
 - Compare two English documents
 - Compare English and French documents
 - Compare two French documents
@@ -40,6 +44,7 @@ The E2E test suite covers the following scenarios:
 - Multi-document comparison workflow
 
 ### 5. Guardrails Validation (`test_guardrails.py`)
+
 - Prompt injection detection (English and French)
 - Hallucination prevention
 - Out-of-scope question handling
@@ -49,6 +54,7 @@ The E2E test suite covers the following scenarios:
 - Confidence threshold enforcement
 
 ### 6. Error Handling (`test_error_handling.py`)
+
 - Query non-existent document
 - Upload invalid file formats
 - Upload empty files
@@ -59,6 +65,7 @@ The E2E test suite covers the following scenarios:
 - Error response trace_id validation
 
 ### 7. Upload Progress Tracking (`test_upload_progress.py`)
+
 - Upload returns task_id
 - Progress tracking through all stages
 - Stage progression validation
@@ -97,7 +104,7 @@ curl http://localhost:6333/health
 curl http://localhost:11434/api/tags
 
 # Pull the LLM model (if not already present)
-docker exec -it lexard-ollama-1 ollama pull mistral:7b-instruct
+docker exec -it lexard-ollama ollama pull mistral:7b-instruct
 ```
 
 ### 2. Install Test Dependencies
@@ -169,10 +176,12 @@ pytest -m requires_services
 ## Continuous Integration
 
 E2E tests run automatically in GitHub Actions on:
+
 - Push to `develop` or `main` branches
 - Pull requests to `develop` or `main` branches
 
 The CI workflow (`.github/workflows/e2e-tests.yml`):
+
 1. Starts Qdrant and Ollama services
 2. Pulls the required LLM model
 3. Runs the E2E test suite
@@ -256,6 +265,7 @@ async def test_my_new_feature(api_client, sample_contract_en_pdf):
 **Cause:** Services not running or not ready
 
 **Solution:**
+
 ```bash
 # Check service status
 docker-compose ps
@@ -273,12 +283,13 @@ docker-compose restart
 **Cause:** LLM model not loaded or slow embedding generation
 
 **Solution:**
+
 ```bash
 # Verify model is loaded
-docker exec -it lexard-ollama-1 ollama list
+docker exec -it lexard-ollama ollama list
 
 # Pull model if missing
-docker exec -it lexard-ollama-1 ollama pull mistral:7b-instruct
+docker exec -it lexard-ollama ollama pull mistral:7b-instruct
 
 # Increase timeout in test if needed (edit conftest.py)
 ```
@@ -288,6 +299,7 @@ docker exec -it lexard-ollama-1 ollama pull mistral:7b-instruct
 **Cause:** Corrupted or missing test fixtures
 
 **Solution:**
+
 ```bash
 # Verify fixtures exist
 ls -lh data/test/contract_*.pdf
@@ -301,6 +313,7 @@ ls -lh data/test/contrat_*.pdf
 **Cause:** Dependencies not installed or virtual environment not activated
 
 **Solution:**
+
 ```bash
 # Activate virtual environment
 source .venv/bin/activate
@@ -321,6 +334,7 @@ Expected execution times (on standard hardware with CPU inference):
 **Note:** LLM query tests are slow due to CPU-based inference in Ollama. The timeout is set to 180 seconds to accommodate slower systems. Tests with GPU acceleration will be significantly faster.
 
 Tests exceeding these times should be investigated for:
+
 - Service availability issues
 - Network connectivity problems
 - Resource constraints (ensure Docker has 24GB+ RAM for Ollama)
@@ -330,6 +344,7 @@ Tests exceeding these times should be investigated for:
 ## Test Data Privacy
 
 **Important:** Test fixtures should NOT contain real PII or sensitive data. All test documents should use:
+
 - Fictional names and addresses
 - Fake SSNs, phone numbers, IBANs
 - Sample contract terms
@@ -340,6 +355,7 @@ Tests exceeding these times should be investigated for:
 ### Updating Test Fixtures
 
 When updating test fixtures:
+
 1. Update files in `data/test/`
 2. Ensure new files maintain naming convention (English: `contract_*_en.*`, French: `contrat_*_fr.*`)
 3. Verify all tests still pass
@@ -348,6 +364,7 @@ When updating test fixtures:
 ### Adding New Test Scenarios
 
 When adding new scenarios:
+
 1. Create new test file in `tests/e2e/`
 2. Follow naming convention: `test_<scenario>.py`
 3. Add necessary fixtures to `conftest.py`
@@ -369,8 +386,9 @@ open htmlcov/index.html
 ## Support
 
 For issues with E2E tests:
+
 1. Check this documentation
 2. Review test logs and error messages
 3. Verify service health and connectivity
 4. Check GitHub Actions logs for CI failures
-5. Report issues at https://github.com/anthropics/lexard/issues
+5. Report issues at the project's GitHub repository

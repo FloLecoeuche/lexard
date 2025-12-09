@@ -7,6 +7,7 @@ Common issues and solutions for Lexard.
 ### Virtual Environment Error (macOS)
 
 **Error:**
+
 ```
 error: externally-managed-environment
 ```
@@ -27,6 +28,7 @@ pip install -e ".[dev]"
 ### Docker Services Not Starting
 
 **Error:**
+
 ```
 Cannot connect to the Docker daemon
 ```
@@ -34,6 +36,7 @@ Cannot connect to the Docker daemon
 **Solutions:**
 
 1. Check Docker is running:
+
    ```bash
    docker ps
    ```
@@ -41,6 +44,7 @@ Cannot connect to the Docker daemon
 2. Start Docker Desktop (macOS/Windows)
 
 3. Start Docker service (Linux):
+
    ```bash
    sudo systemctl start docker
    ```
@@ -56,6 +60,7 @@ Cannot connect to the Docker daemon
 ### Port Already in Use
 
 **Error:**
+
 ```
 Error starting userland proxy: listen tcp 0.0.0.0:8000: bind: address already in use
 ```
@@ -63,6 +68,7 @@ Error starting userland proxy: listen tcp 0.0.0.0:8000: bind: address already in
 **Solutions:**
 
 1. Find process using the port:
+
    ```bash
    # macOS/Linux
    lsof -i :8000
@@ -72,6 +78,7 @@ Error starting userland proxy: listen tcp 0.0.0.0:8000: bind: address already in
    ```
 
 2. Kill the process:
+
    ```bash
    kill -9 <PID>
    ```
@@ -88,6 +95,7 @@ Error starting userland proxy: listen tcp 0.0.0.0:8000: bind: address already in
 ### LLM Service Unavailable
 
 **Error:**
+
 ```json
 {
   "error": {
@@ -100,21 +108,25 @@ Error starting userland proxy: listen tcp 0.0.0.0:8000: bind: address already in
 **Solutions for Ollama:**
 
 1. Check Ollama is running:
+
    ```bash
    docker ps | grep ollama
    ```
 
 2. Check Ollama health:
+
    ```bash
    curl http://localhost:11434/api/tags
    ```
 
 3. Restart Ollama:
+
    ```bash
    docker-compose restart ollama
    ```
 
 4. Check model is pulled:
+
    ```bash
    docker exec -it lexard-ollama ollama list
    ```
@@ -124,19 +136,24 @@ Error starting userland proxy: listen tcp 0.0.0.0:8000: bind: address already in
    docker exec -it lexard-ollama ollama pull mistral:7b-instruct
    ```
 
-**Solutions for llama-server (Vulkan):**
+**Solutions for llama-server (Vulkan) - AMD RDNA4 Workaround:**
+
+> **Note:** llama-server with Vulkan is a workaround for AMD RDNA4 GPUs (gfx1201) due to a [ROCm HIP backend bug](https://github.com/ROCm/ROCm/issues/5706) that causes 100% idle GPU usage with Ollama.
 
 1. Check llama-server is running:
+
    ```bash
    pgrep -f llama-server
    ```
 
 2. Check llama-server health:
+
    ```bash
    curl http://localhost:8080/health
    ```
 
 3. Start llama-server if not running:
+
    ```bash
    cd /tmp/llama.cpp
    GGML_VK_DEVICE=0 ./build/bin/llama-server \
@@ -149,11 +166,14 @@ Error starting userland proxy: listen tcp 0.0.0.0:8000: bind: address already in
    vulkaninfo --summary | grep deviceName
    ```
 
+See [Quickstart - AMD GPU Setup](quickstart.md#amd-gpu-setup-vulkan) for full setup instructions.
+
 ---
 
 ### Qdrant Connection Failed
 
 **Error:**
+
 ```
 ConnectionError: Cannot connect to Qdrant
 ```
@@ -161,21 +181,25 @@ ConnectionError: Cannot connect to Qdrant
 **Solutions:**
 
 1. Check Qdrant is running:
+
    ```bash
    docker ps | grep qdrant
    ```
 
 2. Check Qdrant health:
+
    ```bash
    curl http://localhost:6333/healthz
    ```
 
 3. Check Qdrant logs:
+
    ```bash
    docker-compose logs qdrant
    ```
 
 4. Restart Qdrant:
+
    ```bash
    docker-compose restart qdrant
    ```
@@ -192,6 +216,7 @@ ConnectionError: Cannot connect to Qdrant
 ### Document Upload Fails
 
 **Error:**
+
 ```json
 {
   "error": {
@@ -204,11 +229,13 @@ ConnectionError: Cannot connect to Qdrant
 **Solutions:**
 
 1. Check file size:
+
    ```bash
    ls -lh your-file.pdf
    ```
 
 2. Increase max size in `config/config.yaml`:
+
    ```yaml
    storage:
      max_file_size_mb: 100
@@ -225,6 +252,7 @@ ConnectionError: Cannot connect to Qdrant
 **Causes & Solutions:**
 
 1. **Document not processed:**
+
    ```bash
    curl http://localhost:8000/documents/{document_id}
    # Check status is "processed"
@@ -232,6 +260,7 @@ ConnectionError: Cannot connect to Qdrant
 
 2. **Chunks not indexed:**
    Check `chunk_count` in document metadata:
+
    ```bash
    curl http://localhost:8000/documents/{document_id}
    # chunk_count should be > 0
@@ -239,9 +268,10 @@ ConnectionError: Cannot connect to Qdrant
 
 3. **Score threshold too high:**
    Lower in `config/config.yaml`:
+
    ```yaml
    retrieval:
-     score_threshold: 0.5  # Down from 0.7
+     score_threshold: 0.5 # Down from 0.7
    ```
 
 4. **Query doesn't match document content:**
@@ -256,23 +286,27 @@ ConnectionError: Cannot connect to Qdrant
 **Solutions:**
 
 1. **Check service health:**
+
    ```bash
    curl http://localhost:8000/health
    ```
 
 2. **Reduce top_k:**
+
    ```yaml
    retrieval:
-     top_k: 5  # Down from 8
+     top_k: 5 # Down from 8
    ```
 
 3. **Enable batch processing:**
+
    ```yaml
    embeddings:
-     batch_size: 64  # Up from 32
+     batch_size: 64 # Up from 32
    ```
 
 4. **Check system resources:**
+
    ```bash
    # Monitor CPU/Memory
    docker stats
@@ -293,9 +327,10 @@ ConnectionError: Cannot connect to Qdrant
 **Solutions:**
 
 1. **Lower hallucination threshold:**
+
    ```yaml
    guardrails:
-     hallucination_threshold: 0.7  # Down from 0.8
+     hallucination_threshold: 0.7 # Down from 0.8
    ```
 
 2. **Check citation quality:**
@@ -304,7 +339,7 @@ ConnectionError: Cannot connect to Qdrant
 3. **Increase retrieval chunks:**
    ```yaml
    retrieval:
-     top_k: 12  # Up from 8
+     top_k: 12 # Up from 8
    ```
 
 ---
@@ -316,6 +351,7 @@ ConnectionError: Cannot connect to Qdrant
 **Solutions:**
 
 1. **Verify PII filter is enabled:**
+
    ```yaml
    guardrails:
      enable_pii_filter: true
@@ -325,6 +361,7 @@ ConnectionError: Cannot connect to Qdrant
    Edit `src/guardrails/pii.py` to add custom patterns
 
 3. **Test manually:**
+
    ```python
    from src.guardrails.pii import PIIFilter
 
@@ -344,15 +381,17 @@ ConnectionError: Cannot connect to Qdrant
 **Solutions:**
 
 1. **Reduce embedding batch size:**
+
    ```yaml
    embeddings:
-     batch_size: 16  # Down from 32
+     batch_size: 16 # Down from 32
    ```
 
 2. **Reduce worker count:**
+
    ```yaml
    server:
-     workers: 2  # Down from 4
+     workers: 2 # Down from 4
    ```
 
 3. **Limit concurrent requests:**
@@ -372,16 +411,19 @@ ConnectionError: Cannot connect to Qdrant
 **Solutions:**
 
 1. **Check disk usage:**
+
    ```bash
    df -h
    ```
 
 2. **Clean old Docker images:**
+
    ```bash
    docker system prune -a
    ```
 
 3. **Remove unused volumes:**
+
    ```bash
    docker volume prune
    ```
@@ -398,6 +440,7 @@ ConnectionError: Cannot connect to Qdrant
 ### Import Errors
 
 **Error:**
+
 ```python
 ModuleNotFoundError: No module named 'src'
 ```
@@ -405,11 +448,13 @@ ModuleNotFoundError: No module named 'src'
 **Solutions:**
 
 1. **Install in editable mode:**
+
    ```bash
    pip install -e ".[dev]"
    ```
 
 2. **Verify virtual environment active:**
+
    ```bash
    which python
    # Should show .venv/bin/python
@@ -425,6 +470,7 @@ ModuleNotFoundError: No module named 'src'
 ### Tests Failing
 
 **Error:**
+
 ```
 pytest: error: unrecognized arguments
 ```
@@ -432,11 +478,13 @@ pytest: error: unrecognized arguments
 **Solutions:**
 
 1. **Install dev dependencies:**
+
    ```bash
    pip install -e ".[dev]"
    ```
 
 2. **Run from project root:**
+
    ```bash
    cd /path/to/lexard
    pytest tests/
@@ -452,6 +500,7 @@ pytest: error: unrecognized arguments
 ### Type Checking Errors
 
 **Error:**
+
 ```
 mypy: error: Cannot find implementation or library stub
 ```
@@ -459,6 +508,7 @@ mypy: error: Cannot find implementation or library stub
 **Solutions:**
 
 1. **Install type stubs:**
+
    ```bash
    pip install types-PyYAML types-requests
    ```
@@ -481,6 +531,7 @@ mypy: error: Cannot find implementation or library stub
 **Solutions:**
 
 1. **Check API is running:**
+
    ```bash
    curl http://localhost:8000/health
    ```
@@ -522,6 +573,7 @@ mypy: error: Cannot find implementation or library stub
 ### MCP Server Not Responding
 
 **Error:**
+
 ```json
 {
   "jsonrpc": "2.0",
@@ -535,6 +587,7 @@ mypy: error: Cannot find implementation or library stub
 **Solutions:**
 
 1. **Verify JSON-RPC 2.0 format:**
+
    ```json
    {
      "jsonrpc": "2.0",
@@ -544,6 +597,7 @@ mypy: error: Cannot find implementation or library stub
    ```
 
 2. **Check endpoint:**
+
    ```bash
    curl -X POST http://localhost:8000/mcp \
      -H "Content-Type: application/json" \
@@ -613,12 +667,14 @@ If issues persist:
    [https://github.com/yourusername/lexard/issues](https://github.com/yourusername/lexard/issues)
 
 2. **Enable debug logging and collect:**
+
    - Error messages
    - API logs
    - Docker logs
    - System info (OS, Python version, Docker version)
 
 3. **Create minimal reproduction:**
+
    - Specific steps to reproduce
    - Expected vs actual behavior
    - Sample files (if applicable)

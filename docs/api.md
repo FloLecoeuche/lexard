@@ -68,6 +68,7 @@ Check service health and external dependencies.
 ```
 
 **Status Values:**
+
 - `healthy` - All services connected
 - `degraded` - Some services unavailable
 - `unhealthy` - All services unavailable
@@ -150,6 +151,7 @@ curl -X POST http://localhost:8000/upload \
 ```
 
 **Errors:**
+
 - `413 Payload Too Large` - File exceeds 50MB
 - `415 Unsupported Media Type` - Invalid file format
 - `422 Unprocessable Entity` - Failed to parse document
@@ -161,6 +163,7 @@ curl -X POST http://localhost:8000/upload \
 List all uploaded documents.
 
 **Query Parameters:**
+
 - `limit` (int, default: 100) - Maximum documents to return
 - `offset` (int, default: 0) - Number of documents to skip
 
@@ -220,6 +223,7 @@ curl http://localhost:8000/documents/550e8400-e29b-41d4-a716-446655440000
 ```
 
 **Errors:**
+
 - `404 Not Found` - Document does not exist
 
 ---
@@ -244,6 +248,7 @@ curl -X DELETE http://localhost:8000/documents/550e8400-e29b-41d4-a716-446655440
 ```
 
 **Errors:**
+
 - `404 Not Found` - Document does not exist
 
 ---
@@ -262,6 +267,7 @@ curl http://localhost:8000/documents/550e8400-e29b-41d4-a716-446655440000/file \
 **Response: 200 OK**
 
 Returns the original file with appropriate headers:
+
 - `Content-Type`: MIME type based on file extension
   - PDF: `application/pdf`
   - DOCX: `application/vnd.openxmlformats-officedocument.wordprocessingml.document`
@@ -269,6 +275,7 @@ Returns the original file with appropriate headers:
 - `Content-Disposition`: `inline; filename="original_filename.ext"`
 
 **Errors:**
+
 - `404 Not Found` - Document does not exist (`DOCUMENT_NOT_FOUND`)
 - `404 Not Found` - File content not available (`FILE_NOT_FOUND`) - This occurs for documents uploaded before preview support was added
 
@@ -320,11 +327,13 @@ curl -X POST http://localhost:8000/query \
 ```
 
 **Confidence Levels:**
+
 - `high` - Strong evidence with high-scoring citations
 - `medium` - Moderate evidence with good citations
 - `low` - Weak evidence or low-scoring citations
 
 **Errors:**
+
 - `404 Not Found` - Document does not exist
 - `400 Bad Request` - Document not processed yet
 - `503 Service Unavailable` - LLM service is unavailable
@@ -347,6 +356,7 @@ Generate a document summary.
 ```
 
 **Style Options:**
+
 - `executive` - Brief executive summary (default)
 - `detailed` - Comprehensive detailed summary
 
@@ -376,6 +386,7 @@ curl -X POST http://localhost:8000/summarize \
 ```
 
 **Errors:**
+
 - `404 Not Found` - Document does not exist
 - `400 Bad Request` - Document not processed yet
 - `503 Service Unavailable` - LLM service is unavailable
@@ -423,21 +434,25 @@ curl -X POST http://localhost:8000/risks \
 ```
 
 **Risk Categories:**
+
 - `legal` - Legal compliance issues
 - `financial` - Financial exposure
 - `operational` - Operational constraints
 - `compliance` - Regulatory compliance
 
 **Severity Levels:**
+
 - `critical` - Immediate attention required
 - `high` - Significant risk
 - `medium` - Moderate risk
 - `low` - Minor risk
 
 **Overall Risk Levels:**
+
 - `high`, `medium`, `low`
 
 **Errors:**
+
 - `404 Not Found` - Document does not exist
 - `400 Bad Request` - Document not processed yet
 - `503 Service Unavailable` - LLM service is unavailable
@@ -486,13 +501,81 @@ curl -X POST http://localhost:8000/compare \
 ```
 
 **Change Types:**
+
 - `added` - Present in doc_b but not doc_a
 - `removed` - Present in doc_a but not doc_b
 - `modified` - Different between documents
 
 **Errors:**
+
 - `404 Not Found` - One or both documents do not exist
 - `400 Bad Request` - Document not processed yet
+
+---
+
+### Operations Progress
+
+#### GET /operations/{operation_id}/progress
+
+Stream progress updates for long-running operations using Server-Sent Events (SSE).
+
+**cURL Example**
+
+```bash
+curl -N http://localhost:8000/operations/op-123/progress
+```
+
+**Response: 200 OK (text/event-stream)**
+
+```
+data: {"stage": "extracting", "progress": 0.25, "message": "Extracting text from document..."}
+
+data: {"stage": "chunking", "progress": 0.50, "message": "Splitting into chunks..."}
+
+data: {"stage": "embedding", "progress": 0.75, "message": "Generating embeddings..."}
+
+data: {"stage": "indexing", "progress": 0.90, "message": "Indexing in vector database..."}
+
+data: {"stage": "complete", "progress": 1.0, "message": "Document processed successfully", "document_id": "uuid-here"}
+```
+
+**Progress Stages:**
+
+- `pending` - Operation queued
+- `extracting` - Extracting text from document
+- `chunking` - Splitting text into chunks
+- `embedding` - Generating vector embeddings
+- `indexing` - Storing in vector database
+- `complete` - Successfully completed
+- `failed` - Operation failed
+
+**Errors:**
+
+- `404 Not Found` - Operation ID not found
+
+---
+
+#### GET /operations/{operation_id}/status
+
+Get the current status of an operation (non-streaming).
+
+**cURL Example**
+
+```bash
+curl http://localhost:8000/operations/op-123/status
+```
+
+**Response: 200 OK**
+
+```json
+{
+  "operation_id": "op-123",
+  "stage": "embedding",
+  "progress": 0.75,
+  "message": "Generating embeddings...",
+  "started_at": "2025-12-05T10:30:00Z"
+}
+```
 
 ---
 
