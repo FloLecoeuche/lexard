@@ -22,7 +22,7 @@ This folder contains detailed specifications for each Epic and User Story. Each 
 | 12   | Progress Indicators   | ✅ Completed   | 4/4 US   |
 | 13   | User Analytics        | ✅ Completed   | 4/4 US   |
 | 14   | Internet Exposure     | ✅ Completed   | 2/2 US   |
-| 15   | Mobile UX Refinements | 🔶 In Progress | 1/2 US   |
+| 15   | Mobile UX Refinements | ✅ Completed   | 2/2 US   |
 | 16   | Responsive Mobile UI  | 🔲 Not Started | 0/3 US   |
 
 **Legend:** 🔲 Not Started | 🔶 In Progress | ✅ Completed
@@ -104,6 +104,8 @@ This folder contains detailed specifications for each Epic and User Story. Each 
 | 13.4  | Admin Analytics Dashboard             | 2025-12-09 | dda8dd1  |
 | 14.1  | UI Password Protection                | 2025-12-09 | 686da3c  |
 | 14.2  | Cloudflare Tunnel Setup Guide         | 2025-12-09 | 316f6a8  |
+| 15.1  | Fixed Header & Footer on Mobile       | 2025-12-09 | f1d39df  |
+| 15.2  | Document Display Width & Pinch-to-Zoom | 2025-12-09 | TBD      |
 
 <!-- Format: | US ID | Name | Completed Date | Commit Hash | -->
 
