@@ -1,4 +1,4 @@
-# Epic 16: Mobile UX Refinements
+# Epic 15: Mobile UX Refinements
 
 ## Overview
 
@@ -15,7 +15,7 @@ Minimal mobile UX improvements to make the current UI fully usable on mobile dev
 
 ---
 
-## US 16.1: Fixed Header & Footer on Mobile
+## US 15.1: Fixed Header & Footer on Mobile
 
 **Status:** 🔲 Not Started
 
@@ -103,7 +103,7 @@ Currently on mobile, the entire page scrolls including header and footer. Users 
 
 ---
 
-## US 16.2: Fullscreen Preview Modal with Pinch-to-Zoom
+## US 15.2: Fullscreen Preview Modal with Pinch-to-Zoom
 
 **Status:** 🔲 Not Started
 
@@ -237,7 +237,7 @@ function initMobilePreviewZoom() {
 
 ---
 
-## Definition of Done (Epic 16)
+## Definition of Done (Epic 15)
 
 - [ ] All User Stories completed (2/2 US)
 - [ ] Header and footer fixed on mobile

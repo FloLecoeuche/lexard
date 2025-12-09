@@ -1,4 +1,4 @@
-# Epic 15: Responsive Mobile UI
+# Epic 16: Responsive Mobile UI
 
 ## Overview
 
@@ -32,7 +32,7 @@ Make the main Lexard web UI (`ui/index.html`) fully responsive for mobile device
 
 ---
 
-## US 15.1: Mobile Layout & Collapsible Sidebar
+## US 16.1: Mobile Layout & Collapsible Sidebar
 
 **Status:** 🔲 Not Started
 
@@ -253,7 +253,7 @@ overlay.addEventListener('click', closeSidebar);
 
 ---
 
-## US 15.2: Touch-Optimized Interactions
+## US 16.2: Touch-Optimized Interactions
 
 **Status:** 🔲 Not Started
 
@@ -438,7 +438,7 @@ if (isTouchDevice) {
 
 ---
 
-## US 15.3: Mobile Header & Sticky Navigation
+## US 16.3: Mobile Header & Sticky Navigation
 
 **Status:** 🔲 Not Started
 
@@ -620,7 +620,7 @@ mobileDocIndicator?.addEventListener('click', openSidebar);
 
 ---
 
-## Definition of Done (Epic 15)
+## Definition of Done (Epic 16)
 
 - [ ] All User Stories completed (3/3 US)
 - [ ] UI works on mobile viewports 320px - 768px
