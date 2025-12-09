@@ -103,137 +103,62 @@ Currently on mobile, the entire page scrolls including header and footer. Users 
 
 ---
 
-## US 15.2: Fullscreen Preview Modal with Pinch-to-Zoom
+## US 15.2: Document Display Width & Pinch-to-Zoom
 
 **Status:** 🔲 Not Started
 
 ### Description
 
-On mobile devices, make the document preview modal fullscreen (100% viewport) with pinch-to-zoom support for all document types (PDF, TXT, images).
+Make document content (PDF, DOCX, TXT) display at 100% width of the modal container on mobile and enable pinch-to-zoom for zooming in on document details.
 
 ### Context
 
-The current preview modal is sized for desktop and doesn't provide a good mobile viewing experience. Users need to see documents at full size and zoom in on details. Pinch-to-zoom is the standard mobile interaction for this.
+The modal container already displays at the right size on mobile. The only issue is that the document content inside doesn't use the full width, and users cannot pinch-to-zoom to see details. This is a minimal, focused fix.
 
 ### Tasks
 
-- [ ] Detect mobile viewport and apply fullscreen modal styles
-- [ ] Make modal cover entire viewport (100vw x 100vh) on mobile
-- [ ] Position close button in accessible location (top-right, large touch target)
-- [ ] Implement pinch-to-zoom using CSS touch-action and transform
-- [ ] Add double-tap to reset zoom functionality
-- [ ] Ensure PDF iframe is zoomable (may need wrapper approach)
-- [ ] Ensure text content is zoomable
-- [ ] Ensure images are zoomable
-- [ ] Prevent body scroll when modal is open (already may exist)
-- [ ] Test zoom limits (min 1x, max 4x suggested)
+- [ ] Set document content (iframe/text container) to 100% width of modal body
+- [ ] Enable pinch-to-zoom via CSS `touch-action: pinch-zoom`
+- [ ] Ensure PDF iframe, text content, and images all respect 100% width
 
 ### Implementation Details
 
 ```css
 @media (max-width: 768px) {
-  /* Fullscreen modal on mobile */
-  .preview-modal-content {
-    width: 100vw;
-    height: 100vh;
-    max-width: none;
-    max-height: none;
-    border-radius: 0;
-    margin: 0;
+  /* Document content fills modal width */
+  #preview-body iframe,
+  #preview-body pre,
+  #preview-body img {
+    width: 100%;
+    max-width: 100%;
   }
 
-  .preview-modal-body {
-    height: calc(100vh - 50px); /* Subtract header */
+  /* Enable native pinch-to-zoom */
+  #preview-body {
+    touch-action: pan-x pan-y pinch-zoom;
     overflow: auto;
     -webkit-overflow-scrolling: touch;
-  }
-
-  /* Zoomable content wrapper */
-  .preview-zoom-container {
-    touch-action: pan-x pan-y pinch-zoom;
-    transform-origin: 0 0;
-    min-width: 100%;
-    min-height: 100%;
-  }
-
-  /* Close button - larger touch target */
-  .preview-modal-close {
-    width: 48px;
-    height: 48px;
-    font-size: 1.5rem;
-  }
-}
-```
-
-```javascript
-// Pinch-to-zoom implementation for mobile
-function initMobilePreviewZoom() {
-  const isMobile = window.innerWidth <= 768;
-  if (!isMobile) return;
-
-  const previewBody = document.getElementById('preview-body');
-  let scale = 1;
-  let lastScale = 1;
-  let startDistance = 0;
-
-  previewBody.addEventListener('touchstart', (e) => {
-    if (e.touches.length === 2) {
-      startDistance = getDistance(e.touches[0], e.touches[1]);
-      lastScale = scale;
-    }
-  }, { passive: true });
-
-  previewBody.addEventListener('touchmove', (e) => {
-    if (e.touches.length === 2) {
-      const currentDistance = getDistance(e.touches[0], e.touches[1]);
-      scale = Math.min(Math.max(lastScale * (currentDistance / startDistance), 1), 4);
-      previewBody.style.transform = `scale(${scale})`;
-    }
-  }, { passive: true });
-
-  // Double-tap to reset
-  let lastTap = 0;
-  previewBody.addEventListener('touchend', (e) => {
-    const now = Date.now();
-    if (now - lastTap < 300 && e.touches.length === 0) {
-      scale = 1;
-      previewBody.style.transform = 'scale(1)';
-    }
-    lastTap = now;
-  });
-
-  function getDistance(touch1, touch2) {
-    return Math.hypot(touch1.clientX - touch2.clientX, touch1.clientY - touch2.clientY);
   }
 }
 ```
 
 ### Acceptance Criteria
 
-- [ ] On mobile, preview modal covers full screen (100% width and height)
-- [ ] Close button is easily tappable (48px minimum touch target)
-- [ ] Pinch gesture zooms content in/out
-- [ ] Zoom range is 1x to 4x
-- [ ] Double-tap resets zoom to 1x
-- [ ] PDF documents are zoomable
-- [ ] Text content is zoomable
-- [ ] Image previews are zoomable
-- [ ] Can pan/scroll when zoomed in
+- [ ] PDF iframe displays at 100% width of modal container on mobile
+- [ ] Text content displays at 100% width of modal container on mobile
+- [ ] Pinch-to-zoom works on document content
 - [ ] Desktop preview modal unchanged
 
 ### Tests
 
-- **Manual:** Test on Chrome DevTools with touch emulation enabled
-- **Manual:** Open preview modal - should be fullscreen on mobile
-- **Manual:** Pinch gesture - content zooms in/out smoothly
-- **Manual:** Double-tap - zoom resets to 1x
-- **Manual:** Test with PDF, TXT, and image files
-- **Manual:** Verify panning works when zoomed in
-- **Manual:** Desktop - modal should be unchanged (not fullscreen)
+- **Manual:** Open PDF preview on mobile - iframe fills modal width
+- **Manual:** Open TXT preview on mobile - text fills modal width
+- **Manual:** Pinch gesture zooms content in/out
+- **Manual:** Desktop - no changes to modal behavior
 
 ### Files to Create/Modify
 
-1. `ui/index.html` - Fullscreen modal CSS, pinch-to-zoom JavaScript
+1. `ui/index.html` - Add mobile CSS for document width and pinch-to-zoom
 
 ---
 
@@ -242,9 +167,8 @@ function initMobilePreviewZoom() {
 - [ ] All User Stories completed (2/2 US)
 - [ ] Header and footer fixed on mobile
 - [ ] Only body content scrolls on mobile
-- [ ] Preview modal is fullscreen on mobile
-- [ ] Pinch-to-zoom works on all document types
-- [ ] Double-tap resets zoom
+- [ ] Document content displays at 100% width of modal on mobile
+- [ ] Pinch-to-zoom works on document content
 - [ ] Desktop UI unchanged
 - [ ] Tested on Chrome DevTools mobile emulation
 - [ ] No console errors
