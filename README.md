@@ -1,279 +1,527 @@
 # Lexard
 
-**Sovereign, self-hosted AI contract analysis powered by RAG**
+**Sovereign AI Contract Analysis with RAG & Agentic Architecture**
 
-Lexard is a B2B document intelligence solution that provides contract analysis, risk detection, Q&A with citations, and document comparison - all running locally without external API dependencies.
+Lexard is a self-hosted B2B document intelligence solution that provides contract analysis, risk detection, Q&A with citations, and document comparison - all running locally without external API dependencies.
+
+[![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/downloads/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.109-green.svg)](https://fastapi.tiangolo.com/)
+[![LangGraph](https://img.shields.io/badge/LangGraph-Agent-orange.svg)](https://www.langchain.com/langgraph)
+[![Qdrant](https://img.shields.io/badge/Qdrant-Vector%20DB-red.svg)](https://qdrant.tech/)
+
+---
 
 ## Features
 
-- **Document Ingestion** - Upload and process PDF, DOCX, and TXT files
-- **RAG-Powered Q&A** - Ask questions about contracts with cited sources
-- **Risk Analysis** - Identify legal, financial, and operational risks
-- **Document Summarization** - Generate executive or detailed summaries
-- **Document Comparison** - Compare two contracts and identify differences
-- **Multilingual Support** - Full French and English support with cross-language queries
-- **Guardrails** - Hallucination detection, PII redaction, prompt injection blocking
-- **Sovereign Architecture** - No external APIs, all processing runs locally
+- **RAG-Powered Q&A** - Ask questions with semantically retrieved citations
+- **Risk Analysis** - Identify legal, financial, and operational risks automatically
+- **Document Comparison** - Semantic diff between contract versions
+- **Multilingual** - French/English with cross-language queries and document-language responses
+- **AI Guardrails** - Hallucination detection, PII redaction, prompt injection blocking
+- **MCP Protocol** - Model Context Protocol (JSON-RPC 2.0) for AI assistant integration
+- **100% Sovereign** - No external API calls, all processing runs locally
+
+---
+
+## Architecture Overview
+
+```mermaid
+flowchart TB
+    subgraph Clients["Client Layer"]
+        UI["Web UI<br/>(Responsive PWA)"]
+        REST["REST API<br/>(OpenAPI 3.0)"]
+        MCP["MCP Server<br/>(JSON-RPC 2.0)"]
+    end
+
+    subgraph API["API Layer - FastAPI"]
+        Router["Request Router"]
+        Auth["Auth Middleware"]
+        Progress["SSE Progress<br/>Streaming"]
+    end
+
+    subgraph Agent["Agentic Layer - LangGraph"]
+        Classifier["Intent Classifier"]
+        Graph["State Machine"]
+        Tools["Agent Tools"]
+    end
+
+    subgraph RAG["RAG Pipeline"]
+        Chunker["Chunker<br/>(512 tokens)"]
+        Embedder["Embeddings<br/>(multilingual-e5)"]
+        Retriever["Dense Retriever<br/>(top_k=8)"]
+        Generator["Response Generator"]
+    end
+
+    subgraph Guardrails["Guardrails Layer"]
+        Injection["Prompt Injection<br/>Detector"]
+        Hallucination["Hallucination<br/>Detector"]
+        PII["PII Filter<br/>(IBAN, SSN, etc.)"]
+        Schema["Schema<br/>Validator"]
+    end
+
+    subgraph Storage["Storage Layer"]
+        Qdrant[("Qdrant<br/>Vector DB<br/>(HNSW, cosine)")]
+        SQLite[("SQLite<br/>Document Registry")]
+        FS["File System<br/>Document Store"]
+    end
+
+    subgraph LLM["LLM Layer"]
+        Ollama["Ollama<br/>(Mistral 7B)"]
+    end
+
+    UI --> Router
+    REST --> Router
+    MCP --> Router
+    Router --> Auth
+    Auth --> Progress
+    Progress --> Classifier
+
+    Classifier --> Graph
+    Graph --> Tools
+
+    Tools --> Retriever
+    Retriever --> Embedder
+    Retriever --> Qdrant
+
+    Tools --> Generator
+    Generator --> Ollama
+    Generator --> Hallucination
+
+    Chunker --> Embedder
+    Embedder --> Qdrant
+
+    Injection --> Router
+    Hallucination --> Generator
+    PII --> Generator
+    Schema --> Generator
+
+    Tools --> SQLite
+    Chunker --> FS
+
+    style Guardrails fill:#ffebee
+    style Agent fill:#e3f2fd
+    style RAG fill:#e8f5e9
+    style Storage fill:#fff3e0
+```
+
+---
+
+## LangGraph Agent Workflow
+
+The agentic system uses LangGraph to orchestrate multi-step document analysis with automatic retry on validation failures:
+
+```mermaid
+stateDiagram-v2
+    [*] --> ClassifyIntent: User Query
+
+    ClassifyIntent --> RouteToTool: Intent + Language
+
+    RouteToTool --> Execute: summarize
+    RouteToTool --> Execute: answer_question
+    RouteToTool --> Execute: risk_analysis
+    RouteToTool --> Execute: compare_documents
+    RouteToTool --> Refuse: refuse
+
+    Execute --> ValidateOutput: Tool Result
+
+    ValidateOutput --> [*]: pass
+    ValidateOutput --> Regenerate: retry (max 3)
+    ValidateOutput --> HandleFailure: fail
+
+    Regenerate --> Execute: Retry
+
+    HandleFailure --> [*]: Error Response
+
+    Refuse --> [*]: Refusal Message
+```
+
+**Agent Tools:**
+| Tool | Description | Output |
+|------|-------------|--------|
+| `Summarizer` | Executive or detailed summaries | Structured summary with key points |
+| `RiskDetector` | Legal, financial, operational risks | Categorized risks with severity |
+| `DiffTool` | Semantic document comparison | Changes with similarity scores |
+
+_Note: RAG-based Q&A is handled directly by the RAG pipeline, not as a separate agent tool._
+
+---
+
+## RAG Pipeline Details
+
+```mermaid
+flowchart LR
+    subgraph Ingestion["Document Ingestion"]
+        Upload["Upload<br/>(PDF/DOCX/TXT)"]
+        Extract["Text Extraction<br/>(pypdf, docx)"]
+        Chunk["Chunking<br/>(512 tokens, 50 overlap)"]
+        Embed["Embedding<br/>(multilingual-e5-base)"]
+        Index["Indexing<br/>(Qdrant HNSW)"]
+    end
+
+    subgraph Query["Query Processing"]
+        Q["User Question"]
+        QEmbed["Query Embedding"]
+        Search["Vector Search<br/>(cosine, k=8)"]
+        Filter["Score Filter<br/>(threshold=0.4)"]
+        Context["Context Building"]
+        Generate["LLM Generation"]
+        Validate["Guardrails"]
+    end
+
+    Upload --> Extract --> Chunk --> Embed --> Index
+
+    Q --> QEmbed --> Search --> Filter --> Context --> Generate --> Validate
+
+    Index -.-> Search
+
+    style Ingestion fill:#e8f5e9
+    style Query fill:#e3f2fd
+```
+
+**Key Parameters:**
+
+- **Chunk size:** 512 tokens with 50 token overlap
+- **Embedding model:** `intfloat/multilingual-e5-base` (768 dimensions, 100+ languages)
+- **Vector index:** HNSW with cosine similarity
+- **Retrieval:** top_k=8, score_threshold=0.4 (tuned for cross-lingual retrieval)
+- **Response:** Returns "I cannot find relevant information" if no chunks meet threshold
+
+---
+
+## Guardrails Architecture
+
+Multi-layer validation pipeline protecting inputs and outputs:
+
+```mermaid
+flowchart TB
+    subgraph Input["Input Validation"]
+        Query["User Query"]
+        InjectionCheck{"Prompt Injection<br/>Detection"}
+        Block1["Block + Log"]
+    end
+
+    subgraph Processing["LLM Processing"]
+        RAG["RAG Pipeline"]
+        LLM["Mistral 7B"]
+    end
+
+    subgraph Output["Output Validation"]
+        Response["LLM Response"]
+        SchemaCheck{"Schema<br/>Validation"}
+        HalluCheck{"Hallucination<br/>Detection"}
+        PIICheck["PII Redaction"]
+        Block2["Retry or Block"]
+    end
+
+    subgraph Metrics["Observability"]
+        Logs["Structured Logs<br/>(JSON + trace_id)"]
+        Stats["Metrics<br/>(block rates)"]
+    end
+
+    Query --> InjectionCheck
+    InjectionCheck -->|Safe| RAG
+    InjectionCheck -->|Threat| Block1
+
+    RAG --> LLM --> Response
+
+    Response --> SchemaCheck
+    SchemaCheck -->|Invalid| Block2
+    SchemaCheck -->|Valid| HalluCheck
+
+    HalluCheck -->|Not Grounded| Block2
+    HalluCheck -->|Grounded| PIICheck
+
+    PIICheck --> Output
+
+    Block1 --> Logs
+    Block2 --> Logs
+    PIICheck --> Stats
+
+    style Input fill:#ffcdd2
+    style Output fill:#c8e6c9
+```
+
+**Guardrails Components:**
+
+| Component            | Purpose                     | Technique                                |
+| -------------------- | --------------------------- | ---------------------------------------- |
+| **Prompt Injection** | Block malicious prompts     | Pattern matching + heuristics            |
+| **Hallucination**    | Ensure grounding in sources | N-gram overlap + semantic similarity     |
+| **PII Filter**       | Redact sensitive data       | Regex patterns (IBAN, SSN, email, phone) |
+| **Schema Validator** | Ensure response structure   | Pydantic models                          |
+
+---
+
+## Tech Stack
+
+| Layer          | Technology            | Purpose                                       |
+| -------------- | --------------------- | --------------------------------------------- |
+| **API**        | FastAPI + Uvicorn     | Async REST API with OpenAPI docs              |
+| **Agent**      | LangChain + LangGraph | Agentic workflow orchestration                |
+| **Vector DB**  | Qdrant                | HNSW index, cosine similarity, 768-dim        |
+| **Embeddings** | sentence-transformers | `intfloat/multilingual-e5-base`               |
+| **LLM**        | Ollama                | Local inference (Mistral 7B, llama.cpp, vLLM) |
+| **Guardrails** | Custom implementation | Multi-layer validation (no external libs)     |
+| **Storage**    | SQLite + Filesystem   | Document registry + raw files                 |
+| **Protocol**   | MCP (JSON-RPC 2.0)    | AI assistant integration                      |
+| **UI**         | Vanilla JS + CSS      | Responsive PWA, mobile-friendly               |
+
+---
 
 ## Quick Start
-
-Get Lexard running in 5 minutes:
 
 ```bash
 # Clone repository
 git clone https://github.com/yourusername/lexard.git
 cd lexard
 
-# Start services
+# Start infrastructure
 docker-compose up -d
 
 # Pull LLM model
 docker exec -it lexard-ollama ollama pull mistral:7b-instruct
 
-# Create virtual environment (required on macOS)
+# Setup Python environment
 python -m venv .venv
 source .venv/bin/activate
-
-# Install dependencies
 pip install -e ".[dev]"
 
-# Start API
+# Start API server
 uvicorn src.api.main:app --reload
 ```
 
-Visit [http://localhost:8000](http://localhost:8000) to use the web interface.
+Visit [http://localhost:8000](http://localhost:8000) for the Web UI.
 
-## Architecture
+---
 
-```
-┌─────────────┐
-│   Web UI    │
-└──────┬──────┘
-       │
-┌──────▼──────────┐
-│   FastAPI       │
-│   REST API      │
-└──────┬──────────┘
-       │
-┌──────▼──────────┐      ┌─────────────┐
-│   LangGraph     │──────│   Ollama    │
-│   Agent         │      │  (Mistral)  │
-└──────┬──────────┘      └─────────────┘
-       │
-┌──────▼──────────┐      ┌─────────────┐
-│   RAG Engine    │──────│   Qdrant    │
-│   + Guardrails  │      │  (Vectors)  │
-└─────────────────┘      └─────────────┘
-```
+## API Usage
 
-**Tech Stack:**
-
-- **Backend:** Python 3.11, FastAPI
-- **Agent:** LangChain + LangGraph
-- **Vector DB:** Qdrant (HNSW, cosine similarity)
-- **Embeddings:** sentence-transformers `intfloat/multilingual-e5-base` (multilingual)
-- **LLM:** Ollama `mistral:7b-instruct` (local, no external APIs)
-- **Guardrails:** guardrails-ai + custom validators
-- **Storage:** SQLite (document registry), local filesystem
-
-## API Examples
-
-### Upload a Document
+### Upload Document
 
 ```bash
 curl -X POST http://localhost:8000/upload \
   -F "file=@contract.pdf"
 ```
 
-### Ask a Question
+### Ask Question (with citations)
 
 ```bash
 curl -X POST http://localhost:8000/query \
   -H "Content-Type: application/json" \
   -d '{
-    "document_id": "your-document-id",
-    "question": "What is the termination notice period?"
+    "document_id": "doc-uuid",
+    "question": "What is the termination clause?"
   }'
 ```
 
-Response:
+**Response:**
 
 ```json
 {
-  "answer": "The termination notice period is 30 days...",
+  "answer": "The contract may be terminated with 30 days written notice...",
   "confidence": "high",
-  "citation_chunks": [
+  "language": "en",
+  "citations": [
     {
-      "content": "Either party may terminate with 30 days notice...",
-      "page": 5,
-      "score": 0.89
+      "content": "Either party may terminate this agreement...",
+      "page": 12,
+      "score": 0.92
     }
   ]
 }
 ```
 
-### Analyze Risks
+### Risk Analysis
 
 ```bash
 curl -X POST http://localhost:8000/risks \
   -H "Content-Type: application/json" \
-  -d '{"document_id": "your-document-id"}'
+  -d '{"document_id": "doc-uuid"}'
 ```
 
-### Compare Documents
+### Document Comparison
 
 ```bash
 curl -X POST http://localhost:8000/compare \
   -H "Content-Type: application/json" \
+  -d '{"doc_a": "uuid-1", "doc_b": "uuid-2"}'
+```
+
+### MCP Protocol (JSON-RPC 2.0)
+
+```bash
+curl -X POST http://localhost:8000/mcp \
+  -H "Content-Type: application/json" \
   -d '{
-    "doc_a": "document-id-1",
-    "doc_b": "document-id-2"
+    "jsonrpc": "2.0",
+    "method": "ask_question",
+    "params": {"document_id": "uuid", "question": "..."},
+    "id": 1
   }'
 ```
 
+---
+
+## Project Structure
+
+```
+lexard/
+├── src/
+│   ├── api/              # FastAPI routes, middleware, schemas
+│   │   ├── routes/       # Endpoint handlers
+│   │   └── middleware.py # Auth, logging, CORS
+│   ├── agent/            # LangGraph state machine
+│   │   ├── graph.py      # Workflow definition
+│   │   ├── classifier.py # Intent classification
+│   │   └── tools/        # Summarizer, Risk, Diff
+│   ├── rag/              # RAG pipeline
+│   │   ├── pipeline.py   # Orchestration
+│   │   ├── chunking.py   # Text chunking
+│   │   ├── embeddings.py # Vector embeddings
+│   │   ├── retriever.py  # Dense retrieval
+│   │   └── extractors/   # PDF, DOCX, TXT
+│   ├── guardrails/       # Validation layer
+│   │   ├── hallucination.py
+│   │   ├── prompt_injection.py
+│   │   ├── pii.py
+│   │   └── schema.py
+│   ├── mcp/              # MCP JSON-RPC server
+│   └── db/               # Qdrant + SQLite clients
+├── ui/                   # Web interface
+├── tests/                # Unit, integration, E2E tests
+├── config/
+│   └── config.yaml       # Externalized configuration
+├── docs/                 # Documentation
+└── docker-compose.yml    # Infrastructure
+```
+
+---
+
+## Performance Targets
+
+| Metric                           | Target  |
+| -------------------------------- | ------- |
+| Query latency (P95)              | < 3s    |
+| Document ingestion (10 pages)    | < 15s   |
+| Embedding generation (per chunk) | < 500ms |
+| Concurrent queries               | 10      |
+| Hallucination detection          | 90%+    |
+
+Run `python tests/performance/benchmark.py` to measure actual performance on your hardware.
+
+---
+
+## Multilingual Support (French/English)
+
+Lexard provides full bilingual support with intelligent language handling:
+
+```mermaid
+flowchart LR
+    subgraph Input
+        Query["User Query<br/>(any language)"]
+        Doc["Document<br/>(FR or EN)"]
+    end
+
+    subgraph Processing
+        Embed["Multilingual Embeddings<br/>(intfloat/multilingual-e5-base)"]
+        Detect["Language Detection<br/>(from document chunks)"]
+        Prompt["Bilingual Prompts<br/>(FR or EN)"]
+    end
+
+    subgraph Output
+        Response["Response in<br/>DOCUMENT language"]
+    end
+
+    Query --> Embed
+    Doc --> Embed
+    Embed --> Detect
+    Detect --> Prompt
+    Prompt --> Response
+
+    style Processing fill:#e8f5e9
+```
+
+**Key Features:**
+
+- **Cross-language retrieval** - Query in English, find French documents (and vice-versa)
+- **Document-language responses** - Response language matches the document, not the query
+- **Bilingual prompts** - System prompts in both French and English
+- **Language detection** - Automatic detection from document chunks using `langdetect`
+
+**Example:**
+
+```bash
+# French document uploaded, English query
+curl -X POST http://localhost:8000/query \
+  -d '{"document_id": "french-contract-uuid", "question": "What is the notice period?"}'
+
+# Response in French (matches document language):
+{
+  "answer": "La période de préavis est de 30 jours...",
+  "language": "fr",
+  "citations": [...]
+}
+```
+
+---
+
+## Security & Sovereignty
+
+- **No external API calls** - All processing local (Ollama, Qdrant)
+- **PII redaction** - Automatic detection and masking
+- **Prompt injection blocking** - Multi-pattern detection
+- **Hallucination prevention** - Grounding validation against sources
+- **Data isolation** - Documents never leave your infrastructure
+
+---
+
 ## Documentation
 
-- **[Quickstart Guide](docs/quickstart.md)** - Get started in 5 minutes
-- **[API Reference](docs/api.md)** - Complete REST API documentation
-- **[Configuration Guide](docs/configuration.md)** - Configuration options
-- **[Multilingual Guide](docs/multilingual.md)** - French language support and cross-language queries
-- **[Development Guide](docs/development.md)** - Development setup
-- **[Deployment Guide](docs/deployment.md)** - Production deployment
-- **[Troubleshooting](docs/troubleshooting.md)** - Common issues and solutions
+- [Quickstart Guide](docs/quickstart.md)
+- [API Reference](docs/api.md)
+- [Configuration Guide](docs/configuration.md)
+- [Multilingual Support](docs/multilingual.md)
+- [Deployment Guide](docs/deployment.md)
 
-## Interactive API Documentation
+Interactive API docs at `/docs` (Swagger) and `/redoc` (ReDoc).
 
-Once running, visit:
-
-- **Swagger UI:** [http://localhost:8000/docs](http://localhost:8000/docs)
-- **ReDoc:** [http://localhost:8000/redoc](http://localhost:8000/redoc)
+---
 
 ## Requirements
 
 - Python 3.11+
 - Docker & Docker Compose
 - 8GB RAM minimum (16GB recommended)
-- 50GB disk space (for models and data)
-- macOS, Linux, or Windows with WSL2
-
-## Project Status
-
-Lexard is under active development. Current phase: **Epic 9 - Multilingual Support**
-
-- ✅ Core ingestion pipeline
-- ✅ RAG engine with citations
-- ✅ LangGraph agent system
-- ✅ REST API + Web UI + MCP server
-- ✅ Advanced guardrails
-- ✅ Evaluation harness
-- ✅ Red team testing
-- ✅ Performance optimization
-- ✅ Documentation
-- ✅ French language support
-- 🔶 Integration testing (in progress)
-
-See [tasks/PROGRESS.md](tasks/PROGRESS.md) for detailed status.
-
-## Performance Targets
-
-- **Query latency:** < 3s (P95, with local LLM)
-- **Document ingestion:** < 15s for 10-page document
-- **Embedding generation:** < 500ms per chunk
-- **Concurrent requests:** 10 simultaneous queries
-- **Hallucination detection:** 90%+ accuracy
-
-## Security & Sovereignty
-
-- **No external API calls** - All processing is local
-- **PII redaction** - Automatic redaction of sensitive patterns (IBAN, SSN, etc.)
-- **Prompt injection blocking** - Detects and blocks injection attempts
-- **Hallucination detection** - Validates answers are grounded in source documents
-- **Schema validation** - Ensures response consistency
-
-## Development
-
-### Prerequisites
-
-- Python 3.11+
-- Docker & Docker Compose
-- Git
-
-### Setup
-
-```bash
-# Clone and enter directory
-git clone https://github.com/yourusername/lexard.git
-cd lexard
-
-# Create virtual environment
-python -m venv .venv
-source .venv/bin/activate
-
-# Install with dev dependencies
-pip install -e ".[dev]"
-
-# Start services
-docker-compose up -d
-
-# Pull LLM model
-docker exec -it lexard-ollama ollama pull mistral:7b-instruct
-
-# Run tests
-pytest tests/ -v
-
-# Start development server
-uvicorn src.api.main:app --reload
-```
-
-### Git Workflow
-
-We use Gitflow:
-
-```bash
-# Create feature branch
-git checkout -b feature/my-feature develop
-
-# Make changes and commit
-git commit -m "feat(scope): description"
-
-# Push and create PR to develop
-git push -u origin feature/my-feature
-```
-
-See [docs/development.md](docs/development.md) for details.
-
-## Contributing
-
-Contributions welcome! Please:
-
-1. Fork the repository
-2. Create a feature branch (`feature/amazing-feature`)
-3. Follow conventional commits (`feat:`, `fix:`, `docs:`, etc.)
-4. Write tests for new features
-5. Ensure all tests pass: `pytest tests/ -v`
-6. Submit a pull request to `develop`
-
-## License
-
-License - see [LICENSE](LICENSE) for details.
-
-## Support
-
-- **Documentation:** [docs/](docs/)
-- **Issues:** [GitHub Issues](https://github.com/yourusername/lexard/issues)
-- **Discussions:** [GitHub Discussions](https://github.com/yourusername/lexard/discussions)
-
-## Acknowledgments
-
-Built with:
-
-- [FastAPI](https://fastapi.tiangolo.com/)
-- [LangChain](https://www.langchain.com/)
-- [LangGraph](https://www.langchain.com/langgraph)
-- [Qdrant](https://qdrant.tech/)
-- [Ollama](https://ollama.com/)
-- [sentence-transformers](https://www.sbert.net/)
+- 50GB disk space
 
 ---
 
-**Made with ❤️ for contract analysis without compromising data sovereignty**
+## Development
+
+```bash
+# Run tests
+pytest tests/ -v
+
+# Run with coverage
+pytest tests/ --cov=src --cov-report=html
+
+# Type checking
+mypy src/
+
+# Linting
+ruff check src/
+```
+
+**Git Workflow:** Gitflow with conventional commits (`feat:`, `fix:`, `docs:`, etc.)
+
+---
+
+## License
+
+See [LICENSE](LICENSE) for details.
+
+---
+
+## Acknowledgments
+
+Built with [FastAPI](https://fastapi.tiangolo.com/), [LangChain](https://www.langchain.com/), [LangGraph](https://www.langchain.com/langgraph), [Qdrant](https://qdrant.tech/), [Ollama](https://ollama.com/), and [sentence-transformers](https://www.sbert.net/).
