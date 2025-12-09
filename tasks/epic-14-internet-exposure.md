@@ -78,7 +78,7 @@ Currently, the main UI at `/` is publicly accessible without authentication. The
 
 ## US 14.2: Cloudflare Tunnel Setup Guide
 
-**Status:** 🔲 Not Started
+**Status:** 🔶 In Progress
 
 ### Description
 
