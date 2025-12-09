@@ -101,7 +101,7 @@ This folder contains detailed specifications for each Epic and User Story. Each 
 | 13.3  | Frontend Event Tracking               | 2025-12-09 | 1ee9ce6  |
 | 13.4  | Admin Analytics Dashboard             | 2025-12-09 | dda8dd1  |
 | 14.1  | UI Password Protection                | 2025-12-09 | 686da3c  |
-| 14.2  | Cloudflare Tunnel Setup Guide         | 2025-12-09 | TBD      |
+| 14.2  | Cloudflare Tunnel Setup Guide         | 2025-12-09 | 316f6a8  |
 
 <!-- Format: | US ID | Name | Completed Date | Commit Hash | -->
 
