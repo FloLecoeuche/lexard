@@ -21,7 +21,7 @@ This folder contains detailed specifications for each Epic and User Story. Each 
 | 11   | Document Preview      | ✅ Completed   | 3/3 US   |
 | 12   | Progress Indicators   | ✅ Completed   | 4/4 US   |
 | 13   | User Analytics        | ✅ Completed   | 4/4 US   |
-| 14   | Internet Exposure     | 🔲 Not Started | 0/2 US   |
+| 14   | Internet Exposure     | 🔶 In Progress | 0/2 US   |
 | 15   | Responsive Mobile UI  | 🔲 Not Started | 0/3 US   |
 
 **Legend:** 🔲 Not Started | 🔶 In Progress | ✅ Completed
