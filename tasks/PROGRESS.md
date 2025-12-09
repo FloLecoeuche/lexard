@@ -105,7 +105,7 @@ This folder contains detailed specifications for each Epic and User Story. Each 
 | 14.1  | UI Password Protection                | 2025-12-09 | 686da3c  |
 | 14.2  | Cloudflare Tunnel Setup Guide         | 2025-12-09 | 316f6a8  |
 | 15.1  | Fixed Header & Footer on Mobile       | 2025-12-09 | f1d39df  |
-| 15.2  | Document Display Width & Pinch-to-Zoom | 2025-12-09 | TBD      |
+| 15.2  | Document Display Width & Pinch-to-Zoom | 2025-12-09 | 6607cd7  |
 
 <!-- Format: | US ID | Name | Completed Date | Commit Hash | -->
 
