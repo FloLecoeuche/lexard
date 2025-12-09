@@ -65,6 +65,11 @@ docker-compose up -d
 cloudflared tunnel --url http://localhost:8000
 ```
 
+> **Note:** If you see "Error unmarshaling QuickTunnel response" with a 500 error, this means Cloudflare's quick tunnel service (`trycloudflare.com`) is temporarily unavailable. This is a Cloudflare-side issue. Options:
+> 1. Wait and retry later (usually resolves within hours)
+> 2. Use the Production Setup below with a named tunnel (more reliable)
+> 3. Check [Cloudflare Status](https://www.cloudflarestatus.com/) for outages
+
 You'll see output like:
 ```
 2024-01-15T10:30:00Z INF +-----------------------------------------------------------+
@@ -240,6 +245,17 @@ cloudflared tunnel route dns --remove demo.yourdomain.com
 ## Troubleshooting
 
 ### Tunnel won't start
+
+**Error: "Error unmarshaling QuickTunnel response" (500 Internal Server Error)**
+```
+This is a Cloudflare-side issue with their quick tunnel service.
+The trycloudflare.com service is temporarily unavailable.
+
+Solutions:
+1. Wait and retry later (usually resolves within hours)
+2. Use a named tunnel instead (see Production Setup)
+3. Check https://www.cloudflarestatus.com/ for service status
+```
 
 **Error: "failed to connect to edge"**
 ```
