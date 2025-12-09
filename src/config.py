@@ -102,6 +102,7 @@ class AdminConfig(BaseModel):
 
     analytics_password: str  # Required - must be set in config file
     dashboard_path: str  # Required - must be set in config file
+    ui_password_enabled: bool = True  # Enable password protection for main UI
 
 
 class Settings(BaseModel):

@@ -53,3 +53,4 @@ server:
 admin:
   analytics_password: 'change-me-in-production'  # MUST be changed in production
   dashboard_path: 'metrics-a7x9k2'  # Non-obvious path segment
+  ui_password_enabled: true  # Enable password protection for main UI
