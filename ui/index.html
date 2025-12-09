@@ -1016,6 +1016,200 @@
             margin-top: 0.75rem;
             font-size: 0.875rem;
         }
+
+        /* ==================== MOBILE STYLES ==================== */
+        @media (max-width: 768px) {
+            :root {
+                --header-height: 56px;
+                --footer-height: 48px;
+            }
+
+            /* Fixed header on mobile */
+            header {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                z-index: 100;
+                padding: 0.75rem 1rem;
+                padding-top: calc(0.75rem + env(safe-area-inset-top, 0px));
+            }
+
+            header h1 {
+                font-size: 1.25rem;
+            }
+
+            /* Fixed footer on mobile */
+            footer {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                z-index: 100;
+                padding: 0.5rem 1rem;
+                padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px));
+            }
+
+            /* Body scrolls naturally with padding for fixed elements */
+            body {
+                padding-top: calc(var(--header-height) + env(safe-area-inset-top, 0px));
+                padding-bottom: calc(var(--footer-height) + env(safe-area-inset-bottom, 0px));
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            /* Main content flows naturally */
+            main {
+                flex-direction: column;
+                padding: 0.5rem;
+                min-height: auto;
+            }
+
+            /* Stack panels vertically on mobile */
+            #documents-panel {
+                width: 100%;
+                flex-shrink: 0;
+            }
+
+            /* Compact upload zone on mobile */
+            #upload-zone {
+                padding: 0.75rem;
+            }
+
+            #upload-zone p {
+                display: none; /* Hide "Drag & drop" text on mobile */
+            }
+
+            /* Show document list below upload zone */
+            #document-list {
+                max-height: 150px;
+                overflow-y: auto;
+            }
+
+            /* Main panel takes natural height */
+            #main-panel {
+                width: 100%;
+                min-height: auto;
+            }
+
+            /* Result boxes expand to fit content */
+            .result-box {
+                min-height: 200px;
+                max-height: none;
+                overflow: visible;
+            }
+
+            /* Panels flow naturally */
+            .panel {
+                min-height: auto;
+            }
+
+            /* ==================== US 15.2: Document Display Width & Pinch-to-Zoom ==================== */
+            /* Modal takes full screen on mobile */
+            .preview-modal-content {
+                width: 100%;
+                height: 100%;
+                max-width: 100%;
+                border-radius: 0;
+            }
+
+            .preview-modal-header {
+                padding: 0.75rem 1rem;
+                padding-top: calc(0.75rem + env(safe-area-inset-top, 0px));
+            }
+
+            .preview-modal-title {
+                font-size: 1rem;
+            }
+
+            /* Modal body - vertical scroll only, no horizontal overflow */
+            .preview-modal-body {
+                -webkit-overflow-scrolling: touch;
+                overflow-x: hidden;
+                overflow-y: auto;
+                padding: 0.5rem;
+                min-width: 0; /* Allow flex item to shrink below content size */
+            }
+
+            /* PDF viewer container */
+            .pdf-viewer {
+                width: 100%;
+                height: auto;
+                box-sizing: border-box;
+            }
+
+            /* PDF canvases - rendered at correct size by JS */
+            .pdf-viewer canvas {
+                display: block;
+                margin: 0 0 0.5rem 0;
+                box-shadow: none;
+            }
+
+            /* DOCX viewer fills width */
+            .docx-viewer {
+                width: 100%;
+                max-width: 100%;
+                padding: 0;
+                box-sizing: border-box;
+                overflow-x: hidden;
+            }
+
+            /* Reset ALL elements inside docx-viewer to remove Word document margins */
+            .docx-viewer * {
+                max-width: 100% !important;
+                box-sizing: border-box !important;
+            }
+
+            /* DOCX content wrapper - remove library's default margins/padding */
+            .docx-viewer .docx-wrapper {
+                padding: 0 !important;
+                margin: 0 !important;
+                background: transparent !important;
+            }
+
+            /* DOCX sections/pages - remove page-like styling */
+            .docx-viewer .docx-wrapper > section,
+            .docx-viewer section.docx {
+                padding: 0.5rem !important;
+                margin: 0 !important;
+                min-height: auto !important;
+                box-shadow: none !important;
+                width: 100% !important;
+                border: none !important;
+            }
+
+            /* Target the actual content container inside sections */
+            .docx-viewer section > article,
+            .docx-viewer section > div {
+                padding: 0 !important;
+                margin: 0 !important;
+                width: 100% !important;
+            }
+
+            /* Override inline styles that set fixed widths on paragraphs */
+            .docx-viewer p {
+                margin-left: 0 !important;
+                margin-right: 0 !important;
+                padding-left: 0 !important;
+                padding-right: 0 !important;
+            }
+
+            /* TXT viewer fills width */
+            .txt-viewer {
+                width: 100%;
+                max-width: 100%;
+                font-size: 0.75rem;
+                padding: 0.75rem;
+                box-sizing: border-box;
+                overflow-x: auto;
+            }
+
+            /* Any images in preview fill width */
+            .preview-modal-body img {
+                max-width: 100%;
+                height: auto;
+            }
+        }
     </style>
 
     <!-- PDF.js for PDF rendering -->
@@ -2318,16 +2512,45 @@
             container.innerHTML = '<div class="pdf-viewer" id="pdf-container"></div>';
             const pdfContainer = document.getElementById('pdf-container');
 
+            // Wait for layout to stabilize
+            await new Promise(resolve => requestAnimationFrame(resolve));
+
+            // On mobile, calculate scale to fit container width
+            // On desktop, use fixed scale of 1.5
+            const isMobile = window.innerWidth <= 768;
+            const availableWidth = isMobile ? window.innerWidth - 32 : container.clientWidth - 32;
+
+            // For high-DPI displays, render at higher resolution for sharp text
+            // On mobile, use 2x extra multiplier for better readability
+            const pixelRatio = window.devicePixelRatio || 1;
+            const qualityMultiplier = isMobile ? 2 : 1;
+
             // Render all pages
             for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
                 const page = await pdf.getPage(pageNum);
-                const scale = 1.5;
-                const viewport = page.getViewport({ scale });
+
+                let displayScale;
+                if (isMobile) {
+                    // Calculate scale to fit page width in available space
+                    const defaultViewport = page.getViewport({ scale: 1 });
+                    displayScale = availableWidth / defaultViewport.width;
+                } else {
+                    displayScale = 1.5;
+                }
+
+                // Render at higher resolution for sharp text
+                const renderScale = displayScale * pixelRatio * qualityMultiplier;
+                const viewport = page.getViewport({ scale: renderScale });
 
                 const canvas = document.createElement('canvas');
                 const context = canvas.getContext('2d');
                 canvas.height = viewport.height;
                 canvas.width = viewport.width;
+
+                // Set CSS size to display size (not render size)
+                const displayViewport = page.getViewport({ scale: displayScale });
+                canvas.style.width = displayViewport.width + 'px';
+                canvas.style.height = displayViewport.height + 'px';
 
                 await page.render({
                     canvasContext: context,
@@ -2347,15 +2570,52 @@
             container.innerHTML = '<div class="docx-viewer" id="docx-container"></div>';
             const docxContainer = document.getElementById('docx-container');
 
+            // On mobile, ignore document width so it fits container
+            const isMobile = window.innerWidth <= 768;
+
             await window.docx.renderAsync(blob, docxContainer, null, {
                 className: 'docx-content',
                 inWrapper: true,
-                ignoreWidth: false,
-                ignoreHeight: false,
+                ignoreWidth: isMobile,  // Ignore width on mobile to fit screen
+                ignoreHeight: true,     // Always ignore height for scrolling
                 ignoreFonts: false,
-                breakPages: true,
+                breakPages: !isMobile,  // No page breaks on mobile for continuous scroll
                 useBase64URL: true
             });
+
+            // On mobile, forcefully remove inline styles that cause margins
+            if (isMobile) {
+                // Remove all inline width/margin styles from rendered elements
+                const allElements = docxContainer.querySelectorAll('*');
+                allElements.forEach(el => {
+                    // Remove inline style attributes that cause fixed widths/margins
+                    if (el.style.width) el.style.width = '';
+                    if (el.style.minWidth) el.style.minWidth = '';
+                    if (el.style.maxWidth) el.style.maxWidth = '';
+                    if (el.style.marginLeft) el.style.marginLeft = '';
+                    if (el.style.marginRight) el.style.marginRight = '';
+                    if (el.style.paddingLeft && el.style.paddingLeft !== '0px') {
+                        // Keep small padding but remove large document margins
+                        const padding = parseFloat(el.style.paddingLeft);
+                        if (padding > 20) el.style.paddingLeft = '0';
+                    }
+                    if (el.style.paddingRight && el.style.paddingRight !== '0px') {
+                        const padding = parseFloat(el.style.paddingRight);
+                        if (padding > 20) el.style.paddingRight = '0';
+                    }
+                });
+
+                // Target the wrapper and section specifically
+                const wrapper = docxContainer.querySelector('.docx-wrapper');
+                if (wrapper) {
+                    wrapper.style.cssText = 'padding: 0 !important; margin: 0 !important; background: white !important;';
+                }
+
+                const sections = docxContainer.querySelectorAll('section');
+                sections.forEach(section => {
+                    section.style.cssText = 'width: 100% !important; max-width: 100% !important; padding: 0.5rem !important; margin: 0 !important; min-height: auto !important; box-shadow: none !important;';
+                });
+            }
         }
 
         async function renderTxtPreview(blob, container) {
