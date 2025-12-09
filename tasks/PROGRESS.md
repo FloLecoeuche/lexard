@@ -23,6 +23,7 @@ This folder contains detailed specifications for each Epic and User Story. Each 
 | 13   | User Analytics        | ✅ Completed   | 4/4 US   |
 | 14   | Internet Exposure     | ✅ Completed   | 2/2 US   |
 | 15   | Responsive Mobile UI  | 🔲 Not Started | 0/3 US   |
+| 16   | Mobile UX Refinements | 🔲 Not Started | 0/2 US   |
 
 **Legend:** 🔲 Not Started | 🔶 In Progress | ✅ Completed
 
@@ -43,6 +44,7 @@ This folder contains detailed specifications for each Epic and User Story. Each 
 - [Epic 13: User Analytics](./epic-13-analytics.md)
 - [Epic 14: Internet Exposure](./epic-14-internet-exposure.md)
 - [Epic 15: Responsive Mobile UI](./epic-15-responsive-mobile-ui.md)
+- [Epic 16: Mobile UX Refinements](./epic-16-mobile-ux-refinements.md)
 
 ## Completed User Stories
 
