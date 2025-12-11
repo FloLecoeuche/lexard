@@ -22,7 +22,7 @@ LOG_DIR="/tmp/lexard/logs"
 
 # Service paths
 LLAMA_SERVER="/home/flo/Dev/llama.cpp/build/bin/llama-server"
-MODEL_PATH="${PROJECT_DIR}/models/mistral-7b-instruct-v0.2.Q4_K_M.gguf"
+MODEL_PATH="/home/flo/Dev/llama.cpp/models/mistral-7b-instruct-v0.2.Q4_K_M.gguf"
 TUNNEL_NAME="lexard-demo"
 
 # Ports
