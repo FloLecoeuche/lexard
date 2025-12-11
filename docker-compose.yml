@@ -1,15 +1,22 @@
 # Lexard Docker Compose
 #
+# QUICK START: Use the launcher script to start all services:
+#   ./scripts/lexard.sh start
+#
+# The launcher handles llama-server, Docker, and Cloudflare tunnel automatically.
+# See: ./scripts/lexard.sh --help
+#
+# MANUAL START (if not using the launcher):
 # NOTE: llama-server with Vulkan runs on the HOST (not in Docker) because:
 # - ROCm HIP backend has 100% idle GPU bug on RDNA4 (gfx1201)
 # - Vulkan backend requires host GPU access that's simpler outside Docker
 #
 # Start llama-server on host first:
-#   cd /tmp/llama.cpp && GGML_VK_DEVICE=0 ./build/bin/llama-server \
-#     -m /tmp/mistral-7b-instruct-v0.2.Q4_K_M.gguf \
+#   /home/flo/Dev/llama.cpp/build/bin/llama-server \
+#     -m /home/flo/Dev/llama.cpp/models/mistral-7b-instruct-v0.2.Q4_K_M.gguf \
 #     --host 0.0.0.0 --port 8080 -ngl 99
 #
-# Then: docker-compose up -d
+# Then: docker compose up -d
 
 services:
   qdrant:

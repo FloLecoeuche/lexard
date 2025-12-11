@@ -2,6 +2,35 @@
 
 Get Lexard running in 5 minutes.
 
+## One-Command Start (Recommended)
+
+If you have everything set up (llama.cpp with Vulkan, Cloudflare tunnel), use the launcher script:
+
+```bash
+# Start everything
+./scripts/lexard.sh start
+```
+
+The launcher expects the model at `/home/flo/Dev/llama.cpp/models/mistral-7b-instruct-v0.2.Q4_K_M.gguf`.
+See [AMD GPU Setup](#amd-gpu-setup-vulkan) for model download instructions.
+
+This launches:
+- llama-server (Vulkan backend on GPU)
+- Qdrant vector database
+- Lexard API
+- Cloudflare tunnel (for remote access)
+
+Other commands:
+```bash
+./scripts/lexard.sh status  # Check service health
+./scripts/lexard.sh logs    # Follow all logs
+./scripts/lexard.sh stop    # Stop everything
+```
+
+See [AMD GPU Setup](#amd-gpu-setup-vulkan) for initial llama.cpp build instructions.
+
+---
+
 ## Prerequisites
 
 - Docker & Docker Compose
@@ -216,19 +245,27 @@ vulkaninfo --summary
 ### Build llama.cpp with Vulkan
 
 ```bash
-# Clone llama.cpp
-cd /tmp
+# Clone llama.cpp (recommended location)
+cd ~/Dev  # or wherever you prefer
 git clone --depth 1 https://github.com/ggerganov/llama.cpp.git
 cd llama.cpp
 
 # Build with Vulkan support
 cmake -B build -DGGML_VULKAN=ON -DLLAMA_CURL=OFF
 cmake --build build --config Release -j8
+```
 
-# Download a model
+### Download the Model
+
+Download the model to the llama.cpp models directory:
+
+```bash
+cd ~/Dev/llama.cpp/models/
 curl -L -o mistral-7b-instruct-v0.2.Q4_K_M.gguf \
   "https://huggingface.co/TheBloke/Mistral-7B-Instruct-v0.2-GGUF/resolve/main/mistral-7b-instruct-v0.2.Q4_K_M.gguf"
 ```
+
+File size: ~4.4 GB
 
 ### Start llama-server
 

@@ -23,7 +23,7 @@ This folder contains detailed specifications for each Epic and User Story. Each 
 | 13   | User Analytics        | ✅ Completed   | 4/4 US   |
 | 14   | Internet Exposure     | ✅ Completed   | 2/2 US   |
 | 15   | Mobile UX Refinements | ✅ Completed   | 2/2 US   |
-| 16   | One-Command Launcher  | 🔶 In Progress | 1/2 US   |
+| 16   | One-Command Launcher  | ✅ Completed   | 2/2 US   |
 
 **Legend:** 🔲 Not Started | 🔶 In Progress | ✅ Completed
 
@@ -107,6 +107,7 @@ This folder contains detailed specifications for each Epic and User Story. Each 
 | 15.1  | Fixed Header & Footer on Mobile       | 2025-12-09 | f1d39df  |
 | 15.2  | Document Display Width & Pinch-to-Zoom | 2025-12-09 | 6607cd7  |
 | 16.1  | Launcher Script                        | 2025-12-11 | 49ba79b  |
+| 16.2  | Documentation Update                   | 2025-12-11 | e4a10fa  |
 
 <!-- Format: | US ID | Name | Completed Date | Commit Hash | -->
 
